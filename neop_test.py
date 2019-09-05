@@ -1,5 +1,5 @@
 import board
-import nepixel
+import neopixel
 
 neop = neopixel.NeoPixel(board.D21, 12)
 
