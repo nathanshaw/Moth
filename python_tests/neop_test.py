@@ -70,5 +70,5 @@ def cycleOneByOne(t):
     neop.fill((0,0,0))
 
 if __name__ == '__main__':
-    cycleColors(0.005)
+    cycleColors(0.01)
     cycleOneByOne(0.01)
