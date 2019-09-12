@@ -153,6 +153,7 @@ def recvRMS(rms):
     RMS should be scaled between 0.0 and 1.0 when received
     """
     # TODO not sure if I need to be reading the lux sensors each time msg is received
+    print("RMS message received: ", rms)
     bright_f = constrainBright(constrainAndMapLux(veml1.lux))
     bright_r = constrainBright(constrainAndMapLux(veml2.lux))
     neopFill(bright_f, bright_r)
