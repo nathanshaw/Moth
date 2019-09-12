@@ -74,9 +74,9 @@ fun void calcSongFeatures() {
     songFFT.upchuck();
     songFC.upchuck() @=> UAnaBlob blobSongFC;
     oscSend.startMsg("/rms, ifi");
-    oscSend.addInt(0);
+    // oscSend.addInt(0);
     oscSend.addFloat(blobSongFC.fval(0)*1000);
-    oscSend.addInt(0);
+    // oscSend.addInt(0);
 }
 
 fun float calcClickOnsetProb1(float sens) {
@@ -105,10 +105,10 @@ dur onset_durations[max_notes];
 
 fun void calcClickFeatures() {
     0 => int is_onset;
-    // rms
-    updateFIFO(blobClickFC.fval(0)*20000, rmsVals);
-    oscSend.startMsg("/rms, f");
-    oscSend.addFloat(rmsVals[0]);  
+    // click rms
+    // updateFIFO(blobClickFC.fval(0)*20000, rmsVals);
+    // oscSend.startMsg("/rms, f");
+    // oscSend.addFloat(rmsVals[0]);  
     
     /*
     oscSend.startMsg("/features, ifis");
@@ -244,20 +244,6 @@ fun float getNegDelta(float b[]) {
         return b[1] - b[0];
     }
     return 0.0;
-}
-
-fun void sendFFTMags() {
-    "/fft, " => string fft_msg;
-    for (0 => int i; i < clickFFT.size()*0.5; i++){
-        "f" +=> fft_msg;
-        <<<clickFFT.fval(i)>>>;
-    }
-    /*
-    oscSend.startMsg(fft_msg);
-    for (0 => int i; i < fft.size(); i++){
-        oscSend.addFloat(clickFFT.fval(i));
-    }
-    */
 }
 
 while (1) {

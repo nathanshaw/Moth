@@ -5,6 +5,7 @@ import adafruit_veml7700
 import neopixel
 from time import sleep
 from random import randint
+from oscpy.server import OSCThreadServer
 
 # lux sensors - veml7700
 i2c = busio.I2C(board.SCL, board.SDA)
@@ -145,6 +146,25 @@ def neopFill(frontb, rearb, side="all"):
     else:
         print("ERROR, neopFill needs to be called with 'both', 'front', or 'rear' as an argument")
 
+def recvRMS(rms):
+    """
+    Receive rms data from chuck and use it to adjust neopixel brightness
+
+    RMS should be scaled between 0.0 and 1.0 when received
+    """
+    # TODO not sure if I need to be reading the lux sensors each time msg is received
+    bright_f = constrainBright(constrainAndMapLux(veml1.lux))
+    bright_r = constrainBright(constrainAndMapLux(veml2.lux))
+    neopFill(bright_f, bright_r)
+
+
+def recvClick(amp):
+    """
+    Receive click event data from ChucK and use it to trigger a "click" event
+    """
+    print("Click message received")
+    click(amp)
+
 def testLuxToBrightness(verbose=0):
     bright_f = constrainBright(constrainAndMapLux(veml1.lux))
     bright_r = constrainBright(constrainAndMapLux(veml2.lux))
@@ -154,9 +174,19 @@ def testLuxToBrightness(verbose=0):
         print("lux mapped to bright : ", round(bright_f, 3),  " | ", round(bright_r, 3))
 
 while __name__ == "__main__":
+    osc = OSCThreadServer()
+    oscReceiver = osc.listen(address='127.0.0.1', port=6450, default=True)
+    osc.bind(b'/rms', recvRMS)
+    osc.bind(b'/click', recvClick)
+    while True:
+        # just keep the program running
+        sleep(100)
+    """
     while True:
         testLuxToBrightness()
         if randint(0,40) < 1:
             print("CLICK MESSAGE")
             click()
         sleep(0.1)
+    """
+
