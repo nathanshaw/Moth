@@ -3,13 +3,13 @@ SndBuf2 sampler => PoleZero dcBlock => Gain samplerG; // => dac;
 0.99 => dcBlock.blockZero;
 
 // TODO get a chain for the clicks
-samplerG => HPF clickHPF1 => HPF clickHPF2 => LPF clickLPF1 => LPF clickLPF2 => Gain clickGain => dac;
+samplerG => HPF clickHPF1 => HPF clickHPF2 => LPF clickLPF1 => LPF clickLPF2 => Gain clickGain => blackhole;
 1000 => clickHPF1.freq => clickHPF2.freq;
 0.75 => clickHPF1.Q => clickHPF2.Q;
 3000 => clickLPF1.freq => clickLPF2.freq;
 
 // TODO get a chain for the song...
-samplerG => HPF songHPF1 => HPF songHPF2 => LPF songLPF1 => LPF songLPF2 => Gain songGain => dac;
+samplerG => HPF songHPF1 => HPF songHPF2 => LPF songLPF1 => LPF songLPF2 => Gain songGain => blackhole;
 4000 => songHPF1.freq => songHPF2.freq;
 16000 => songLPF1.freq => songLPF2.freq;
 1.0 => songHPF1.Q => songHPF2.Q;
@@ -73,10 +73,8 @@ fun float calcNegLogLikelihood() {
 fun void calcSongFeatures() {
     songFFT.upchuck();
     songFC.upchuck() @=> UAnaBlob blobSongFC;
-    oscSend.startMsg("/rms, ifi");
-    // oscSend.addInt(0);
+    oscSend.startMsg("/rms, f");
     oscSend.addFloat(blobSongFC.fval(0)*1000);
-    // oscSend.addInt(0);
 }
 
 fun float calcClickOnsetProb1(float sens) {
@@ -105,48 +103,21 @@ dur onset_durations[max_notes];
 
 fun void calcClickFeatures() {
     0 => int is_onset;
-    // click rms
-    // updateFIFO(blobClickFC.fval(0)*20000, rmsVals);
-    // oscSend.startMsg("/rms, f");
-    // oscSend.addFloat(rmsVals[0]);  
-    
-    /*
-    oscSend.startMsg("/features, ifis");
-    oscSend.addInt(1);
-    oscSend.addFloat((rmsVals[0]));
-    oscSend.addInt(0);
-    oscSend.addString("RMS");
-    */
-    
     // update the FIFO with values
     
     // rms pos delta
     updateFIFO(getPosDelta(rmsVals), rmsPosDeltas);
-    spork ~ sendFeatureMsg(2, Math.pow(rmsPosDeltas[0], 2)*10, 0, "RMS Pos Delta"); 
+    // spork ~ sendFeatureMsg(2, Math.pow(rmsPosDeltas[0], 2)*10, 0, "RMS Pos Delta"); 
     
     // index 1 is flux
     updateFIFO(blobClickFC.fval(1), fluxVals);
     updateFIFO(getPosDelta(fluxVals), fluxPosDeltas);
-    sendFeatureMsg(3, fluxPosDeltas[0]*4, 0, "Flux pos delta * 4"); 
     
     // index 2 is centroid
     updateFIFO(blobClickFC.fval(2), centVals);
-    // oscSend.startMsg("/features, ifis");
-    // oscSend.addInt(3);
-    // oscSend.addFloat(getPosDelta(centVals)*10);
-    // oscSend.addInt(0);
-    // oscSend.addString("Centroid Pos Delta");
-    
     
     // index 3 is roff
     updateFIFO(blobClickFC.fval(3), roffVals);
-    /*
-    oscSend.startMsg("/features, ifis");
-    oscSend.addInt(1);
-    oscSend.addFloat(Math.pow(getDelta(roffVals), 2)*400);
-    oscSend.addInt(0);
-    oscSend.addString("Roff Delta Squared");
-    */
     
     calcClickOnsetProb1(1.5) => float prob1;
     if (prob1 >= onset_thresh) {
@@ -170,54 +141,13 @@ fun void calcClickFeatures() {
             <<<"WARNING --- REJECTING ONSET DUE TO ONSET DEBOUNCING">>>;
         } else {      
             rmsVals[0] => onset_velocities[current_note]; // store the current RMS as the velocity for the current note
-            if (current_note == 0) {
-                // if it is the first onset of a potential rhythm, then the time is 0
-                0::ms => onset_durations[current_note];
-                <<<"ONSET DETECTED">>>;
-            } else{
-                // otherwise store the amount of time which has passed since the last onset (in ms)
-                now - last_onset => onset_durations[current_note];
-                <<<"RHYTHM DETECTED">>>;
-            }
-            
+            oscSend.startMsg("/click, f");
+            oscSend.addFloat(blobClickFC.fval(0))*1000);
             // store the current time as the time of the last onset
             now => last_onset;
-            <<<"last_onset set to : ", last_onset>>>;
-            
             // needs to be done last (to ensure velocities and times are written to the correct indexes
-            current_note++; // keeps track of how many notes we are within the rhythm
-            0.8 => onset_thresh; // make it easier to detect onsets for 2 seconds (this is reset to 1.0 in below if statement)
-            <<<"onset thresh set to : ", onset_thresh>>>;
-            if (current_note >= max_notes) {
-                max_notes -1 => current_note;
-                <<<"WARNING ONSET DETECTION IS TOO SENSATIVE!!!">>>;
-                <<<"EXTREMELY LONG RHYTHMS BEING DETECTED">>>;
-            }
         }
     }
-    //////////////////////////////////////////////////
-    // if it has been more than 2 seconds since the last detected onset, turn off rhythm detection mode...
-    if (now > last_onset + max_inter_note_rhythm && current_note != 0) {
-        // if we have detected two or more notes which are related to another...
-        if (current_note > 1) {
-            // store the currently accumulated data on the rhythm into a rhythm object
-            rhythms[current_rhythm].init(onset_velocities, onset_durations, current_note);
-            current_rhythm + 1 % max_rhythms => current_rhythm; // increment the "current rhythm" which keeps track of what instance of the rhythm class we are updating        
-        } 
-        0 => current_note; // reset current note, we dont have to "erase" contents of rhythm_velocities or intervals as their values will be overwriten once a new rhythm is detected.
-        1.0 => onset_thresh;
-        <<<"onset thresh set to : ", onset_thresh>>>;
-    }
-}
-
-
-fun void sendFeatureMsg(int f_num, float val, int flag, string name) {
-    oscSend.startMsg("/features, ifis");
-    oscSend.addInt(f_num);
-    oscSend.addFloat(val);
-    oscSend.addInt(flag);
-    oscSend.addString(name);
-    // <<<"feature message send">>>;
 }
 
 fun float[] updateFIFO(float val, float b[]){
@@ -250,7 +180,7 @@ while (1) {
     WIN_SIZE::samp => now;
     clickFFT.upchuck();
     clickFC.upchuck() @=> blobClickFC;
-    // calcSongFeatures();
+    calcSongFeatures();
     calcClickFeatures();
     // sendFFTMags();
 }
