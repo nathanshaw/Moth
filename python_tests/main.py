@@ -125,6 +125,7 @@ def neopFill(frontb, rearb, side="all"):
     """
     bf = (int(255*frontb))
     br = (int(255*rearb))
+    # print("bf : ", bf, " br : ", br)
     if side is "all":
         for i in range(0,6):
             neop[i] = (bf, 0, 0)
@@ -153,7 +154,8 @@ def recvRMS(rms):
     RMS should be scaled between 0.0 and 1.0 when received
     """
     # TODO not sure if I need to be reading the lux sensors each time msg is received
-    print("RMS message received: ", rms)
+    rms = min(rms, 1.0)
+    # print("RMS message received: ", rms)
     bright_f = constrainBright(constrainAndMapLux(veml1.lux))
     bright_r = constrainBright(constrainAndMapLux(veml2.lux))
     neopFill(bright_f, bright_r)

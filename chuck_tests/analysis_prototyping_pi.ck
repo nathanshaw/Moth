@@ -1,5 +1,6 @@
     // for playing back the clip
-    SndBuf2 sampler => PoleZero dcBlock => Gain samplerG; // => dac;
+    // SndBuf2 sampler => PoleZero dcBlock => Gain samplerG; // => dac;
+    adc  => PoleZero dcBlock => Gain samplerG; // => dac;
     0.99 => dcBlock.blockZero;
 
     // TODO get a chain for the clicks
@@ -34,7 +35,7 @@
     // for storing MIR features for the click
     UAnaBlob blobClickFC;
 
-    sampler.read(me.dir() + "Cicadas_20190207-143838-repaired.wav");
+    // sampler.read(me.dir() + "Cicadas_20190207-143838-repaired.wav");
 
     10 => int history;
 
@@ -75,7 +76,7 @@
         songFC.upchuck() @=> UAnaBlob blobSongFC;
         oscSend.startMsg("/rms, f");
         oscSend.addFloat(blobSongFC.fval(0)*1000);
-        <<<"sending song rms message : ", blobSongFC.fval(0)*1000>>>;
+        // <<<"sending song rms message : ", blobSongFC.fval(0)*1000>>>;
     }
 
     fun float calcClickOnsetProb1(float sens) {
