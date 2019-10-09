@@ -183,9 +183,49 @@ void clickFlashes() {
   }
 }
 
+
 ///////////////////////////////////////////////////////////////////////
 //                    Song Audio Functions
 ///////////////////////////////////////////////////////////////////////
+
+/* TODO need a watchdog program which will run adjust gain if certain conditions are met.
+ *  One such condition is if too many click events are detected within a certain period of time,
+ *  Another condition is if too few click everts are detected within a certain period of time,
+ *  Another condition is if the red led brightness is too low, for an extended period of time
+ *  Another condition is if the red led brightness is too high over an extended period of time.
+*/
+
+/* TODO - need a function which will poll the lux sensor and then adjust the brightness of the
+ *  LEDs.
+ *  
+ * Also there should be a watchdog which every 10 minutes (or so) will re-poll the lux sensor 
+ * when the LEDs are turned off to readjst the brightness scales.
+ * 
+ */
+
+double target_song_rms = ?;
+double target_click_rms = ?;
+
+void adjustGain(unsigned long len) {
+  /* The purpose of this function is to determine the gain level for both the "song" and the
+   *  "click" bands. The function will run for a number of milliseconds equal to the variable len
+   *  passed into it. (usually around 5 or 10 seconds)
+   * 
+   * It will poll the RMS and Peak for each band for this period of time and determine what the max 
+   * and average values are.
+   * 
+   * It will then adjust the master gain levels, click_gain and song_gain to meet target values 
+   * target_click_rms and target_song_rms.
+   * 
+   * This function should be run in the setup loop when the teensy is booting as well as a few times an 
+   * hour to adjust the gain levels.
+   * 
+  */
+  elapsedMillis start_time = 0;
+  while (start_time < len) {
+    
+  }
+}
 
 void printSongStats() {
   if (song_rms.available() && song_peak.available()) {
