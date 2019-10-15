@@ -6,6 +6,28 @@ extern "C" {
 }
 #include "Adafruit_VEML7700.h"
 
+// User Controls
+
+//NeoP
+#define MAX_BRIGHTNESS 150
+// for the clicks
+#define MAX_CLICK_LENGTH 60
+#define MIN_CLICK_LENGTH 20
+// Audio
+// gain levels
+double song_gain = 4; // starting song gain level
+double click_gain = 10; // starting click gain level
+
+// TODO need to determine what are good values for these
+#define MIN_SONG_PEAK_AVG 0.01
+#define MAX_SONG_PEAK_AVG 0.25
+#define MIN_CLICK_GAIN 0.5
+#define MAX_CLICK_GAIN 20.0
+#define MIN_SONG_GAIN 0.5
+#define MAX_SONG_GAIN 20
+
+#define FRONT_LUX_INSTALLED true
+#define REAR_LUX_INSTATLLED true
 
 ///////////////////////////////// Neopixels //////////////////////////////////
 const int numled = 12;
@@ -22,16 +44,6 @@ DMAMEM byte displayMemory[numled * 12]; // 12 bytes per LED
 
 WS2812Serial leds(numled, displayMemory, drawingMemory, pin, WS2812_GRB);
 
-/*
-  #define RED    0xFF0000
-  #define GREEN  0x00FF00
-  #define BLUE   0x0000FF
-  #define YELLOW 0xFFFF00
-  #define PINK   0xFF1088
-  #define ORANGE 0xE05800
-  #define WHITE  0xFFFFFF
-*/
-
 // Less intense...
 
 #define RED    0x160000
@@ -43,20 +55,22 @@ WS2812Serial leds(numled, displayMemory, drawingMemory, pin, WS2812_GRB);
 #define ORANGE 0x100400
 #define WHITE  0x101010
 
-
 // to keep track of the flash
 uint16_t flash_delay = 0;
 bool flash_on = false;
 elapsedMillis last_click_flash;
-unsigned long click_length = 20;
-#define MAX_CLICK_LENGTH 60;
 
 ///////////////////////////////////////////////////////////////////////
 //                       VEML7700 Lux Sensors
 ///////////////////////////////////////////////////////////////////////
 
-Adafruit_VEML7700 veml1 = Adafruit_VEML7700();
-Adafruit_VEML7700 veml2 = Adafruit_VEML7700();
+#ifdef FRONT_LUX_INSTALLED
+Adafruit_VEML7700 veml_front = Adafruit_VEML7700();
+#endif
+
+#ifdef REAR_LUX_INSTALLED
+Adafruit_VEML7700 veml_rear = Adafruit_VEML7700();
+#endif
 
 elapsedMillis last_lux_reading = 0;
 unsigned long lux_reading_delay = 1000*60*10;// every 10 minutes
@@ -64,8 +78,8 @@ unsigned long lux_reading_delay = 1000*60*10;// every 10 minutes
 double lux_min = 10;
 double lux_max = 300;
 
-double brightness_scaler_front = 1.0; // TODO expand to a front and back brightness scaler?
-double brightness_scaler_rear = 1.0; // TODO expand to a front and back brightness scaler?
+// double brightness_scaler_front = 1.0; // TODO expand to a front and back brightness scaler?
+// double brightness_scaler_rear = 1.0; // TODO expand to a front and back brightness scaler?
 
 double front_lux;
 double rear_lux;
@@ -140,12 +154,6 @@ uint8_t song_peak_weighted = 0;
 elapsedMillis lastUsagePrint = 0;
 #define AUDIO_MEMORY 16
 
-double song_gain = 4;
-double click_gain = 10;
-
-#define MAX_CLICK_GAIN 20.0
-#define MIN_CLICK_GAIN 0.5
-
 ///////////////////////////////////////////////////////////////////////
 //                    Click Audio Functions
 ///////////////////////////////////////////////////////////////////////
@@ -178,7 +186,7 @@ void calculateClickAudioFeatures() {
     num_past_clicks++;
     // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
     if (flash_delay <= 0) {
-      flash_delay += click_length;
+      flash_delay = MIN_CLICK_LENGTH;
     } else if (flash_delay < MAX_CLICK_LENGTH) {
       flash_delay++;
     }
@@ -237,11 +245,7 @@ void clickFlashes() {
 
 */
 
-// TODO need to determine what are good values for these
-#define MIN_SONG_PEAK_AVG 0.01
-#define MAX_SONG_PEAK_AVG 0.25
-#define MIN_SONG_GAIN 0.5
-#define MAX_SONG_GAIN 20
+
 // double average_song_rms; // to keep track of the average song_rms in-between auto gain evaluations
 // double average_song_peak; // to keep track of the average peak_rms in-between auto gain evaluations
 double total_song_peak;
@@ -428,7 +432,7 @@ void printAudioUsage() {
 ///////////////////////////////////////////////////////////////////////
 
 uint8_t calculateWeightedSongBrightness(double val) {
-  uint8_t bright = map(constrain(val, 0, 1.0), 0, 1.0, 0, 255);
+  uint8_t bright = map(constrain(val, 0, 1.0), 0, 1.0, 0, MAX_BRIGHTNESS);
   // Serial.print(val);
   // Serial.print("\t");
   // Serial.println(bright);
@@ -454,22 +458,32 @@ uint32_t scaleColorToLux(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 
-
-void printVEMLReadings() {
+void readLuxSensors() {
+  // TODO
+  // make it so when it is time to rea
   if (last_lux_reading > lux_reading_delay) {
     colorWipe(0x000000, 0);
-    front_lux = veml1.readLux();
-    rear_lux = veml2.readLux();
+    
+    #ifdef FRONT_LUX_INSTALLED
+    front_lux = veml_front.readLux();
     brightness_scaler_front = map(constrain(front_lux, lux_min, lux_max), lux_min, lux_max, 50, 250)/250;
+    #endif
+ 
+    #ifdef REAR_LUX_INSTALLED
+    rear_lux = veml_rear.readLux();
     brightness_scaler_rear = map(constrain(rear_lux, lux_min, lux_max), lux_min, lux_max, 50, 250)/250;
-    Serial.print("Lux: "); Serial.print(front_lux); Serial.print(" ("); Serial.print(brightness_scaler_front);Serial.print(")");
-    Serial.print(" - "); Serial.print(rear_lux);Serial.print(" ("); Serial.print(brightness_scaler_rear);Serial.println(")");
-    // Serial.print("White: "); Serial.print(veml1.readWhite());Serial.print(" - "); Serial.println(veml2.readWhite());
-    // Serial.print("Raw ALS: "); Serial.print(veml1.readALS());Serial.print(" - "); Serial.println(veml2.readALS());
+    #endif
+    
     last_lux_reading = 0;
   }
 }
 
+void printLuxReadings() {
+  Serial.print("Lux: "); Serial.print(front_lux); Serial.print(" ("); Serial.print(brightness_scaler_front);Serial.print(")");
+  Serial.print(" - "); Serial.print(rear_lux);Serial.print(" ("); Serial.print(brightness_scaler_rear);Serial.println(")");
+  // Serial.print("White: "); Serial.print(veml_front.readWhite());Serial.print(" - "); Serial.println(veml_rear.readWhite());
+  // Serial.print("Raw ALS: "); Serial.print(veml_front.readALS());Serial.print(" - "); Serial.println(veml_rear.readALS());
+}
 ///////////////////////////////////////////////////////////////////////
 //                       TCA9532A I2C bus expander
 ///////////////////////////////////////////////////////////////////////
@@ -498,16 +512,16 @@ void setupVEMLthroughTCA() {
   }
 
   tcaselect(0);
-  if (!veml1.begin()) {
+  if (!veml_front.begin()) {
     Serial.println("Sensor not found");
     while (1);
   }
   Serial.println("VEML #1 Sensor found");
-  veml1.setGain(VEML7700_GAIN_1);
-  veml1.setIntegrationTime(VEML7700_IT_800MS);
+  veml_front.setGain(VEML7700_GAIN_1);
+  veml_front.setIntegrationTime(VEML7700_IT_50MS);// 800ms was default
 
   Serial.print(F("Gain: "));
-  switch (veml1.getGain()) {
+  switch (veml_front.getGain()) {
     case VEML7700_GAIN_1: Serial.println("1"); break;
     case VEML7700_GAIN_2: Serial.println("2"); break;
     case VEML7700_GAIN_1_4: Serial.println("1/4"); break;
@@ -515,7 +529,7 @@ void setupVEMLthroughTCA() {
   }
 
   Serial.print(F("Integration Time (ms): "));
-  switch (veml1.getIntegrationTime()) {
+  switch (veml_front.getIntegrationTime()) {
     case VEML7700_IT_25MS: Serial.println("25"); break;
     case VEML7700_IT_50MS: Serial.println("50"); break;
     case VEML7700_IT_100MS: Serial.println("100"); break;
@@ -527,21 +541,22 @@ void setupVEMLthroughTCA() {
   //veml.powerSaveEnable(true);
   //veml.setPowerSaveMode(VEML7700_POWERSAVE_MODE4);
 
-  veml1.setLowThreshold(10000);
-  veml1.setHighThreshold(20000);
-  veml1.interruptEnable(true);
+  veml_front.setLowThreshold(10000);
+  veml_front.setHighThreshold(20000);
+  veml_front.interruptEnable(true);
 
+  #ifdef REAR_LUX_INSTALLED
   tcaselect(1);
-  if (!veml2.begin()) {
+  if (!veml_rear.begin()) {
     Serial.println("Sensor not found");
     while (1);
   }
   Serial.println("VEML #2 Sensor found");
-  veml2.setGain(VEML7700_GAIN_1);
-  veml2.setIntegrationTime(VEML7700_IT_800MS);
+  veml_rear.setGain(VEML7700_GAIN_1);
+  veml_rear.setIntegrationTime(VEML7700_IT_50MS);// 800ms was default
 
   Serial.print(F("Gain: "));
-  switch (veml2.getGain()) {
+  switch (veml_rear.getGain()) {
     case VEML7700_GAIN_1: Serial.println("1"); break;
     case VEML7700_GAIN_2: Serial.println("2"); break;
     case VEML7700_GAIN_1_4: Serial.println("1/4"); break;
@@ -549,7 +564,7 @@ void setupVEMLthroughTCA() {
   }
 
   Serial.print(F("Integration Time (ms): "));
-  switch (veml2.getIntegrationTime()) {
+  switch (veml_rear.getIntegrationTime()) {
     case VEML7700_IT_25MS: Serial.println("25"); break;
     case VEML7700_IT_50MS: Serial.println("50"); break;
     case VEML7700_IT_100MS: Serial.println("100"); break;
@@ -561,16 +576,22 @@ void setupVEMLthroughTCA() {
   //veml.powerSaveEnable(true);
   //veml.setPowerSaveMode(VEML7700_POWERSAVE_MODE4);
 
-  veml2.setLowThreshold(10000);
-  veml2.setHighThreshold(20000);
-  veml2.interruptEnable(true);
+  veml_rear.setLowThreshold(10000);
+  veml_rear.setHighThreshold(20000);
+  veml_rear.interruptEnable(false);
+  #endif
 }
 
 ///////////////////////////////////////////////////////////////////////
 //                    Setup and Main Loops
 ///////////////////////////////////////////////////////////////////////
 
+
 void setup() {
+  // turn off the onboard LED to conserve power
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  
   AudioMemory(AUDIO_MEMORY);
 
   /////////////////////////////////
@@ -634,7 +655,8 @@ void loop() {
   calculateSongAudioFeatures();
   clickFlashes();
   songDisplay();
-  printVEMLReadings();
+  readLuxSensors();
+  printLuxReadings();
   // printClickStats();
   // printAudioUsage(); // print audio usage every five seconds
 }
