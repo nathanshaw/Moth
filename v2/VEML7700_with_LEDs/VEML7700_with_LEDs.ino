@@ -12,6 +12,24 @@ extern "C" {
 Adafruit_VEML7700 veml1 = Adafruit_VEML7700();
 Adafruit_VEML7700 veml2 = Adafruit_VEML7700();
 
+#include <WS2812Serial.h>
+
+const int numled = 12;
+const int pin = 5;
+
+byte drawingMemory[numled*3];         //  3 bytes per LED
+DMAMEM byte displayMemory[numled*12]; // 12 bytes per LED
+
+WS2812Serial leds(numled, displayMemory, drawingMemory, pin, WS2812_GRB);
+
+#define RED    0xFF0000
+#define GREEN  0x00FF00
+#define BLUE   0x0000FF
+#define YELLOW 0xFFFF00
+#define PINK   0xFF1088
+#define ORANGE 0xE05800
+#define WHITE  0xFFFFFF
+
 #define TCAADDR 0x70
 void tcaselect(uint8_t i) {
   if (i > 7) return;
@@ -20,11 +38,21 @@ void tcaselect(uint8_t i) {
   Wire.endTransmission();
 }
 
+
+void colorWipe(int color, int wait) {
+  for (int i=0; i < leds.numPixels(); i++) {
+    leds.setPixel(i, color);
+    leds.show();
+    delayMicroseconds(wait);
+  } 
+}
+
 // standard Arduino setup()
 void setup()
 {
   while (!Serial);
   delay(1000);
+  leds.begin();
   Wire.begin();
   Serial.begin(115200);
   Serial.println("\nTCAScanner ready!");
@@ -67,7 +95,7 @@ void setup()
     case VEML7700_IT_800MS: Serial.println("800"); break;
   }
 
-  veml1.setPowerSaveMode(VEML7700_POWERSAVE_MODE4);
+  veml1.setPowerSaveMode(VEML7700_POWERSAVE_MODE1);
   veml1.powerSaveEnable(true);
   
   tcaselect(1);
@@ -97,11 +125,11 @@ void setup()
     case VEML7700_IT_800MS: Serial.println("800"); break;
   }
 
-  veml2.setPowerSaveMode(VEML7700_POWERSAVE_MODE4);
+  veml2.setPowerSaveMode(VEML7700_POWERSAVE_MODE1);
+  veml2.powerSaveEnable(true);
   Serial.println();
   Serial.println("setup done");
   Serial.println();
-  veml2.powerSaveEnable(true);
 }
 
 double v1_lux, v2_lux;
@@ -110,20 +138,24 @@ double v1_als, v2_als;
 
 void loop()
 {
+  colorWipe(WHITE, 0);
+  delay(5000);
+  
+  colorWipe(0, 0);
+  delay(40);
+  
   tcaselect(0);
   v1_lux = veml1.readLux();
-  v1_white = veml1.readWhite();
-  v1_als = veml1.readALS();
+  // v1_white = veml1.readWhite();
+  // v1_als = veml1.readALS();
   
   tcaselect(1);
   v2_lux = veml2.readLux();
-  v2_white = veml2.readWhite();
-  v2_als = veml2.readALS();
+  // v2_white = veml2.readWhite();
+  // v2_als = veml2.readALS();
   
   Serial.print("VEML Lux:\t"); Serial.print(v1_lux); Serial.print(" \t\t "); Serial.println(v2_lux);
-  Serial.print("VEML White:\t"); Serial.print(v1_white); Serial.print(" \t\t "); Serial.println(v2_white);
-  Serial.print("VEML Raw ALS:\t"); Serial.print(v1_als); Serial.print(" \t "); Serial.println(v2_als);
-
+  // Serial.print("VEML White:\t"); Serial.print(v1_white); Serial.print(" \t\t "); Serial.println(v2_white);
+  // Serial.print("VEML Raw ALS:\t"); Serial.print(v1_als); Serial.print(" \t "); Serial.println(v2_als);
   Serial.println("---------------------");
-  delay(1000);
 }
