@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 /*
  * Test firmware for the Moth bot
  */
@@ -17,13 +19,13 @@ extern "C" {
 #define BOARD_REVISION 1
 
 /////////////////////////////// NeoP ////////////////////////////////////
-#define MAX_BRIGHTNESS 175
+#define MAX_BRIGHTNESS 250
 #define MIN_BRIGHTNESS 10
 // for the clicks
 #define MAX_CLICK_LENGTH 40
 #define MIN_CLICK_LENGTH 10
 
-#define NUM_LED 12
+#define NUM_LED 10
 #define LED_PIN 5
 
 #define RED    0x160000
@@ -67,7 +69,6 @@ double brightness_scaler_rear = 1.0; // TODO expand to a front and back brightne
 double front_lux;
 double rear_lux;
 
-
 #ifdef FRONT_LUX_INSTALLED
 Adafruit_VEML7700 veml_front = Adafruit_VEML7700();
 #endif
@@ -78,15 +79,15 @@ Adafruit_VEML7700 veml_rear = Adafruit_VEML7700();
 ////////////////////////////// AUDIO ///////////////////////////////////
 #define USB_OUTPUT 1
 // One click per ten minutes
-#define MIN_CLICKS_PER_MINUTE 0.1
-#define MAX_CLICKS_PER_MINUTE 90.0
+#define MIN_CLICKS_PER_MINUTE 1.0
+#define MAX_CLICKS_PER_MINUTE 40.0
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG 0.01
-#define MAX_SONG_PEAK_AVG 0.25
+#define MAX_SONG_PEAK_AVG 0.15
 
 #define MIN_CLICK_GAIN 0.5
-#define MAX_CLICK_GAIN 20.0
+#define MAX_CLICK_GAIN 24.0
 #define MIN_SONG_GAIN 0.5
 #define MAX_SONG_GAIN 20
 
@@ -94,7 +95,7 @@ Adafruit_VEML7700 veml_rear = Adafruit_VEML7700();
 
 // gain levels
 double song_gain = 4; // starting song gain level
-double click_gain = 10; // starting click gain level
+double click_gain = 12; // starting click gain level
 
 /////////////////////////////////// Audio Library /////////////////////////////////////////////
 
@@ -593,7 +594,6 @@ void printAudioUsage() {
 ///////////////////////////////////////////////////////////////////////
 //                    Setup and Main Loops
 ///////////////////////////////////////////////////////////////////////
-
 
 void setup() {
   /////////////////////////////////

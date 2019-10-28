@@ -6,7 +6,7 @@
 */
 #include "Wire.h"
 extern "C" {
-#include "utility/twi.h" // from Wire library, so we can do bus scanning
+#include "utility/twi.h" // from Wire library, so we can do bus sc anning
 }
 #include "Adafruit_VEML7700.h"
 Adafruit_VEML7700 veml1 = Adafruit_VEML7700();
@@ -69,7 +69,7 @@ void setup()
 
   veml1.setPowerSaveMode(VEML7700_POWERSAVE_MODE4);
   veml1.powerSaveEnable(true);
-  
+
   tcaselect(1);
   if (!veml2.begin()) {
     Serial.println("Sensor not found");
@@ -114,6 +114,7 @@ void loop()
   v1_lux = veml1.readLux();
   v1_white = veml1.readWhite();
   v1_als = veml1.readALS();
+
   
   tcaselect(1);
   v2_lux = veml2.readLux();
