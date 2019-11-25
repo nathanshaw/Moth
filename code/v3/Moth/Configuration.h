@@ -1,21 +1,39 @@
 // this is the primary use configurable portion of the program
 
 #ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#define CONFIGURATION_H 
 // for things which can be either on or off, the name is simply defined?
 
 ///////////////////////// General Settings /////////////////////////////////
-#define SERIAL_ID 7
+#define SERIAL_ID 11
 
+///////////////////////// Operating Modes //////////////////////////////////
 #define CICADA_MODE 0
 #define PITCH_MODE  1
 #define FIRMWARE_MODE (CICADA_MODE)
+
+///////////////////////// Lux    Settings /////////////////////////////////
+#define LUX_CALIBRATION_TIME 4000
+#define SMOOTH_LUX_READINGS true
+
+#define LOW_LUX_THRESHOLD 16.0
+#define HIGH_LUX_THRESHOLD 400.0
+// Neo Pixels
+#define MIN_BRIGHTNESS 10
+#define MAX_BRIGHTNESS 255
+
+// on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
+// 500 would equate to a dimming of 50%
+#define BRIGHTNESS_SCALER_MIN 0.8
+
+unsigned long lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
+unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 0.05); // 3 seconds
 
 ///////////////////////// Datalog Settings /////////////////////////////////
 // record the run time // last value is number of minutes
 #define RUNTIME_POLL_DELAY 1000*60*5
 // when should the value log start // last value is number of minutes
-#define LOG_START_DELAY 1000*60*30
+#define LOG_START_DELAY 1000*60*10
 // how long should the logging last? // last value is number of hours
 #define LOG_TIME_FRAME 1000*60*60*50
 
@@ -35,20 +53,20 @@
 #define MAX_LED_ON_RATIO (0.95)
 
 ///////////////////////// Debuggings ////////////////////////////////////
-#define PRINT_LUX_DEBUG       false
+#define PRINT_LUX_DEBUG       true
 #define PRINT_LUX_READINGS    true
 // TODO
 #define PRINT_SONG_DATA       false
 // TODO
 #define PRINT_CLICK_FEATURES  false
-#define PRINT_CLICK_DEBUG     true
+#define PRINT_CLICK_DEBUG     false
 // TODO
 #define PRINT_LED_VALUES      false
 #define PRINT_AUTO_GAIN       false
 
 #define PRINT_LED_DEBUG       false
 
-#define PRINT_LOG_WRITE       true
+#define PRINT_LOG_WRITE       false
 
 #define EEPROM_WRITE_CHECK    false
 
@@ -64,43 +82,29 @@
 // data logging related
 #define AUDIO_USAGE_POLL_RATE 200000
 
-// Neo Pixels
-#define MAX_BRIGHTNESS 250
-#define MIN_BRIGHTNESS 20
-
 // Audio
 #define USB_OUTPUT 1
 #define MAX_GAIN_ADJUSTMENT 0.10
 
-const uint32_t auto_gain_frequency = 1000 * 60 * 0.5; // how often to calculate auto-gain (in ms)
-
-////////////////////////////////////// lux
-
-unsigned long lux_max_reading_delay = long(1000 * 60 * 6); // every 6 minutes
-unsigned long lux_min_reading_delay = long(1000 * 60 * 0.05); // 3 seconds
-
-#define SMOOTH_LUX_READINGS true
-
-#define MIN_LUX_EXPECTED 1.0
-#define MAX_LUX_EXPECTED 400.0
-// on scale of 1-1000 what is the min multiplier for lux sensor brightness adjustment
-// 500 would equate to a dimming of 50%
-#define BRIGHTNESS_SCALER_MIN 800
+const uint32_t auto_gain_frequency = 1000 * 60 * 10; // how often to calculate auto-gain (in ms)
 
 // song gain
+#define RMS_DELTA  0
+#define PEAK_DELTA 1
+#define ALL_FEATURES 10
 //////// Song Settings
 
 // TODO - add bin magnitude as a feature
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-#define SONG_FEATURE "peak"
+#define SONG_FEATURE PEAK_DELTA
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG 0.005
 #define MAX_SONG_PEAK_AVG 0.20
 
-#define STARTING_SONG_GAIN 12.0
+#define STARTING_SONG_GAIN 8.0
 
 #define SONG_BQ1_THRESH 13500
 #define SONG_BQ1_Q 0.85
@@ -114,7 +118,8 @@ unsigned long lux_min_reading_delay = long(1000 * 60 * 0.05); // 3 seconds
 // "rms_delta" will use that feature along with CLICK_RMS_DELTA_THRESH
 // "peak_delta" will use that feature along with CLICK_PEAK_DELTA_THRESH
 // "all" will use all available features with their corresponding thresholds
-#define CLICK_FEATURE "rms_delta"
+
+#define CLICK_FEATURE RMS_DELTA
 #define CLICK_RMS_DELTA_THRESH 0.03
 #define CLICK_PEAK_DELTA_THRESH 0.03
 
@@ -136,11 +141,6 @@ unsigned long lux_min_reading_delay = long(1000 * 60 * 0.05); // 3 seconds
 #define CLICK_BQ2_THRESH 2500
 #define CLICK_BQ2_Q 0.95
 #define CLICK_BQ2_DB -24
-
-// how high the click flash timer will go up to
-#define MAX_FLASH_TIME 300
-// where the click flash timer will start
-#define MIN_FLASH_TIME 100
 
 //////////////////// Leds
 

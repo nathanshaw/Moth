@@ -13,7 +13,11 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <WS2812Serial.h>
+#include <EEPROM.h>
+#include <PrintUtils.h>
 #include "Neos.h" // has to be before elapsedmillis
+#include "Lux.h"
 #include <elapsedMillis.h>
 
 #include "Macros.h"

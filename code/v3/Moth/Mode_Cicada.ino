@@ -1,111 +1,6 @@
 // #ifndef __CIDADA_MODE_H__
 // #define __CIDADA_MODE_H__
 
-// #include "MothConfig.h"
-#include <Audio.h>
-
-AudioInputI2S            i2s1;           //xy=76.66667938232422,1245.6664371490479
-AudioAnalyzeRMS          rms_input1;     //xy=260.00000762939453,1316.6666345596313
-AudioAnalyzeRMS          rms_input2;     //xy=260.00000762939453,1316.6666345596313
-AudioAnalyzePeak         peak_input1;    //xy=264.00000762939453,1348.6666345596313
-AudioAnalyzePeak         peak_input2;    //xy=264.00000762939453,1348.6666345596313
-AudioAmplifier           click_input_amp1; //xy=282.6666793823242,1217.9999284744263
-AudioAmplifier           song_input_amp1; //xy=282.6666717529297,1250.6665239334106
-AudioAmplifier           song_input_amp2; //xy=282.66666412353516,1283.9998378753662
-AudioAmplifier           click_input_amp2; //xy=286.00001525878906,1184.6665925979614
-AudioFilterBiquad        click_biquad2;  //xy=460.9999542236328,1187.9998712539673
-AudioFilterBiquad        song_biquad2;   //xy=462.6666946411133,1282.999761581421
-AudioFilterBiquad        click_biquad1;  //xy=464.33331298828125,1219.6665210723877
-AudioFilterBiquad        song_biquad1;   //xy=464.33331298828125,1249.6665210723877
-AudioAmplifier           click_mid_amp2; //xy=630.6666412353516,1185.333086013794
-AudioAmplifier           click_mid_amp1; //xy=633.9999542236328,1216.9998998641968
-AudioAmplifier           song_mid_amp2;  //xy=634.9999160766602,1284.3331317901611
-AudioAmplifier           song_mid_amp1;  //xy=636.6666259765625,1252.6665229797363
-AudioFilterBiquad        click_biquad11; //xy=813.0000114440918,1216.333209991455
-AudioFilterBiquad        click_biquad21; //xy=814.6666412353516,1187.9998941421509
-AudioFilterBiquad        song_biquad11;  //xy=814.9999961853027,1247.3331470489502
-AudioFilterBiquad        song_biquad21;  //xy=814.9999771118164,1280.6664805412292
-AudioAmplifier           song_post_amp2; //xy=991.333381652832,1295.9998598098755
-AudioAmplifier           click_post_amp1; //xy=991.9999771118164,1221.9999532699585
-AudioAmplifier           song_post_amp1; //xy=994.6666030883789,1260.9998998641968
-AudioAmplifier           click_post_amp2; //xy=995.3332748413086,1185.3333415985107
-AudioAnalyzeRMS          song_rms1;      //xy=1257.0000228881836,1259.6665334701538
-AudioAnalyzeRMS          song_rms2;      //xy=1258.6666717529297,1224.6665143966675
-AudioAnalyzeRMS          click_rms1;     //xy=1260.0000228881836,1086.6665334701538
-AudioAnalyzeRMS          click_rms2;     //xy=1261.666648864746,1051.666464805603
-AudioAnalyzePeak         song_peak1;     //xy=1261.0000228881836,1291.6665334701538
-AudioAnalyzePeak         song_peak2;     //xy=1262.6666717529297,1323.3332242965698
-AudioAnalyzePeak         click_peak1;    //xy=1264.0000228881836,1118.6665334701538
-AudioAnalyzePeak         click_peak2;    //xy=1265.6666717529297,1151.9998006820679
-AudioOutputUSB           usb1;           //xy=1307.33353805542,1409.3331747055054
-AudioConnection          patchCord1(i2s1, 0, rms_input1, 0);
-AudioConnection          patchCord2(i2s1, 0, peak_input1, 0);
-AudioConnection          patchCord3(i2s1, 0, click_input_amp1, 0);
-AudioConnection          patchCord4(i2s1, 0, song_input_amp1, 0);
-AudioConnection          patchCord5(i2s1, 0, peak_input2, 0);
-AudioConnection          patchCord6(i2s1, 0, rms_input2, 0);
-AudioConnection          patchCord7(i2s1, 1, click_input_amp2, 0);
-AudioConnection          patchCord8(i2s1, 1, song_input_amp2, 0);
-AudioConnection          patchCord9(click_input_amp1, click_biquad1);
-AudioConnection          patchCord10(song_input_amp1, song_biquad1);
-AudioConnection          patchCord11(song_input_amp2, song_biquad2);
-AudioConnection          patchCord12(click_input_amp2, click_biquad2);
-AudioConnection          patchCord13(click_biquad2, click_mid_amp2);
-AudioConnection          patchCord14(song_biquad2, song_mid_amp2);
-AudioConnection          patchCord15(click_biquad1, click_mid_amp1);
-AudioConnection          patchCord16(song_biquad1, song_mid_amp1);
-AudioConnection          patchCord17(click_mid_amp2, click_biquad21);
-AudioConnection          patchCord18(click_mid_amp1, click_biquad11);
-AudioConnection          patchCord19(song_mid_amp2, song_biquad21);
-AudioConnection          patchCord20(song_mid_amp1, song_biquad11);
-AudioConnection          patchCord21(click_biquad11, click_post_amp1);
-AudioConnection          patchCord22(click_biquad21, click_post_amp2);
-AudioConnection          patchCord23(song_biquad11, song_post_amp1);
-AudioConnection          patchCord24(song_biquad21, song_post_amp2);
-AudioConnection          patchCord25(song_post_amp2, song_rms2);
-AudioConnection          patchCord26(song_post_amp2, song_peak2);
-AudioConnection          patchCord27(click_post_amp1, click_rms1);
-AudioConnection          patchCord28(click_post_amp1, click_peak1);
-AudioConnection          patchCord29(click_post_amp1, 0, usb1, 0);
-AudioConnection          patchCord30(song_post_amp1, song_rms1);
-AudioConnection          patchCord31(song_post_amp1, song_peak1);
-AudioConnection          patchCord32(song_post_amp1, 0, usb1, 1);
-AudioConnection          patchCord33(click_post_amp2, click_rms2);
-AudioConnection          patchCord34(click_post_amp2, click_peak2);
-
-// keeping track of clicks //////
-long total_clicks_detected[2] = {0, 0}; // number of clicks which has occurred since boot
-long num_past_clicks[2];            // number of clicks since last auto-gain adjustment
-long num_cpm_clicks[2];
-
-// click gain //////////////////
-double click_gain[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN}; // starting click gain level
-double click_gain_min[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN};
-double click_gain_max[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN};
-
-// click rms ///////////////////
-double click_rms_val[2] = {0.0, 0.0};
-double last_click_rms_val[2] = {0.0, 0.0};
-double click_rms_delta[2] = {0.0, 0.0};
-
-// click peak //////////////////
-double click_peak_val[2] = {0.0, 0.0};
-double last_click_peak_val[2] = {0.0, 0.0};
-double click_peak_delta[2] = {0.0, 0.0};
-
-////////////////////////////////
-double song_gain[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};   // starting song gain level
-double song_gain_min[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};
-double song_gain_max[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};
-
-// song rms
-uint8_t song_rms_weighted[2] = {0, 0};  // 0 -255 depending on the RMS of the song band...
-
-// song peak
-uint8_t song_peak_weighted[2] = {0, 0}; // 0 -255 depending on the peak of the song band...
-double total_song_peaks[2];
-unsigned long num_song_peaks[2];
-
 void cicadaLoop() {
   updateSong();
   updateClicks();
@@ -114,14 +9,14 @@ void cicadaLoop() {
 void updateSong() {
   // SONG /////////////////////////
   calculateSongAudioFeatures();
-  songDisplay();  
+  songDisplay();
 }
 
 // this should be in the main audio loop
 void updateClicks() {
-    // Serial.println("WARNING CALCCULATECLICKAUDIOFEATURES IS BROKEN!");
+  // Serial.println("WARNING CALCCULATECLICKAUDIOFEATURES IS BROKEN!");
   for (int i = 0; i < num_channels; i++) {
-    if (CLICK_FEATURE == "rms_delta" || CLICK_FEATURE == "all") {
+    if ( (CLICK_FEATURE == RMS_DELTA) || (CLICK_FEATURE == ALL_FEATURES)) {
       if (click_rms1.available() && i == 0) {
         last_click_rms_val[i] = click_rms_val[i];
         click_rms_val[i] = click_rms1.read();
@@ -133,7 +28,7 @@ void updateClicks() {
         updateClickAudioFeaturesRMS(i);
       }
     }
-    if (CLICK_FEATURE == "peak_delta" || CLICK_FEATURE == "all") {
+    if (CLICK_FEATURE == PEAK_DELTA || CLICK_FEATURE == ALL_FEATURES) {
       if (click_peak1.available() && i == 0 ) {
         last_click_peak_val[i] = click_peak_val[i];
         click_peak_val[i] = click_peak1.read();
@@ -145,7 +40,7 @@ void updateClicks() {
         updateClickAudioFeaturesPeak(i);
       }
     }
-    if (CLICK_FEATURE != "peak_delta" && CLICK_FEATURE != "rms_delta") {
+    if (CLICK_FEATURE != PEAK_DELTA && CLICK_FEATURE != RMS_DELTA) {
       Serial.print("sorry the CLICK_FEATURE ");
       Serial.print(CLICK_FEATURE);
       Serial.println(" is not implemented/available");
@@ -155,62 +50,6 @@ void updateClicks() {
   flashUpdate();
 };
 
-void writeSetupConfigsToEEPROM() {
-  if (data_logging_active) {
-    EEPROM.update(EEPROM_JMP1, cicada_mode);
-    EEPROM.update(EEPROM_JMP2, stereo_audio);
-    EEPROM.update(EEPROM_JMP3, both_lux_sensors);
-    EEPROM.update(EEPROM_JMP4, combine_lux_readings);
-    EEPROM.update(EEPROM_JMP5, gain_adjust_active);
-    EEPROM.update(EEPROM_JMP6, data_logging_active);
-    dprintln(PRINT_LOG_WRITE, "logged jumper values to EEPROM");
-
-    // log the starting gains to the min/max EEPROM
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + 4, song_gain[1]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4, click_gain[1]);
-
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS, 0);
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS + 4, 0);
-
-
-    EEPROM.update(EEPROM_AUDIO_MEM_MAX, AUDIO_MEMORY);
-    dprintln(PRINT_LOG_WRITE, "logged AUDIO_MEMORY to EEPROM");
-
-    // auto-log values
-    EEPROM.update(EEPROM_LOG_ACTIVE, data_logging_active);
-    writeLongToEEPROM(EEPROM_LOG_POLLING_RATE, LOG_POLLING_RATE);
-    writeLongToEEPROM(EEPROM_LOG_START_TIME, LOG_START_DELAY);
-    writeLongToEEPROM(EEPROM_LOG_END_TIME,  LOG_START_DELAY + LOG_TIME_FRAME);
-    dprintln(PRINT_LOG_WRITE, "Logged Log info (in minutes):");
-    dprint(PRINT_LOG_WRITE, "Datalog Active :\t"); dprintln(PRINT_LOG_WRITE, data_logging_active);
-    dprint(PRINT_LOG_WRITE, "Start time     :\t"); dprintln(PRINT_LOG_WRITE, LOG_START_DELAY / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "End time       :\t"); dprintln(PRINT_LOG_WRITE, (LOG_START_DELAY + LOG_TIME_FRAME) / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "Logging Rate   :\t"); dprintln(PRINT_LOG_WRITE, (String)(LOG_POLLING_RATE / ONE_MINUTE));
-
-    EEPROM.update(EEPROM_SERIAL_ID, SERIAL_ID);
-    dprint(PRINT_LOG_WRITE, "logged serial number : ");
-    dprintln(PRINT_LOG_WRITE, SERIAL_ID);
-    dprintln(PRINT_LOG_WRITE, "\nFinished logging setup configs to EEPROM");
-    dprintln(PRINT_LOG_WRITE, "|||||||||||||||||||||||||||||||||||||||||");
-  }
-}
 
 
 void cicadaSetup() {
@@ -301,7 +140,7 @@ void cicadaSetup() {
 
   Serial.println("\n- - - - - - - - - - - - - -");
   Serial.println("Searching for Lux Sensors");
-  setupVEMLthroughTCA();
+  // setupVEMLthroughTCA();
   Serial.print("Log Polling Rate (ms)              :\t");
   Serial.println(LOG_POLLING_RATE);
   if (lux_max_reading_delay > LOG_POLLING_RATE) {
@@ -341,40 +180,301 @@ void updateClickAudioFeaturesRMS(uint8_t i) {
   if (click_rms_delta[i] > CLICK_RMS_DELTA_THRESH) {
     // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
     // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
-    if (neos[i].getRemainingFlashDelay() <= 0) {
-      neos[i].setRemainingFlashDelay(MIN_FLASH_TIME);
-      num_past_clicks[i]++;
-      // TODO have a timeout for the clicks, perhaps 100ms or something like that, prevent the click from being detected if under that time...
-      dprint(PRINT_CLICK_DEBUG, "-------------- CLICK "); dprint(PRINT_CLICK_DEBUG, i); dprint(PRINT_CLICK_DEBUG, " DETECTED --------------------- ");
-      dprint(PRINT_CLICK_DEBUG, "rms_delta | ");
-      dprintln(PRINT_CLICK_DEBUG, num_past_clicks[i]);
-    } else if (neos[i].getRemainingFlashDelay() < MAX_FLASH_TIME) {
-      neos[i].addToRemainingFlashDelay(1);
-      dprint(PRINT_CLICK_DEBUG, " .");
-    } else if (neos[i].getRemainingFlashDelay() > MAX_FLASH_TIME) {
-      neos[i].setRemainingFlashDelay(MAX_FLASH_TIME);
-      dprint(PRINT_CLICK_DEBUG, " x");
-    }
+    neos[i].flashOn(); // all flash logic is conducted in the NeoGroup instance
   }
 }
 
 void updateClickAudioFeaturesPeak(uint8_t i) {
   click_peak_delta[i] = last_click_peak_val[i]  - click_peak_val[i];
   if (click_peak_delta[i] > CLICK_PEAK_DELTA_THRESH) {
-    // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
-    // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
-    if (neos[i].getRemainingFlashDelay() <= 0) {
-      neos[i].setRemainingFlashDelay(MIN_FLASH_TIME);
-      num_past_clicks[i]++;
-      dprint(PRINT_CLICK_DEBUG, "-------------- CLICK "); dprint(PRINT_CLICK_DEBUG, i); dprint(PRINT_CLICK_DEBUG, " DETECTED --------------------- ");
-      dprint(PRINT_CLICK_DEBUG, "peak_delta | ");
-      dprintln(PRINT_CLICK_DEBUG, num_past_clicks[i]);
-    } else if (neos[i].getRemainingFlashDelay() < MAX_FLASH_TIME) {
-      neos[i].addToRemainingFlashDelay(1);
-    } else if (neos[i].getRemainingFlashDelay() > MAX_FLASH_TIME) {
-      neos[i].setRemainingFlashDelay(MAX_FLASH_TIME);
+    neos[i].flashOn();
+  }
+}
+
+///////////////////////////////////////////////////////////////////////
+//                    Song Audio Functions
+///////////////////////////////////////////////////////////////////////
+
+/* TODO need a watchdog program which will run adjust gain if certain conditions are met.
+    One such condition is if too many click events are detected within a certain period of time,
+    Another condition is if too few click everts are detected within a certain period of time,
+    Another condition is if the red led brightness is too low, for an extended period of time
+    Another condition is if the red led brightness is too high over an extended period of time.
+*/
+
+/* TODO - need a function which will poll the lux sensor and then adjust the brightness of the
+    LEDs.
+
+   Also there should be a watchdog which every 10 minutes (or so) will re-poll the lux sensor
+   when the LEDs are turned off to readjst the brightness scales.
+
+*/
+
+void printSongStats() {
+  for (int i = 0; i < num_channels; i++) {
+    dprint(PRINT_SONG_DATA, "Song -- "); dprint(PRINT_SONG_DATA, i); dprint(PRINT_SONG_DATA, " | rms_weighted: ");
+    dprint(PRINT_SONG_DATA, song_rms_weighted[i]);
+    dprint(PRINT_SONG_DATA, "\t peak: ");
+    dprint(PRINT_SONG_DATA, song_peak_weighted[i]);
+    dprintln(PRINT_SONG_DATA);
+  }
+}
+
+
+void songDisplay() {
+  for (int i = 0; i < num_channels; i++) {
+    // if (flash_on[i] == false) {
+    // TODO make a user control which allows for selection between RMs and peak
+    if (SONG_FEATURE == PEAK_DELTA) {
+      if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
+        if (front_mic_active == true && i == 0) {
+          neos[0].colorWipe(song_peak_weighted[i], 0, 0);
+          neos[1].colorWipe(song_peak_weighted[i], 0, 0);
+        } else if (rear_mic_active == true && i == 1) {
+          neos[0].colorWipe(song_peak_weighted[i], 0, 0);
+          neos[1].colorWipe(song_peak_weighted[i], 0, 0);          
+        }
+      } else {
+        neos[i].colorWipe(song_peak_weighted[i], 0, 0);
+        // colorWipeRear(song_peak_weighted_r, 0, 0);
+      }
+    } else if (SONG_FEATURE == RMS_DELTA) {
+      if (stereo_audio == false) {
+        if (front_mic_active == true && i == 0) {
+          neos[0].colorWipe(song_rms_weighted[i], 0, 0);
+          neos[1].colorWipe(song_rms_weighted[i], 0, 0);
+        } else if (rear_mic_active == true && i == 1) {
+          neos[0].colorWipe(song_rms_weighted[i], 0, 0);
+          neos[1].colorWipe(song_rms_weighted[i], 0, 0);          
+        }
+      } else  {
+        neos[i].colorWipe(song_rms_weighted[i], 0, 0);
+        // colorWipeRear(song_rms_weighted_r, 0, 0);
+      }
+    } else {
+      Serial.print("ERROR: the SONG_FEATURE ");
+      Serial.print(SONG_FEATURE);
+      Serial.println(" is not a valid/implemented SONG_FEATURE");
     }
   }
 }
 
+bool adjustSongGainLedOnRatio() {
+  bool success = false;
+  for (int i = 0; i < num_channels; i++) {
+    double cost = 0.5;
+    if (neos[i].getOnRatio() > MAX_LED_ON_RATIO) {
+      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
+      song_gain[i] -= change;
+      // ensure that what we have is not less than the min
+      song_gain[i] = max(song_gain[i], MIN_SONG_GAIN);
+      dprint(PRINT_AUTO_GAIN, "led_on_ratio is too high ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
+      dprint(PRINT_AUTO_GAIN, ") lowering the song gain "); dprintln(PRINT_AUTO_GAIN, i);
+      dprint(PRINT_AUTO_GAIN, change);
+      dprint(PRINT_AUTO_GAIN, " ");
+      success = true;
+    } else if (neos[i].getOnRatio() < MIN_LED_ON_RATIO) {
+      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
+      song_gain[i] += change;
+      // ensure that what we have is not less than the min
+      song_gain[i] = min(song_gain[i], MAX_SONG_GAIN);
+      dprint(PRINT_AUTO_GAIN, "led_on_ratio is too low ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
+      dprint(PRINT_AUTO_GAIN, ") raising the song gain "); dprintln(PRINT_AUTO_GAIN, i);
+      dprint(PRINT_AUTO_GAIN, change);
+      dprint(PRINT_AUTO_GAIN, " ");
+      success = true;
+    }
+  }
+  if (success) {
+    updateSongGain(song_gain);
+    updateSongGainMinMax();
+    return 1;
+  }
+  return 0;
+}
+
+void checkSongAutoGain() {
+  adjustSongGainLedOnRatio();
+  bool success = false;
+  for (int i = 0; i < num_channels; i++) {
+    ///////////////////////////////////////////////////////////////
+    // second check is to see if the song gain needs to be adjusted
+    ///////////////////////////////////////////////////////////////
+    // calculate the average peak values since the last auto-gain adjust
+    double avg_song_peak = total_song_peaks[i] / num_song_peaks[i];
+    double cost; // our cost variable
+    dprint(PRINT_AUTO_GAIN, "\n--------- song "); dprint(PRINT_AUTO_GAIN, i); dprintln(PRINT_AUTO_GAIN, " -------------");
+    dprint(PRINT_AUTO_GAIN, "total_song_peaks ");
+    dprintln(PRINT_AUTO_GAIN, total_song_peaks[i]);
+    dprint(PRINT_AUTO_GAIN, "num_song_peaks ");
+    dprintln(PRINT_AUTO_GAIN, (long) num_song_peaks[i]);
+    // if the avg value is more than the max...
+    if (avg_song_peak > MAX_SONG_PEAK_AVG) {
+      // calculate cost between 0 and 1 with higher cost resulting in higher gain amplification
+      cost = 1.0 - (MAX_SONG_PEAK_AVG / avg_song_peak);
+      // calculate what the new song_gain will be
+      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
+      song_gain[i] -= change;
+      // ensure that what we have is not less than the min
+      song_gain[i] = max(song_gain[i], MIN_SONG_GAIN);
+      dprint(PRINT_AUTO_GAIN, "song gain decreased by ");
+      dprint(PRINT_AUTO_GAIN, change);
+      dprint(PRINT_AUTO_GAIN, " ");
+      success = true;
+    }
+    // if the average value is less than the min....
+    else if (avg_song_peak < MIN_SONG_PEAK_AVG) {
+      dprintln(PRINT_AUTO_GAIN);
+      dprint(PRINT_AUTO_GAIN, "avg_song_peak lower than MIN_SONG_PEAK_AVG ");
+      dprintln(PRINT_AUTO_GAIN, avg_song_peak);
+      // calculate cost between 0 and 1 with higher cost resulting in higher gain attenuation
+      cost = 1.0 - (MIN_SONG_PEAK_AVG / avg_song_peak);
+      dprint(PRINT_AUTO_GAIN, "cost : ");
+      dprintln(PRINT_AUTO_GAIN, cost);
+      // calculate the new song gain
+      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
+      song_gain[i] += change;
+      // ensure what we have is not less than the max...
+      song_gain[i] = min(song_gain[i], MAX_SONG_GAIN);
+      dprint(PRINT_AUTO_GAIN, "song gain increased by ");
+      dprint(PRINT_AUTO_GAIN, change);
+      dprint(PRINT_AUTO_GAIN, " ");
+      dprintln(PRINT_AUTO_GAIN);
+      success = true;
+    }
+    // now check the avg on time? todo
+
+    ///////////////////////////////////////////////////////////////
+    // last thing to do is reset the last_auto_gain_adjustment timer
+    ///////////////////////////////////////////////////////////////
+    total_song_peaks[i] = 0;
+    num_song_peaks[i] = 0;
+  }
+  if (success) {
+    updateSongGain(song_gain);
+    updateSongGainMinMax();
+  };
+}
+// #endif // __CICADA_SONG_H__
+/*#ifndef CICADA_CONFIG_H
+  #define CICADA_CONFIG_H
+
+  #include "MothConfig.h"
+*/
+/*  Below is a map of what will be stored in the data logger
+   /////////////////////////////////////////////////////////
+   General Configuration Settings 0 - 24
+   0-5 the jumper configurations
+
+   Runtime Values 50 - 99
+   //////////////
+   50 max_memory usage
+   51 the total audio memory allocated
+   60 front_lux min reading
+   61 rear_lux min reading
+   62 front_lux_max_reading
+   63 rear_lux_max_reading
+
+   Lux Sensor Readings 100 - 200
+
+   Click Readings
+
+   Song Readings
+
+*/
+void printClickStats() {
+  if (PRINT_CLICK_FEATURES) {
+    // TODO update this to have a stereo option
+    Serial.print("1000* Click | rms: ");
+    Serial.print(click_rms_val[0] * 1000);
+    Serial.print(" delta: ");
+    Serial.print(click_rms_delta[0] * 1000);
+    Serial.print(" peak: ");
+    Serial.print(click_peak_val[0] * 1000);
+    if (stereo_audio) {
+      Serial.print(" R: ");
+      Serial.print(click_rms_val[1] * 1000);
+      Serial.print(" delta: ");
+      Serial.print(click_rms_delta[1] * 1000);
+      Serial.print(" peak: ");
+      Serial.print(click_peak_val[1] * 1000);
+    }
+    Serial.println();
+  }
+}
+// void updateClickGain(double click_gain[], double click_gain_min[], double click_gain_max[]);
+
+void flashUpdate() {
+  for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
+    neos[i].updateFlash();
+  }
+}
+
+void updateClickGain(double click_gain[], double click_gain_min[], double click_gain_max[]) {
+  //
+  Serial.println("WARNING UPDATECLICKGAIN IS NOT IMPLEMENTED YET");
+}
+
+
+uint8_t testRearMicrophone () {
+  // go through and gather 10 features from each channel and make sure it is picking up audio
+  uint8_t readings = 0;
+  double values = 0.0;
+  unsigned long a_time = millis();
+  Serial.print("Testing Rear Microphone");
+  while (readings < 10 && millis() < a_time + 4000) {
+    if (click_rms2.available()) {
+      values += click_rms2.read();
+      readings++;
+      Serial.print(".");
+      delay(20);
+    }
+  }
+  if (values > 0) {
+    Serial.println("\nRear Microphone is good");
+    return true;
+  } else {
+    Serial.println("\nERROR, Rear Microphone does not work");
+    printDivideLn();
+    return false;
+  }
+}
+
+uint8_t testFrontMicrophone () {
+  // go through and gather 10 features from each channel and make sure it is picking up audio
+  uint8_t readings = 0;
+  double values = 0.0;
+  unsigned long a_time = millis();
+  Serial.print("Testing Front Microphone");
+  while (readings < 10 && millis() < a_time + 4000) {
+    if (click_rms1.available()) {
+      values += click_rms1.read();
+      readings++;
+      Serial.print(".");
+      delay(20);
+    }
+  }
+  if (values > 0) {
+    Serial.println("\nFront Microphone is good");
+    return true;
+  } else {
+    Serial.println("\nERROR, Front Microphone does not work");
+    return false;
+  }
+}
+
+void testMicrophones() {
+  if (testFrontMicrophone() == false) {
+    // todo - do something to deactive this audio channel
+    Serial.println("setting front_mic_active to false");
+    front_mic_active = false;
+  }
+  if (testRearMicrophone() == false) {
+    // todo - do something to deactive this audio channel
+    Serial.println("setting rear_mic_active to false");
+    rear_mic_active = false;
+  }
+  printDivideLn();
+}
+// #endif // CICADA_CONFIG_H
 // #endif // __CIDADA_MODE_H__

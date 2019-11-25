@@ -16,12 +16,12 @@ void setup() {
   // create either front and back led group, or just one for both  
   neos[0].colorWipe(120, 70, 0); // turn off the LEDs
   neos[1].colorWipe(120, 70, 0); // turn off the LEDs
-  Serial.println("Leds turned yellow for setup loop");
+  Serial.println("Leds turned yellow for setup loop\n");
   delay(2000);
 
-  Serial.println("Checking Hardware Jumpers");
   if (JUMPERS_POPULATED) {
     printMinorDivide();
+    Serial.println("Checking Hardware Jumpers");
     readJumpers();
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
@@ -41,18 +41,23 @@ void setup() {
       delay(1000);
     }
   }
+  Serial.println("Testing Microphones\n");
+  testMicrophones();
+  
   if (data_logging_active) {
     writeSetupConfigsToEEPROM();
   }
+  Serial.println("turning off LEDs for Lux Calibration");
   // todo make this proper
-  if (I2C_MULTI) {
-    luxSetupCal(true);
-  }
+  lux_sensors[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
+  lux_sensors[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+  lux_sensors[0].calibrate(LUX_CALIBRATION_TIME);
+  lux_sensors[1].calibrate(LUX_CALIBRATION_TIME);
   printMajorDivide("Setup Loop Finished");
 }
 
 void loop() {
-  checkLuxSensors(); // this needs to stay in the faster main loop
+  updateLuxSensors(); // this needs to stay in the faster main loop
   if (cicada_mode) {
     cicadaLoop();
   } else {

@@ -23,19 +23,23 @@
 */
 #include <WS2812Serial.h>
 #include "Configuration.h"
+#include "Configuration_adv.h"
 #include "PrintUtils.h"
 // #include <elapsedMillis.h>
-#define UPDATE_ON_OFF_RATIOS true
-// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define LED_SHDN_LEN 40
-#define FLASH_DEBOUNCE_TIME 200
 
 uint32_t packColors(uint8_t red, uint8_t green, uint8_t blue, double scaler) {
   // TODO change code to account for front and back sides
   uint32_t color = 0;
+  // Serial.print("red: ");
+  // Serial.print(red);
   red = red * scaler;
+  // Serial.print("\t");
+  // Serial.println(red);
   green = green * scaler;
   blue = blue * scaler;
+  red = min(red, MAX_BRIGHTNESS);
+  green = min(green, MAX_BRIGHTNESS);
+  blue = min(blue, MAX_BRIGHTNESS);
   color = (red << 16) + (green << 8) + (blue);
   return color;
 }
@@ -62,6 +66,9 @@ class NeoGroup {
     long getShdnTimer() {
       return shdn_timer;
     };
+    long getShdnLen() {
+      return shdn_len;
+    };
 
 
     void setBrightnessScaler(double scaler) {
@@ -77,26 +84,31 @@ class NeoGroup {
     };
     double getAvgBrightnessScaler();
     double getAvgBrightness(String type);
-    unsigned long getRemainingFlashDelay() {
+    long getRemainingFlashDelay() {
       return remaining_flash_delay;
     };
-    void addToRemainingFlashDelay(unsigned long i) {
+    void addToRemainingFlashDelay(long i) {
       remaining_flash_delay += i;
+      if (remaining_flash_delay > flash_max_time) {
+        remaining_flash_delay = flash_max_time;
+      }
     };
-    void setRemainingFlashDelay(unsigned long d) {
+    void setRemainingFlashDelay(long d) {
       remaining_flash_delay = d;
     };
 
+    void colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs);
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
     // void wipeAll(uint8_t red, uint8_t green, uint8_t blue);
     void flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
+    void flashOn();
     void flashOff();
     void updateFlash();
 
     void printGroupConfigs();
 
-    bool luxShutdown();
+    bool shutdown(long len);
     void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
 
   private:
@@ -104,10 +116,10 @@ class NeoGroup {
     uint8_t flash_red = 0;
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
-    unsigned long remaining_flash_delay = 0;
+    long remaining_flash_delay = 0;// negative values expected, can not be a variable
     bool flash_on = false;
-    unsigned long flash_min_time;
-    unsigned long flash_max_time;
+    long flash_min_time;
+    long flash_max_time;
 
     // related to auto-calibration and datalogging
     bool update_on_off_ratios = UPDATE_ON_OFF_RATIOS;
@@ -118,8 +130,9 @@ class NeoGroup {
     int idx_start;
     int idx_end;
     int num_pixels;
-    
+
     elapsedMillis shdn_timer; // if this is below a certain threshold then shutdown everything
+    unsigned long shdn_len = 0;
 
     bool leds_on = false;
 
@@ -127,15 +140,15 @@ class NeoGroup {
     elapsedMillis on_off_len; // this is reset every time the leds shutdown or turn on (length of time on or off)
     elapsedMillis last_flash_update;
 
-    unsigned long on_time = 1;
-    unsigned long off_time = 1;
+    long on_time = 1;
+    long off_time = 1;
     double on_ratio = 0.5;
     double brightness_scaler = 1.0;
     double brightness_scaler_total;
     double brightness_scaler_changes;
     // functions
 
-    void updateOnOffRatios(int color);
+    void updateOnRatio(int color);
     void updateBrightnessScalerTotals();
     void resetOnOffRatioCounters();
 };
@@ -152,8 +165,9 @@ NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, lo
   gname = id;
 }
 
-bool NeoGroup::luxShutdown() {
+bool NeoGroup::shutdown(long len) {
   // return 0 if lux shutdown not a success, 1 if it is
+  shdn_len = len;
   if (flash_on == false) {
     colorWipe(0, 0, 0);
     shdn_timer = 0;
@@ -169,13 +183,17 @@ void NeoGroup::updateFlashColors(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue) {
+  colorWipe(red, green, blue, brightness_scaler);
+}
+
+void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   // TODO this logic is broken...
   // Serial.println("Starting colorWipe in NeoGroup");
-  int colors = packColors(red, green, blue, brightness_scaler);
+  int colors = packColors(red, green, blue, bs);
   if (update_on_off_ratios) {
-    updateOnOffRatios(colors);
+    updateOnRatio(colors);
   }
-  if (shdn_timer < LED_SHDN_LEN) {
+  if (shdn_timer < shdn_len) {
     // if the LEDs are in shutdown mode than simply exit without changing the LEDs
     dprint(PRINT_LED_DEBUG, "colorWipe returning due to shdn_timer : "); dprintln(PRINT_LED_DEBUG, shdn_timer);
     return;
@@ -204,8 +222,8 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue) {
 void NeoGroup::colorWipe(int colors) {
   // TODO this logic is broken...
   Serial.println("WARNING COLOR WIPE DOES NOT DO ITS OWN BRIGHTNESS SCALING WHEN SINGLE INT IS PASSED TO IT");
-  updateOnOffRatios(colors);
-  if (shdn_timer < LED_SHDN_LEN) {
+  updateOnRatio(colors);
+  if (shdn_timer < shdn_len) {
     // if the LEDs are in shutdown mode than simply exit without changing the LEDs
     return;
   }
@@ -229,7 +247,8 @@ void NeoGroup::flashOff() {
   // if the flash is allowed to be turned off
   if (remaining_flash_delay <= 0) {
     dprint(PRINT_CLICK_DEBUG, gname);
-    dprint(PRINT_CLICK_DEBUG, "FlashOff ");
+    dprint(PRINT_CLICK_DEBUG, " FlashOff : ");
+    dprintln(PRINT_CLICK_DEBUG, last_flash);
     flash_on = false;
     leds_on = false;
     colorWipe(0, 0, 0);
@@ -241,26 +260,40 @@ void NeoGroup::flashOff() {
 void NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
   // if it has been long enough since the last flash occured
   if (last_flash > FLASH_DEBOUNCE_TIME) {
-    Serial.print("FLASH ON");
-    if (red + green + blue > 0 && shdn_timer > LED_SHDN_LEN) {
-      colorWipe(red, green, blue); // has to be on first as flash_on will block the colorWipe
-      flash_on = true; // turn the light on along with the flag
-      leds_on = true;
-      last_flash = 0; // reset the elapsed millis variable as the light was just turned on
-      Serial.println(" Flashed");
+    dprint(PRINT_CLICK_DEBUG, "FLASH ON");
+    if (red + green + blue > 0 && shdn_timer > shdn_len) {
+      // if a flash is not currently on
+      if ( (flash_on == false) || (leds_on == false) ) {
+        remaining_flash_delay = flash_min_time;
+        colorWipe(red, green, blue, brightness_scaler*1.5); // has to be on first as flash_on will block the colorWipe
+        flash_on = true; // turn the light on along with the flag
+        leds_on = true;
+        last_flash = 0; // reset the elapsed millis variable as the light was just turned on
+        dprint(PRINT_CLICK_DEBUG, " Flashed "); dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
+      } else { // if a flash is on then increment the remaining_flash_Delay
+        addToRemainingFlashDelay(1);
+        if (remaining_flash_delay > flash_max_time) {
+          remaining_flash_delay = flash_max_time;
+        }
+      }
     }
   } else {
     dprintln(PRINT_CLICK_DEBUG, "Flash skipped due to FLASH_DEBOUNCE_TIME");
   }
 }
 
+void NeoGroup::flashOn() {
+  flashOn(flash_red, flash_green, flash_blue);
+}
+
 void NeoGroup::updateFlash() {
   // if there is time remaining in the flash it either needs to be turned on or the timer needs to increment
   if (remaining_flash_delay > 0) {
     dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, gname); dprint(PRINT_CLICK_DEBUG, " : ");
-    dprint(PRINT_CLICK_DEBUG, remaining_flash_delay);
+    dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
+    dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
     if (flash_on < 1) { //and the light is not currently on
-      dprintln(PRINT_CLICK_DEBUG, "Turning the Flash ON ");
+      dprintln(PRINT_CLICK_DEBUG, "-- Turning the Flash ON --");
       flashOn(flash_red, flash_green, flash_blue);// flash on
     }
     else {
@@ -269,7 +302,7 @@ void NeoGroup::updateFlash() {
       // Serial.print("remaining_flash_delay["); Serial.print(i); Serial.print("] :\t");
       // Serial.print(remaining_flash_delay[i]); Serial.print("\t");
       remaining_flash_delay = remaining_flash_delay - last_flash_update;
-      remaining_flash_delay = min(remaining_flash_delay, 0);
+      remaining_flash_delay = max(remaining_flash_delay, 0);
       dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
       if (remaining_flash_delay == 0) {
         dprint(PRINT_CLICK_DEBUG, "Click time over, turning off flash "); dprintln(PRINT_CLICK_DEBUG, gname);
@@ -300,7 +333,7 @@ void NeoGroup::resetOnOffRatioCounters() {
 }
 
 // mode 0 is just front, mode 1 is just rear, mode 2 is both (using combined values?), mode 3 is both using independent values
-void NeoGroup::updateOnOffRatios(int color) {
+void NeoGroup::updateOnRatio(int color) {
   // when color wipe is called it should take care of this for  us
   // to keep track of on/off times
   if (color > 0) {

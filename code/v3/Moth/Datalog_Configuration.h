@@ -10,6 +10,13 @@
 #define EEPROM_JMP5                       4
 #define EEPROM_JMP6                       5
 
+#define EEPROM_S_VERSION_MAJOR            6
+#define EEPROM_S_VERSION_MINOR            7
+#define EEPROM_S_SUBVERION                8
+
+#define EEPROM_H_VERSION_MAJOR            9
+#define EEPROM_H_VERSION_MINOR            10
+
 #define EEPROM_SERIAL_ID                  40
 #define EEPROM_RUN_TIME                   41
 
