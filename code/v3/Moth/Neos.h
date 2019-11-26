@@ -66,13 +66,22 @@ class NeoGroup {
     long getShdnTimer() {
       return shdn_timer;
     };
-    long getShdnLen() {
-      return shdn_len;
+   
+    unsigned long getShdnLen();
+
+    bool isInShutdown() {
+      if (shdn_timer < shdn_len) {
+        return true;
+      }
+      return false;
     };
 
+    void updateAvgBrightnessScaler();
+    void resetAvgBrightnessScaler();
 
     void setBrightnessScaler(double scaler) {
       brightness_scaler = scaler;
+      updateAvgBrightnessScaler();
     };
 
     double getOnRatio() {
@@ -101,15 +110,19 @@ class NeoGroup {
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
     // void wipeAll(uint8_t red, uint8_t green, uint8_t blue);
-    void flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
-    void flashOn();
+    bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
+    bool flashOn();
     void flashOff();
     void updateFlash();
 
     void printGroupConfigs();
 
     bool shutdown(long len);
+    void powerOn();
     void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
+
+    double getFlashPerMinuteAvg();
+    void resetFlashPerMinuteAvg();
 
   private:
     // related to the flash command
@@ -117,9 +130,12 @@ class NeoGroup {
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
     long remaining_flash_delay = 0;// negative values expected, can not be a variable
+    
     bool flash_on = false;
     long flash_min_time;
     long flash_max_time;
+    long num_flashes;
+    elapsedMillis fpm_timer;
 
     // related to auto-calibration and datalogging
     bool update_on_off_ratios = UPDATE_ON_OFF_RATIOS;
@@ -153,9 +169,17 @@ class NeoGroup {
     void resetOnOffRatioCounters();
 };
 
+void NeoGroup::resetFlashPerMinuteAvg() {
+  num_flashes = 0;
+  fpm_timer = 0;
+}
+
+double NeoGroup::getFlashPerMinuteAvg() {
+  return (double)num_flashes / (double)fpm_timer;
+}
+
 NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, long f_min, long f_max) {
   // todo
-  Serial.println("WARNING NOT IMPLEMENTED YET");
   flash_min_time = f_min;
   flash_max_time = f_max;
   num_pixels = end_idx - start_idx + 1;
@@ -167,13 +191,29 @@ NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, lo
 
 bool NeoGroup::shutdown(long len) {
   // return 0 if lux shutdown not a success, 1 if it is
-  shdn_len = len;
-  if (flash_on == false) {
+  if (!isInShutdown()) {
+    dprint(PRINT_LUX_DEBUG,millis());dprint(PRINT_LUX_DEBUG, "\tSHUTTING DOWN GROUP ");
+    dprintln(PRINT_LUX_DEBUG, gname);
+    shdn_len = len;
     colorWipe(0, 0, 0);
     shdn_timer = 0;
-    return 1;
+    leds_on = false;
+    return 0;
   }
-  return 0;
+  return 1;
+}
+
+void NeoGroup::powerOn() {
+  dprintln(PRINT_LUX_DEBUG, "POWER ON MESSAGE RECEIVED");
+  shdn_timer += shdn_len;
+}
+
+unsigned long NeoGroup::getShdnLen() {
+  if (shdn_timer <= shdn_len) {
+    return shdn_timer;
+  } else  {
+    return 0;
+  }
 }
 
 void NeoGroup::updateFlashColors(uint8_t red, uint8_t green, uint8_t blue) {
@@ -257,7 +297,7 @@ void NeoGroup::flashOff() {
   }
 }
 
-void NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
+bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
   // if it has been long enough since the last flash occured
   if (last_flash > FLASH_DEBOUNCE_TIME) {
     dprint(PRINT_CLICK_DEBUG, "FLASH ON");
@@ -265,25 +305,28 @@ void NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
       // if a flash is not currently on
       if ( (flash_on == false) || (leds_on == false) ) {
         remaining_flash_delay = flash_min_time;
-        colorWipe(red, green, blue, brightness_scaler*1.5); // has to be on first as flash_on will block the colorWipe
+        colorWipe(red, green, blue, brightness_scaler * 1.5); // has to be on first as flash_on will block the colorWipe
         flash_on = true; // turn the light on along with the flag
         leds_on = true;
         last_flash = 0; // reset the elapsed millis variable as the light was just turned on
         dprint(PRINT_CLICK_DEBUG, " Flashed "); dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
+        num_flashes++;
       } else { // if a flash is on then increment the remaining_flash_Delay
         addToRemainingFlashDelay(1);
         if (remaining_flash_delay > flash_max_time) {
           remaining_flash_delay = flash_max_time;
         }
       }
+      return true;
     }
   } else {
     dprintln(PRINT_CLICK_DEBUG, "Flash skipped due to FLASH_DEBOUNCE_TIME");
+    return false;
   }
 }
 
-void NeoGroup::flashOn() {
-  flashOn(flash_red, flash_green, flash_blue);
+bool NeoGroup::flashOn() {
+  return flashOn(flash_red, flash_green, flash_blue);
 }
 
 void NeoGroup::updateFlash() {
@@ -316,13 +359,18 @@ void NeoGroup::updateFlash() {
   }
 }
 
-void NeoGroup::updateBrightnessScalerTotals() {
+void NeoGroup::updateAvgBrightnessScaler() {
   brightness_scaler_total += brightness_scaler;
   brightness_scaler_changes++;
 }
 
 double NeoGroup::getAvgBrightnessScaler() {
   return brightness_scaler_total / brightness_scaler_changes;
+}
+
+void NeoGroup::resetAvgBrightnessScaler() {
+  brightness_scaler_total = 0;
+  brightness_scaler_changes = 0;
 }
 
 void NeoGroup::resetOnOffRatioCounters() {

@@ -1,5 +1,4 @@
 /////////////////////////////// NeoP ////////////////////////////////////
-
 #define NUM_LED 10
 #define LED_PIN 5
 
@@ -17,6 +16,7 @@ Lux lux_sensors[NUM_LUX_SENSORS] = {
   Lux(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
   Lux(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
+
 double combined_lux;
 double combined_min_lux_reading;
 double combined_max_lux_reading;
@@ -192,11 +192,13 @@ void updateLuxSensors() {
   // if the LEDs have been off, on their own regard, for 40ms or longer...
   // and it has been long-enough to warrent a new reading
   // dprintln(PRINT_LUX_DEBUG,"\nchecking lux sensors: ");
+  combined_lux = 0;
   for (unsigned int i = 0; i < sizeof(lux_sensors) / sizeof(lux_sensors[0]); i++) {
     // for each lux sensor, if the LEDs are off, have been off for longer than the LED_SHDN_LEN
     // and it has been longer than the
     // min reading delay then read the sensors
     lux_sensors[i].update();
+    combined_lux += lux_sensors[i].getLux();
   }
 }
 

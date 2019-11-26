@@ -41,7 +41,8 @@ void setup() {
       delay(1000);
     }
   }
-  Serial.println("Testing Microphones\n");
+  Serial.println("Testing Microphones");
+  printTeensyDivide();
   testMicrophones();
   
   if (data_logging_active) {

@@ -6,6 +6,6 @@
 
 #define S_VERSION_MAJOR           3
 #define S_VERSION_MINOR           0
-#define S_SUBVERSION              2
+#define S_SUBVERSION              3
 
 #define NUM_LUX_SENSORS           2

@@ -102,11 +102,10 @@ void printAndClearDoubleLog(uint32_t _start, uint32_t _end, String _name) {
     }
     for (unsigned int i = _start + side; i < _end; i += 8) {
       double val = readDoubleFromEEPROM(i);
-      dprintln(PRINT_LOG_WRITE, "");
-      dprint(PRINT_LOG_WRITE, i);
+      //  dprint(PRINT_LOG_WRITE, "");
+      // dprint(PRINT_LOG_WRITE, i);
       dprint(PRINT_LOG_WRITE, ",");
       dprint(PRINT_LOG_WRITE, val);
-      dprint(PRINT_LOG_WRITE, "\t");
       if (data_logging_active) {
         writeDoubleToEEPROM(i, 0.0);
       }
@@ -120,28 +119,31 @@ uint8_t updateLuxLog() {
   // if datalogging is active
   // if enough time has passed since last logging and the log still has space allowcated to it
   if (log_timer > LOG_POLLING_RATE && lux_eeprom_idx < EEPROM_LUX_LOG_END) {
-    double lux_average[2];
-    for (int i = 0; i < 2; i++) {
-      lux_average[i] = lux_total[i] / (double)lux_readings[i];
-      // reset the average values
-      lux_total[i] = 0;
-      lux_readings[i] = 0;
-    }
     dprint(PRINT_LOG_WRITE, "Logging Lux Data into EEPROM location: "); dprintln(PRINT_LOG_WRITE, (int)lux_eeprom_idx);
-    dprint(PRINT_LOG_WRITE, "lux_average :\t"); dprint(PRINT_LOG_WRITE, lux_average[0]); dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, lux_average[1]);
+    dprint(PRINT_LOG_WRITE, "lux_average                          :\t");  
     // store the current lux readings
     // increment the index, 4 bytes to a double
-    writeDoubleToEEPROM(lux_eeprom_idx, lux_average[0]);
-    lux_eeprom_idx += 4;
-    writeDoubleToEEPROM(lux_eeprom_idx, lux_average[1]);
-    lux_eeprom_idx += 4;
+    if (front_lux_active) {
+      dprint(PRINT_LOG_WRITE, lux_sensors[0].getAvgLux()); 
+      writeDoubleToEEPROM(lux_eeprom_idx, lux_sensors[0].getAvgLux());
+      lux_eeprom_idx += 4;
+    } else{
+      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
+    }
+    if (rear_lux_active) {
+      writeDoubleToEEPROM(lux_eeprom_idx, lux_sensors[1].getAvgLux());
+      lux_eeprom_idx += 4;
+      dprint(PRINT_LOG_WRITE, "\t");
+      dprintln(PRINT_LOG_WRITE, lux_sensors[1].getAvgLux());
+    } else {
+      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
+    }
     return 1;
   }
   return 0;
 }
 
-void updateLuxMinMaxDatalog() {
+bool updateLuxMinMaxDatalog() {
   // give the program some time to settle
   if (data_logging_active && millis() > 20000) {
     // front
@@ -149,15 +151,15 @@ void updateLuxMinMaxDatalog() {
       // is the current reading more than the max recorded?
       // if the current reading is the same then nothing is written, if it is different something is writen
       writeDoubleToEEPROM(EEPROM_MAX_LUX_READINGS + (i * 4) , lux_sensors[i].getMaxLux());
-      // dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
-      // dprint(PRINT_LOG_WRITE, " max_lux_reading to EEPROM at addr: "); dprint(PRINT_LOG_WRITE, EEPROM_MAX_LUX_READINGS + (i * 4));
-      // dprint(PRINT_LOG_WRITE, " :\t"); dprintln(PRINT_LOG_WRITE, lux_sensors[i].getMaxLux());
-      // dprint(PRINT_LOG_WRITE, " read back:\t");dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + (i*4)));
+      dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
+      dprint(PRINT_LOG_WRITE, " max_lux_reading to EEPROM at addr: "); dprint(PRINT_LOG_WRITE, EEPROM_MAX_LUX_READINGS + (i * 4));
+      dprint(PRINT_LOG_WRITE, " :\t"); dprintln(PRINT_LOG_WRITE, lux_sensors[i].getMaxLux());
+      dprint(PRINT_LOG_WRITE, " read back:\t");dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + (i*4)));
 
       writeDoubleToEEPROM(EEPROM_MIN_LUX_READINGS + (i * 4) , lux_sensors[i].getMinLux());
-      //dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
-      //dprint(PRINT_LOG_WRITE, " min_lux_reading to EEPROM\t"); dprint(PRINT_LOG_WRITE, lux_sensors[i].getMinLux());
-      //dprint(PRINT_LOG_WRITE, " read back:\t"); dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + (i * 4)));
+      dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
+      dprint(PRINT_LOG_WRITE, " min_lux_reading to EEPROM\t"); dprint(PRINT_LOG_WRITE, lux_sensors[i].getMinLux());
+      dprint(PRINT_LOG_WRITE, " read back:\t"); dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + (i * 4)));
     }
   }
   // combined
@@ -165,11 +167,14 @@ void updateLuxMinMaxDatalog() {
     combined_max_lux_reading = combined_lux;
     writeDoubleToEEPROM(EEPROM_MAX_LUX_READING_COMBINED, combined_max_lux_reading);
     dprint(PRINT_LOG_WRITE, "logged new combined max_lux_reading to EEPROM\t"); dprintln(PRINT_LOG_WRITE, combined_max_lux_reading);
+    return 1;
   } else if (combined_lux < combined_min_lux_reading) {
     combined_min_lux_reading = combined_lux;
     writeDoubleToEEPROM(EEPROM_MIN_LUX_READING_COMBINED , combined_min_lux_reading);
     dprint(PRINT_LOG_WRITE, "logged new combined min_lux_reading to EEPROM\t"); dprintln(PRINT_LOG_WRITE, combined_max_lux_reading);
+    return 1;
   }
+  return 0;
 }
 
 uint8_t updateBrightnessScalerAvgLog() {
@@ -191,7 +196,7 @@ uint8_t updateBrightnessScalerAvgLog() {
 void printBrightnessAverageLog() {
   // TODO
   // write the current brightness scaler average to EEPROM
-  Serial.print("Printing the average brightness scalers:");
+  Serial.print("Printing the average brightness scalers :");
   for (int  i = 0; i < 3; i++) {
     Serial.print("\t");
     Serial.print(readDoubleFromEEPROM(EEPROM_AVG_BRIGHTNESS_SCALER + (i * 4)));
@@ -292,16 +297,22 @@ uint8_t updateCPMLog() {
   if (log_timer > LOG_POLLING_RATE && cpm_eeprom_idx < EEPROM_CPM_LOG_END) {
     double cpm[2];
     for (int i = 0; i < 2; i++) {
-      dprint(PRINT_LOG_WRITE, "num_cpm_clicks / cpm :\t"); dprint(PRINT_LOG_WRITE, i); dprint(PRINT_LOG_WRITE, "\t:\t");
+      dprint(PRINT_LOG_WRITE, "num_cpm_clicks / cpm "); 
+      if ( i == 0) {
+        dprint(PRINT_LOG_WRITE, "Front           :\t");
+      } else{
+        dprint(PRINT_LOG_WRITE, "Rear            :\t");
+      }
       dprint(PRINT_LOG_WRITE, num_cpm_clicks[i]);
       cpm[i] = (double)num_cpm_clicks[i] / ((double)log_timer / 60000);
-      dprint(PRINT_LOG_WRITE, "\t/\t"); dprintln(PRINT_LOG_WRITE, cpm[i]);
+      dprint(PRINT_LOG_WRITE, "/"); dprintln(PRINT_LOG_WRITE, cpm[i]);
       // reset the average values
       num_cpm_clicks[i] = 0;
     }
-    dprint(PRINT_LOG_WRITE, "Logging CPM Data into EEPROM location: "); dprintln(PRINT_LOG_WRITE, cpm_eeprom_idx);
-    dprint(PRINT_LOG_WRITE, "cpm :\t"); dprint(PRINT_LOG_WRITE, cpm[0]); dprint(PRINT_LOG_WRITE, "\t");
+    dprint(PRINT_LOG_WRITE, "Logging CPM Data into EEPROM location: "); dprint(PRINT_LOG_WRITE, cpm_eeprom_idx);
+    dprint(PRINT_LOG_WRITE, "\tcpm :\t"); dprint(PRINT_LOG_WRITE, cpm[0]); dprint(PRINT_LOG_WRITE, "\t");
     dprintln(PRINT_LOG_WRITE, cpm[1]);
+    dprintMinorDivide(PRINT_LOG_WRITE);
     // store the current lux readings
     // increment the index, 4 bytes to a double
     writeDoubleToEEPROM(cpm_eeprom_idx, cpm[0]);
@@ -336,6 +347,7 @@ void updateEEPROMLogs() {
       updates += updateBrightnessScalerAvgLog();
       updates += updateLuxLog();
       updates += updateCPMLog();
+      updates += updateLuxMinMaxDatalog();
     }
     if (updates) {
       log_timer = 0;
@@ -391,11 +403,9 @@ void printEEPROMContents() {
 
   Serial.println("\n - CLICK");
   printMinorDivide();
-  Serial.print("front/read starting gain          :\t");
+  Serial.print("front/rear starting gain          :\t");
   Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START)); Serial.print("\t");
   Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START + 4));
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX));
   Serial.print("front min/max recorded gain       :\t");
   Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN)); Serial.print("\t");
   Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX));
@@ -428,7 +438,7 @@ void printEEPROMContents() {
   Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT)); Serial.print("\t");
   Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT + 4)); Serial.println();
 
-  Serial.println("\nLux Settings\n");
+  Serial.println("\nLux Settings");
   printDivide();
   Serial.print("min/max front lux reading         : \t");
   Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS)); Serial.print("\t");

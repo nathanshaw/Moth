@@ -3,8 +3,6 @@
 
 ////////////////////////// Lux Sensors /////////////////////////////////////////
 // TODO these need to change into variables which are set with the jumpers?
-#define FRONT_LUX_INSTALLED true
-#define REAR_LUX_INSTALLED true
 
 // turn this flag off if no I2C multiplexer is present
 #define I2C_MULTI 1

@@ -5,7 +5,7 @@
 // for things which can be either on or off, the name is simply defined?
 
 ///////////////////////// General Settings /////////////////////////////////
-#define SERIAL_ID 11
+#define SERIAL_ID 3
 
 ///////////////////////// Operating Modes //////////////////////////////////
 #define CICADA_MODE 0
@@ -17,25 +17,33 @@
 #define SMOOTH_LUX_READINGS true
 
 #define LOW_LUX_THRESHOLD 16.0
-#define HIGH_LUX_THRESHOLD 400.0
+// when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
+#define MID_LUX_THRESHOLD 100
+#define HIGH_LUX_THRESHOLD 450.0
+
 // Neo Pixels
 #define MIN_BRIGHTNESS 10
 #define MAX_BRIGHTNESS 255
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-// 500 would equate to a dimming of 50%
-#define BRIGHTNESS_SCALER_MIN 0.8
+#define BRIGHTNESS_SCALER_MIN 0.5
+#define BRIGHTNESS_SCALER_MAX 1.5
 
 unsigned long lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
-unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 0.05); // 3 seconds
+unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 
+bool front_lux_active = true;
+bool rear_lux_active = true;
+
+////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 // record the run time // last value is number of minutes
 #define RUNTIME_POLL_DELAY 1000*60*5
 // when should the value log start // last value is number of minutes
-#define LOG_START_DELAY 1000*60*10
+#define LOG_START_DELAY 1000*60*1
 // how long should the logging last? // last value is number of hours
-#define LOG_TIME_FRAME 1000*60*60*50
+#define LOG_TIME_FRAME 1000*60*60*0.5
 
 ///////////////////////// Jumper Settings /////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
@@ -55,6 +63,7 @@ unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 0.05); // 3 seconds
 ///////////////////////// Debuggings ////////////////////////////////////
 #define PRINT_LUX_DEBUG       true
 #define PRINT_LUX_READINGS    true
+#define PRINT_BRIGHTNESS_SCALER_DEBUG true
 // TODO
 #define PRINT_SONG_DATA       false
 // TODO
@@ -66,7 +75,7 @@ unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 0.05); // 3 seconds
 
 #define PRINT_LED_DEBUG       false
 
-#define PRINT_LOG_WRITE       false
+#define PRINT_LOG_WRITE       true
 
 #define EEPROM_WRITE_CHECK    false
 
@@ -143,6 +152,5 @@ const uint32_t auto_gain_frequency = 1000 * 60 * 10; // how often to calculate a
 #define CLICK_BQ2_DB -24
 
 //////////////////// Leds
-
 
 #endif // CONFIGURATION_H

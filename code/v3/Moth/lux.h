@@ -30,6 +30,11 @@ class Lux {
       return max_reading;
     };
 
+    double getAvgLux();
+    double resetAvgLux();
+
+    String getName() {return id;};
+
   private:
     Adafruit_VEML7700 sensor = Adafruit_VEML7700();
 
@@ -73,6 +78,16 @@ Lux::Lux (long minrt, long maxrt, int tca, String _name, NeoGroup *n) {
   neo = n;
   min_reading_time = minrt;
   max_reading_time = maxrt;
+}
+
+double Lux::getAvgLux() {
+  return lux_total / (double) lux_readings;
+}
+
+double Lux::resetAvgLux() {
+  lux_total = 0;
+  lux_readings = 0;  
+  dprintln(PRINT_LUX_DEBUG, "reset lux_total and lux_readings");
 }
 
 void tcaselect(uint8_t i) {
@@ -123,7 +138,7 @@ double Lux::checkForLuxOverValue() {
 }
 
 void Lux::readLux() {
-  dprintln(PRINT_LUX_DEBUG, millis()); dprint(PRINT_LUX_DEBUG, "readLux("); dprint(PRINT_LUX_DEBUG, id); dprintln(PRINT_LUX_DEBUG, ")");
+  dprint(PRINT_LUX_DEBUG, last_reading); dprint(PRINT_LUX_DEBUG, " readLux("); dprint(PRINT_LUX_DEBUG, id); dprint(PRINT_LUX_DEBUG, ")\t");
   if (tca_addr > -1) {
     tcaselect(tca_addr);
   }
@@ -132,17 +147,17 @@ void Lux::readLux() {
     return;
   }
   if (SMOOTH_LUX_READINGS && lux != 0) {
-      lux = (lux + temp) * 0.5;
-      checkForLuxOverValue();
-      lux_total += lux;
-      lux_readings++;
+    lux = (lux + temp) * 0.5;
+    checkForLuxOverValue();
+    lux_total += lux;
+    lux_readings++;
   } else {
     lux = temp;
     checkForLuxOverValue();
     lux_total += lux;
     lux_readings++;
   }
-  dprint(PRINT_LUX_READINGS, "lux: "); dprint(PRINT_LUX_READINGS, id); dprintTab(PRINT_LUX_READINGS);
+  dprint(PRINT_LUX_READINGS, id); dprintTab(PRINT_LUX_READINGS);
   dprint(PRINT_LUX_READINGS, lux); dprintTab(PRINT_LUX_READINGS);
   // dprint(PRINT_LUX_READINGS, "lux_readings "); dprint(PRINT_LUX_READINGS, id);
   // dprint(PRINT_LUX_READINGS, " increased to : "); dprintln(PRINT_LUX_READINGS, lux_readings);
@@ -150,7 +165,7 @@ void Lux::readLux() {
   // todo have the brightness scaler mapping
   brightness_scaler = calculateBrightnessScaler();
   neo->setBrightnessScaler(brightness_scaler);
-  dprint(PRINT_LUX_READINGS, "\tbs: "); dprintln(PRINT_LUX_READINGS, brightness_scaler);
+  if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0){dprint(PRINT_LUX_READINGS, "\tbs: "); dprintln(PRINT_LUX_READINGS, brightness_scaler);};
   updateMinMax();
   last_reading = 0;
 }
@@ -158,8 +173,18 @@ void Lux::readLux() {
 
 double Lux::calculateBrightnessScaler() {
   // todo need to make this function better... linear mapping does not really work, need to map li
+  // dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
+  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tconstrained:\t");
   double t = constrain(lux, LOW_LUX_THRESHOLD, HIGH_LUX_THRESHOLD);
-  double bs = map(t, LOW_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN * 1000000, 1000000) / (500000);
+  double bs;
+  // conduct brightness scaling depending on if the reading is above or below the mid thresh
+  if (t < MID_LUX_THRESHOLD)  {
+    bs = map(t, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
+  } else {
+    bs = map(t, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
+  }
+  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, t); dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tbrightness_scaler:\t");
+  dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, bs);
   return bs;
 }
 
@@ -210,12 +235,14 @@ double Lux::forceLuxReading() {
 }
 
 void Lux::update() {
-  if (neo->getLedsOn() == false && neo->getOnOffLen() >= neo->getShdnLen() && last_reading > min_reading_time) {
+  if ((neo->getLedsOn() == false && neo->getOnOffLen() >= LUX_SHDN_LEN) || (neo->getShdnLen() > LUX_SHDN_LEN)) {
     readLux();
-    // dprintln(PRINT_LUX_DEBUG, lux);
+    if (neo->getShdnLen() > LUX_SHDN_LEN) {
+      neo->powerOn();
+    }
   } else if (last_reading > max_reading_time && neo->getLedsOn() == true) {
-    neo->shutdown(LUX_SHDN_LEN);
-    dprintln(PRINT_LUX_DEBUG, "Sending lux shutdown message to Neos");
+    // shdn len has to be longer to ensure the lux sensors get a good reading
+    neo->shutdown(LUX_SHDN_LEN*1.25);
   }
 }
 

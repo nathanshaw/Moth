@@ -73,7 +73,7 @@ void cicadaSetup() {
   click_biquad2.setHighpass(1, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
   click_biquad2.setHighpass(2, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
   click_biquad2.setLowShelf(3, CLICK_BQ1_THRESH, CLICK_BQ1_DB);
-  Serial.print("First Click BiQuads HP-HP-HP-LS:\t");
+  Serial.print("First Click BiQuads HP-HP-HP-LS       :\t");
   Serial.print("thresh:\t"); Serial.print(CLICK_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(CLICK_BQ1_Q); Serial.print("\tdB"); Serial.println(CLICK_BQ1_DB);
 
@@ -85,18 +85,10 @@ void cicadaSetup() {
   click_biquad11.setLowpass(1,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
   click_biquad11.setLowpass(2,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
   click_biquad11.setHighShelf(3, CLICK_BQ2_THRESH, CLICK_BQ2_DB);
-  Serial.print("Second Click BiQuads HP-HP-HP-LS:\t");
+  Serial.print("Second Click BiQuads HP-HP-HP-LS      :\t");
   Serial.print("thresh:\t"); Serial.print(CLICK_BQ2_THRESH); Serial.print("\tQ\t");
   Serial.print(CLICK_BQ2_Q); Serial.print("\tdB"); Serial.println(CLICK_BQ2_DB);
 
-  click_input_amp1.gain(click_gain[0]);
-  click_mid_amp1.gain(click_gain[0]);
-  click_post_amp1.gain(click_gain[0]);
-  click_input_amp2.gain(click_gain[1]);
-  click_mid_amp2.gain(click_gain[1]);
-  click_post_amp2.gain(click_gain[1]);
-  Serial.print("Click gains all set to          :\t");
-  Serial.print(click_gain[0]); Serial.print("\t"); Serial.println(click_gain[1]);
 
   // Audio for the song channel...
   song_biquad1.setHighpass(0, SONG_BQ1_THRESH, SONG_BQ1_Q);
@@ -107,7 +99,7 @@ void cicadaSetup() {
   song_biquad2.setHighpass(1, SONG_BQ1_THRESH, SONG_BQ1_Q);
   song_biquad2.setHighpass(2, SONG_BQ1_THRESH, SONG_BQ1_Q);
   song_biquad2.setLowShelf(3, SONG_BQ1_THRESH, SONG_BQ1_DB);
-  Serial.print("First Song BiQuads HP-HP-HP-LS:\t");
+  Serial.print("\nFirst Song BiQuads HP-HP-HP-LS        :\t");
   Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(SONG_BQ1_Q); Serial.print("\tdB"); Serial.println(SONG_BQ1_DB);
 
@@ -119,9 +111,18 @@ void cicadaSetup() {
   song_biquad21.setLowpass(1,   SONG_BQ2_THRESH, SONG_BQ2_Q);
   song_biquad21.setLowpass(2,   SONG_BQ2_THRESH, SONG_BQ2_Q);
   song_biquad21.setHighShelf(3, SONG_BQ2_THRESH, SONG_BQ2_DB);
-  Serial.print("Second Song BiQuads HP-HP-HP-LS:\t");
+  Serial.print("Second Song BiQuads HP-HP-HP-LS       :\t");
   Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(SONG_BQ2_Q); Serial.print("\tdB"); Serial.println(SONG_BQ2_DB);
+
+  click_input_amp1.gain(click_gain[0]);
+  click_mid_amp1.gain(click_gain[0]);
+  click_post_amp1.gain(click_gain[0]);
+  click_input_amp2.gain(click_gain[1]);
+  click_mid_amp2.gain(click_gain[1]);
+  click_post_amp2.gain(click_gain[1]);
+  Serial.print("\nClick gains all set to                :\t");
+  Serial.print(click_gain[0]); Serial.print("\t"); Serial.println(click_gain[1]);
 
   song_input_amp1.gain(song_gain[0]);
   song_mid_amp1.gain(song_gain[0]);
@@ -129,18 +130,17 @@ void cicadaSetup() {
   song_input_amp2.gain(song_gain[1]);
   song_mid_amp2.gain(song_gain[1]);
   song_post_amp2.gain(song_gain[1]);
-  Serial.print("Song gains all set to: ");
+  Serial.print("Song gains all set to                 :\t");
   Serial.print(song_gain[0]); Serial.print("\t"); Serial.println(song_gain[1]);
-  Serial.println();
   delay(1000);
 
   /////////////////////////////////
   // VEML sensors through TCA9543A
   /////////////////////////////////
 
-  Serial.println("\n- - - - - - - - - - - - - -");
+  Serial.println();
+  printMinorDivide();
   Serial.println("Searching for Lux Sensors");
-  // setupVEMLthroughTCA();
   Serial.print("Log Polling Rate (ms)              :\t");
   Serial.println(LOG_POLLING_RATE);
   if (lux_max_reading_delay > LOG_POLLING_RATE) {
@@ -180,14 +180,22 @@ void updateClickAudioFeaturesRMS(uint8_t i) {
   if (click_rms_delta[i] > CLICK_RMS_DELTA_THRESH) {
     // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
     // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
-    neos[i].flashOn(); // all flash logic is conducted in the NeoGroup instance
+    if (neos[i].flashOn() ==  true) { // all flash logic is conducted in the NeoGroup instance
+      num_cpm_clicks[i]++;
+      Serial.print("cpm clicks increased : ");
+      Serial.println(num_cpm_clicks[i]);
+    }
   }
 }
 
 void updateClickAudioFeaturesPeak(uint8_t i) {
   click_peak_delta[i] = last_click_peak_val[i]  - click_peak_val[i];
   if (click_peak_delta[i] > CLICK_PEAK_DELTA_THRESH) {
-    neos[i].flashOn();
+    if (neos[i].flashOn() == true) { // all flash logic is conducted in the NeoGroup instance
+      num_cpm_clicks[i]++;
+      Serial.print("cpm clicks increased : ");
+      Serial.println(num_cpm_clicks[i]);
+    }
   }
 }
 
@@ -422,7 +430,7 @@ uint8_t testRearMicrophone () {
   double values = 0.0;
   unsigned long a_time = millis();
   Serial.print("Testing Rear Microphone");
-  while (readings < 10 && millis() < a_time + 4000) {
+  while (readings < 10 && millis() < a_time + 2000) {
     if (click_rms2.available()) {
       values += click_rms2.read();
       readings++;
@@ -446,7 +454,7 @@ uint8_t testFrontMicrophone () {
   double values = 0.0;
   unsigned long a_time = millis();
   Serial.print("Testing Front Microphone");
-  while (readings < 10 && millis() < a_time + 4000) {
+  while (readings < 10 && millis() < a_time + 2000) {
     if (click_rms1.available()) {
       values += click_rms1.read();
       readings++;
