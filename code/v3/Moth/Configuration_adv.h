@@ -1,6 +1,8 @@
 #ifndef CONFIGURATION_ADV_H
 #define CONFIGURATION_ADV_H
 
+#include "Datalog_Configuration.h"
+#include "Hardware_Configuration.h"
 ////////////////////////// Lux Sensors /////////////////////////////////////////
 // TODO these need to change into variables which are set with the jumpers?
 
@@ -11,20 +13,15 @@
 #define LUX_SHDN_LEN 40
 
 ///////////////////////// Audio //////////////////////////////////////////////////
-
 #define FRONT_MICROPHONE_INSTALLED    true
 #define REAR_MICROPHONE_INSTALLED     true
 
 ////////////////////////// Neo Pixels ///////////////////////////////////////////
 #define UPDATE_ON_OFF_RATIOS true
-// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME 200
 
-// this file assigns pin values to different variables depending on the version of the board
-/*
-#ifndef __PINS_H__
-#define __PINS_H__
-*/
+byte drawingMemory[NUM_LED * 3];       //  3 bytes per LED
+DMAMEM byte displayMemory[NUM_LED * 12]; // 12 bytes per LED
+
 ////////////////////////////////////////////////////////////////////////////
 //////////////////////// Hardware Controls /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -33,6 +30,8 @@
 #define MAX_FLASH_TIME 200
 // where the click flash timer will start
 #define MIN_FLASH_TIME 40
+// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
+#define FLASH_DEBOUNCE_TIME 200
 
 // cicada (-) or bird song (+) mode
 #define JMP1_PIN 12

@@ -1,30 +1,19 @@
 /**
- * Moth Sonic Art Framework Firmware
- * 
- * Written by Nathan Villicana-Shaw in 2019
- * 
- * Inspired by the Marlin 3D Printer Firmware
- * 
- */
+   Moth Sonic Art Framework Firmware
 
- // #include "MothConfig.h"
+   Written by Nathan Villicana-Shaw in 2019
 
- // todo need logic for which libraries to include
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-#include <WS2812Serial.h>
-#include <EEPROM.h>
-#include <PrintUtils.h>
-#include "Neos.h" // has to be before elapsedmillis
-#include "Lux.h"
-#include <elapsedMillis.h>
+   Inspired by the Marlin 3D Printer Firmware
 
-#include "Macros.h"
-#include "Datalog_Configuration.h"
-#include "Hardware_Configuration.h"
+*/
+// todo need logic for which libraries to include
 #include "Configuration.h"
-#include "Configuration_adv.h"
+
+#if FIRMWARE_MODE == CICADA_MODE
+#include "ModeCicada.h"
+#elif FIRMWARE_MODE == PITCH_MODE
+#include "ModePitch.h"
+#endif
 
 #include "PrintUtils.h"
 // that is all for this file
@@ -32,6 +21,19 @@
 // desired classes
 // - neoP (initalised with mode specific data)
 // lux (initalised with mode specific data)
-// audio engine (should be shared with Lyre?) 
+// audio engine (should be shared with Lyre?)
 // datalogging (should be shared with Lyre)
 // mode (for different installations of the Moth mode)
+
+///////////////////////////////////////////////////////////////////////
+//                    Setup and Main Loops
+///////////////////////////////////////////////////////////////////////
+
+void setup() {
+  mothSetup();
+}
+
+void loop() {
+  // this needs to stay in the faster main loop
+  mothLoop();
+}

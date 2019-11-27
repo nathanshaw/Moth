@@ -2,6 +2,12 @@
 
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H 
+
+#include "Configuration_adv.h"
+#include "Macros.h"
+#include <PrintUtils.h>
+#include "Macros.h"
+
 // for things which can be either on or off, the name is simply defined?
 
 ///////////////////////// General Settings /////////////////////////////////
@@ -10,24 +16,29 @@
 ///////////////////////// Operating Modes //////////////////////////////////
 #define CICADA_MODE 0
 #define PITCH_MODE  1
-#define FIRMWARE_MODE (CICADA_MODE)
+#define FIRMWARE_MODE (PITCH_MODE)
+
+#if FIRMWARE_MODE == PITCH_MODE
+  #include "Configuration_pitch.h"
+#endif
 
 ///////////////////////// Lux    Settings /////////////////////////////////
-#define LUX_CALIBRATION_TIME 4000
-#define SMOOTH_LUX_READINGS true
+#define LUX_SENSORS_ACTIVE        false
+#define LUX_CALIBRATION_TIME      4000
+#define SMOOTH_LUX_READINGS       true
 
-#define LOW_LUX_THRESHOLD 16.0
+#define LOW_LUX_THRESHOLD         16.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD 100
-#define HIGH_LUX_THRESHOLD 450.0
+#define MID_LUX_THRESHOLD         100
+#define HIGH_LUX_THRESHOLD        450.0
 
 // Neo Pixels
-#define MIN_BRIGHTNESS 10
-#define MAX_BRIGHTNESS 255
+#define MIN_BRIGHTNESS            10
+#define MAX_BRIGHTNESS            255
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN 0.5
-#define BRIGHTNESS_SCALER_MAX 1.5
+#define BRIGHTNESS_SCALER_MIN     0.5
+#define BRIGHTNESS_SCALER_MAX     1.5
 
 unsigned long lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
 unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
@@ -61,11 +72,12 @@ bool rear_lux_active = true;
 #define MAX_LED_ON_RATIO (0.95)
 
 ///////////////////////// Debuggings ////////////////////////////////////
+///////////////////////// Cicada ////////////////////////////////////////
 #define PRINT_LUX_DEBUG       true
 #define PRINT_LUX_READINGS    true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG true
+#define PRINT_BRIGHTNESS_SCALER_DEBUG false
 // TODO
-#define PRINT_SONG_DATA       false
+#define PRINT_SONG_DATA       true
 // TODO
 #define PRINT_CLICK_FEATURES  false
 #define PRINT_CLICK_DEBUG     false
@@ -79,11 +91,21 @@ bool rear_lux_active = true;
 
 #define EEPROM_WRITE_CHECK    false
 
+///////////////////////// Feature Collector ///////////////////////////////
+// feature collector related
+#define PRINT_RMS_VALS        false
+#define PRINT_PEAK_VALS       false
+#define PRINT_TONE_VALS       false
+#define PRINT_FREQ_VALS       false
+#define PRINT_FFT_VALS        false
+
+// set to true if you want to print out data stored in EEPROM on boot
+#define PRINT_EEPROM_CONTENTS false
+
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Firmware Controls //////////////////////////////
 /////////////////////////////////////////////////////////////////////////
-// set to true if you want to print out data stored in EEPROM on boot
-#define PRINT_EEPROM_CONTENTS true
+
 
 // turns on/off debug printing
 #define DEBUG 0
