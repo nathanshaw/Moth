@@ -11,7 +11,7 @@
 // for things which can be either on or off, the name is simply defined?
 
 ///////////////////////// General Settings /////////////////////////////////
-#define SERIAL_ID 3
+#define SERIAL_ID 11
 
 ///////////////////////// Operating Modes //////////////////////////////////
 #define CICADA_MODE 0
@@ -55,6 +55,8 @@ bool rear_lux_active = true;
 #define LOG_START_DELAY 1000*60*1
 // how long should the logging last? // last value is number of hours
 #define LOG_TIME_FRAME 1000*60*60*0.5
+// data logging related
+#define AUDIO_USAGE_POLL_RATE 200000
 
 ///////////////////////// Jumper Settings /////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
@@ -68,28 +70,29 @@ bool rear_lux_active = true;
 // auto gain code. This value needs to be less than 1. 0.5 would mean that the gain can change
 // by a factor of half its current gain. So, if the gain was 2.0 then it could be increased/decreased by 1.0
 // with a max/min value of 1.0 / 3.0.
-#define MIN_LED_ON_RATIO (0.3)
-#define MAX_LED_ON_RATIO (0.95)
+#define USE_LED_ON_RATIO              (1)
+#define MIN_LED_ON_RATIO              (0.3)
+#define MAX_LED_ON_RATIO              (0.95)
 
 ///////////////////////// Debuggings ////////////////////////////////////
 ///////////////////////// Cicada ////////////////////////////////////////
-#define PRINT_LUX_DEBUG       true
-#define PRINT_LUX_READINGS    true
+#define PRINT_LUX_DEBUG               true
+#define PRINT_LUX_READINGS            true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG false
 // TODO
-#define PRINT_SONG_DATA       true
+#define PRINT_SONG_DATA               true
 // TODO
-#define PRINT_CLICK_FEATURES  false
-#define PRINT_CLICK_DEBUG     false
+#define PRINT_CLICK_FEATURES          false
+#define PRINT_CLICK_DEBUG             false
 // TODO
-#define PRINT_LED_VALUES      false
-#define PRINT_AUTO_GAIN       false
+#define PRINT_LED_VALUES              false
+#define PRINT_AUTO_GAIN               false
 
-#define PRINT_LED_DEBUG       false
+#define PRINT_LED_DEBUG               false
 
-#define PRINT_LOG_WRITE       true
+#define PRINT_LOG_WRITE               true
 
-#define EEPROM_WRITE_CHECK    false
+#define EEPROM_WRITE_CHECK            false
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
@@ -102,16 +105,13 @@ bool rear_lux_active = true;
 // set to true if you want to print out data stored in EEPROM on boot
 #define PRINT_EEPROM_CONTENTS false
 
+// minimum amount of time between peak-log resets  which is allowed.
+#define PEAK_LOG_RESET_MIN    2000
+#define USE_SCALED_FFT 1
+
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Firmware Controls //////////////////////////////
 /////////////////////////////////////////////////////////////////////////
-
-
-// turns on/off debug printing
-#define DEBUG 0
-
-// data logging related
-#define AUDIO_USAGE_POLL_RATE 200000
 
 // Audio
 #define USB_OUTPUT 1

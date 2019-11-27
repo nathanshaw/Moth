@@ -16,6 +16,9 @@
 #define FRONT_MICROPHONE_INSTALLED    true
 #define REAR_MICROPHONE_INSTALLED     true
 
+bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
+bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
+
 ////////////////////////// Neo Pixels ///////////////////////////////////////////
 #define UPDATE_ON_OFF_RATIOS true
 

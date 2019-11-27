@@ -66,6 +66,8 @@ class NeoGroup {
     long getShdnTimer() {
       return shdn_timer;
     };
+
+    long getNumFlashes() {return num_flashes;};
    
     unsigned long getShdnLen();
 
@@ -123,6 +125,8 @@ class NeoGroup {
 
     double getFlashPerMinuteAvg();
     void resetFlashPerMinuteAvg();
+
+    String getName() { return gname;};
 
   private:
     // related to the flash command

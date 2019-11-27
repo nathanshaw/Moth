@@ -4,8 +4,10 @@
 #include <WS2812Serial.h>
 #include "Datalog.h"
 #include "Configuration.h"
+#include "Configuration_pitch.h"
 #include "Neos.h"
 #include "Lux.h"
+#include <Audio.h>
 
 WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
 NeoGroup neos[2] = {
@@ -28,10 +30,11 @@ double combined_max_lux_reading;
 uint8_t audio_usage_max = 0;
 elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 
+// for the update to EEPROM on how long the program has been running for
 elapsedMillis last_runtime_update;
+
+// for creating a second "ten second loop"
 elapsedMillis ten_second_timer;
-bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
-bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
 
 elapsedMillis last_auto_gain_adjustment; // the time in which the last auto_gain_was_calculated
 
@@ -44,12 +47,7 @@ elapsedMillis log_timer;
 const long LOG_POLLING_RATE = (long)((double)LOG_TIME_FRAME / (double)EEPROM_LUX_LOG_LENGTH * 2.0);
 
 unsigned int lux_eeprom_idx = EEPROM_LUX_LOG_START;
-int lux_total[2];
-int lux_readings[2];
 
-///////////////////////// Cicada Mode ////////////////////////////////////
-// #include "MothConfig.h"
-#include <Audio.h>
 
 AudioInputI2S            i2s1;           //xy=76.66667938232422,1245.6664371490479
 AudioAnalyzeRMS          rms_input1;     //xy=260.00000762939453,1316.6666345596313
@@ -182,9 +180,9 @@ void updateClickAudioFeaturesRMS(uint8_t i) {
     // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
     // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
     if (neos[i].flashOn() ==  true) { // all flash logic is conducted in the NeoGroup instance
-      num_cpm_clicks[i]++;
-      Serial.print("cpm clicks increased : ");
-      Serial.println(num_cpm_clicks[i]);
+      Serial.print(neos[i].getName());
+      Serial.print(" num clicks increased : ");
+      Serial.println(neos[i].getNumFlashes());
     }
   }
 }
@@ -1017,8 +1015,6 @@ void printOnRatioLog() {
   dprintln(PRINT_LOG_WRITE);
 }
 
-//#ifndef __LOGGING_CICADA_MODE_H__
-//#define __LOGGING_CICADA_MODE_H__
 
 void writeTotalClicksToEEPROM() {
   if (data_logging_active) {
@@ -1070,20 +1066,7 @@ uint8_t updateCPMLog() {
   }
   return 0;
 }
-/*
-  void readLuxLogFromEEPROM() {
-  Serial.print("luxlog as stored in EEPROM");
-  for (int i = EEPROM_LUX_LOG; i < LUX_LOG_LAST_ADDR; i  += 4) {
-    double val = readDoubleFromEEPROM(i);
-    if ( val > 0) {
-      Serial.print(i - 1000 / 4); Serial.print("\t"); Serial.print(val); dprintln(PRINT_LOG_WRITE, "\t");
-      if (i % 20 ==  0) {
-        dprintln(PRINT_LOG_WRITE, );
-      }
-    }
-  }
-  }
-*/
+
 void updateEEPROMLogs() {
   if (data_logging_active) {
     // if enough time has passed since init for data-logging to be active
@@ -1101,6 +1084,83 @@ void updateEEPROMLogs() {
       Serial.print("A Total of "); Serial.print(updates); Serial.println(" logs were updated");
       printDivide();
     }
+  }
+}
+
+void writeSetupConfigsToEEPROM() {
+  if (data_logging_active) {
+    #if JUMPERS_POPULATED
+    EEPROM.update(EEPROM_JMP1, cicada_mode);
+    EEPROM.update(EEPROM_JMP2, stereo_audio);
+    EEPROM.update(EEPROM_JMP3, NUM_LUX_SENSORS);
+    EEPROM.update(EEPROM_JMP4, combine_lux_readings);
+    EEPROM.update(EEPROM_JMP5, gain_adjust_active);
+    EEPROM.update(EEPROM_JMP6, data_logging_active);
+    dprintln(PRINT_LOG_WRITE, "logged jumper values to EEPROM");
+    #endif // jumpers_populated
+
+    #if FIRMWARE_MODE == CICADA_MODE
+    // log the starting gains to the min/max EEPROM
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN, click_gain[0]);
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN + 4, click_gain[1]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN, song_gain[0]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN + 4, song_gain[1]);
+
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START, click_gain[0]);
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START + 4, click_gain[1]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START, song_gain[0]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START + 4, song_gain[1]);
+
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX, click_gain[0]);
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX + 4, click_gain[1]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX, song_gain[0]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX + 4, song_gain[1]);
+
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT, song_gain[0]);
+    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + 4, song_gain[1]);
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT, click_gain[0]);
+    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4, click_gain[1]);
+
+    writeLongToEEPROM(EEPROM_TOTAL_CLICKS, 0);
+    writeLongToEEPROM(EEPROM_TOTAL_CLICKS + 4, 0);
+
+    #endif // cicada_mode
+
+    EEPROM.update(EEPROM_AUDIO_MEM_MAX, AUDIO_MEMORY);
+    dprintln(PRINT_LOG_WRITE, "logged AUDIO_MEMORY to EEPROM");
+    
+    // auto-log values
+    EEPROM.update(EEPROM_LOG_ACTIVE, data_logging_active);
+    writeLongToEEPROM(EEPROM_LOG_POLLING_RATE, LOG_POLLING_RATE);
+    writeLongToEEPROM(EEPROM_LOG_START_TIME, LOG_START_DELAY);
+    writeLongToEEPROM(EEPROM_LOG_END_TIME,  LOG_START_DELAY + LOG_TIME_FRAME);
+    dprintln(PRINT_LOG_WRITE, "Logged Log info (in minutes):");
+    dprint(PRINT_LOG_WRITE, "Datalog Active :\t"); dprintln(PRINT_LOG_WRITE, data_logging_active);
+    dprint(PRINT_LOG_WRITE, "Start time     :\t"); dprintln(PRINT_LOG_WRITE, LOG_START_DELAY / ONE_MINUTE);
+    dprint(PRINT_LOG_WRITE, "End time       :\t"); dprintln(PRINT_LOG_WRITE, (LOG_START_DELAY + LOG_TIME_FRAME) / ONE_MINUTE);
+    dprint(PRINT_LOG_WRITE, "Logging Rate   :\t"); dprintln(PRINT_LOG_WRITE, (String)(LOG_POLLING_RATE / ONE_MINUTE));
+
+    EEPROM.update(EEPROM_SERIAL_ID, SERIAL_ID);
+    dprint(PRINT_LOG_WRITE, "logged serial number : ");
+    dprintln(PRINT_LOG_WRITE, SERIAL_ID);
+
+    // the software and hardware version numbers
+    dprint(PRINT_LOG_WRITE, "Software Version:\t"); 
+    dprint(PRINT_LOG_WRITE, S_VERSION_MAJOR);
+    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, S_VERSION_MINOR);
+    dprint(PRINT_LOG_WRITE,".");dprintln(PRINT_LOG_WRITE, S_SUBVERSION);
+    EEPROM.update(EEPROM_S_SUBVERION, S_SUBVERSION);
+    EEPROM.update(EEPROM_S_VERSION_MINOR, S_VERSION_MINOR);
+    EEPROM.update(EEPROM_S_VERSION_MAJOR, S_VERSION_MAJOR);
+
+    dprint(PRINT_LOG_WRITE, "hardware Version:\t"); 
+    dprint(PRINT_LOG_WRITE, H_VERSION_MAJOR);
+    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, H_VERSION_MINOR);
+    EEPROM.update(EEPROM_H_VERSION_MINOR, H_VERSION_MINOR);
+    EEPROM.update(EEPROM_H_VERSION_MAJOR, H_VERSION_MAJOR);
+    
+    dprintln(PRINT_LOG_WRITE, "\nFinished logging setup configs to EEPROM");
+    dprintln(PRINT_LOG_WRITE, "|||||||||||||||||||||||||||||||||||||||||");
   }
 }
 
@@ -1206,78 +1266,6 @@ void printEEPROMContents() {
   printMajorDivide("Finished Printing EEPROM Datalog");
 }
 
-void writeSetupConfigsToEEPROM() {
-  if (data_logging_active) {
-    EEPROM.update(EEPROM_JMP1, cicada_mode);
-    EEPROM.update(EEPROM_JMP2, stereo_audio);
-    EEPROM.update(EEPROM_JMP3, NUM_LUX_SENSORS);
-    EEPROM.update(EEPROM_JMP4, combine_lux_readings);
-    EEPROM.update(EEPROM_JMP5, gain_adjust_active);
-    EEPROM.update(EEPROM_JMP6, data_logging_active);
-    dprintln(PRINT_LOG_WRITE, "logged jumper values to EEPROM");
-
-    // log the starting gains to the min/max EEPROM
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + 4, song_gain[1]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4, click_gain[1]);
-
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS, 0);
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS + 4, 0);
-
-
-    EEPROM.update(EEPROM_AUDIO_MEM_MAX, AUDIO_MEMORY);
-    dprintln(PRINT_LOG_WRITE, "logged AUDIO_MEMORY to EEPROM");
-
-    // auto-log values
-    EEPROM.update(EEPROM_LOG_ACTIVE, data_logging_active);
-    writeLongToEEPROM(EEPROM_LOG_POLLING_RATE, LOG_POLLING_RATE);
-    writeLongToEEPROM(EEPROM_LOG_START_TIME, LOG_START_DELAY);
-    writeLongToEEPROM(EEPROM_LOG_END_TIME,  LOG_START_DELAY + LOG_TIME_FRAME);
-    dprintln(PRINT_LOG_WRITE, "Logged Log info (in minutes):");
-    dprint(PRINT_LOG_WRITE, "Datalog Active :\t"); dprintln(PRINT_LOG_WRITE, data_logging_active);
-    dprint(PRINT_LOG_WRITE, "Start time     :\t"); dprintln(PRINT_LOG_WRITE, LOG_START_DELAY / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "End time       :\t"); dprintln(PRINT_LOG_WRITE, (LOG_START_DELAY + LOG_TIME_FRAME) / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "Logging Rate   :\t"); dprintln(PRINT_LOG_WRITE, (String)(LOG_POLLING_RATE / ONE_MINUTE));
-
-    EEPROM.update(EEPROM_SERIAL_ID, SERIAL_ID);
-    dprint(PRINT_LOG_WRITE, "logged serial number : ");
-    dprintln(PRINT_LOG_WRITE, SERIAL_ID);
-
-    // the software and hardware version numbers
-    dprint(PRINT_LOG_WRITE, "Software Version:\t"); 
-    dprint(PRINT_LOG_WRITE, S_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, S_VERSION_MINOR);
-    dprint(PRINT_LOG_WRITE,".");dprintln(PRINT_LOG_WRITE, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_SUBVERION, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_VERSION_MINOR, S_VERSION_MINOR);
-    EEPROM.update(EEPROM_S_VERSION_MAJOR, S_VERSION_MAJOR);
-
-    dprint(PRINT_LOG_WRITE, "hardware Version:\t"); 
-    dprint(PRINT_LOG_WRITE, H_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MINOR, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MAJOR, H_VERSION_MAJOR);
-    
-    dprintln(PRINT_LOG_WRITE, "\nFinished logging setup configs to EEPROM");
-    dprintln(PRINT_LOG_WRITE, "|||||||||||||||||||||||||||||||||||||||||");
-  }
-}
 
 void mothSetup() {
   Serial.begin(57600);

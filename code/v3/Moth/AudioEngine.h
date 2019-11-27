@@ -1,14 +1,17 @@
 #ifndef __AUDIOENGINE_H__
 #define __AUDIOENGINE_H__
 
-#define USE_SCALED_FFT 1
+#define PEAK_SCALER 10.0
+
 #include "Configuration.h"
 
 class FeatureCollector {
   public:
     FeatureCollector(String _id);
     void printFeatures();
-    String getName(){return id;};
+    String getName() {
+      return id;
+    };
     //////////////// RMS /////////////////////////
     void linkRMS(AudioAnalyzeRMS *r) {
       rms_ana = r;
@@ -16,7 +19,7 @@ class FeatureCollector {
     };
     double getRMS();
     double getRMSPosDelta();
-    void printRMSVals();
+    void   printRMSVals();
 
     //////////////// Peak /////////////////////////
     void linkPeak(AudioAnalyzePeak *r) {
@@ -25,7 +28,9 @@ class FeatureCollector {
     };
     double getPeakVal();
     double getPeakPosDelta();
-    void printPeakVals();
+    double getPeakAvg();
+    void   resetPeakAvgLog();
+    void   printPeakVals();
 
     //////////////// Tone /////////////////////////
     void linkTone(AudioAnalyzeToneDetect *r) {
@@ -33,7 +38,7 @@ class FeatureCollector {
       tone_active = true;
     };
     double getToneLevel();
-    void printToneVals();
+    void   printToneVals();
 
     //////////////// Freq /////////////////////////
     void linkFreq(AudioAnalyzeNoteFrequency *r) {
@@ -50,6 +55,9 @@ class FeatureCollector {
     };
     void printFFTVals();
     double getFFTRange(uint8_t s, uint8_t e);
+    int getHighestEnergyBin() {
+      return highest_energy_idx;
+    };
 
     //////////////// General ///////////////////////
     void update();
@@ -70,6 +78,9 @@ class FeatureCollector {
     void calculatePeak();
     double peak_val;
     double peak_pos_delta;
+    double peak_totals = 0;
+    unsigned long peak_readings = 0;
+    elapsedMillis last_peak_reset;
 
     //////////////// Tone /////////////////////////
     AudioAnalyzeToneDetect *tone_ana;
@@ -90,6 +101,8 @@ class FeatureCollector {
     double fft_vals[128];
     void calculateFFT();
     void calculateScaledFFT();
+    double fft_tot_energy;
+    int highest_energy_idx;
 };
 
 class AutoGain {
@@ -105,8 +118,11 @@ class AutoGain {
 void FeatureCollector::calculateFFT() {
   if (fft_active && fft_ana->available()) {
     Serial.println("FFT Available");
+    fft_tot_energy = 0;
+    int highest = -1;
     for (int i = 0; i < 128; i++) {
       fft_vals[i] = fft_ana->read(i);
+      fft_tot_energy += fft_vals[i];
     }
   }
 }
@@ -114,14 +130,21 @@ void FeatureCollector::calculateFFT() {
 void FeatureCollector::calculateScaledFFT() {
   if (fft_active && fft_ana->available()) {
     // Serial.println("FFT Available");
-    double tot;
+    fft_tot_energy = 0;
+    int highest = -1;
+    double highest_val = -1.0;
     for (int i = 0; i < 128; i++) {
       fft_vals[i] = fft_ana->read(i);
-      tot += fft_vals[i];
+      fft_tot_energy += fft_vals[i];
+      if (fft_vals[i] > highest_val) {
+        highest_val = fft_vals[i];
+        highest = i;
+      }
     }
     for (int i = 0; i < 128; i++) {
-      fft_vals[i] = fft_vals[i] / tot;
+      fft_vals[i] = fft_vals[i] / fft_tot_energy;
     }
+    highest_energy_idx = highest;
   }
 }
 
@@ -140,7 +163,19 @@ void FeatureCollector::calculateFreq() {
 
 void FeatureCollector::calculatePeak() {
   if (peak_active && peak_ana->available()) {
-    peak_val =  peak_ana->read();
+    peak_val =  peak_ana->read() * PEAK_SCALER;
+    peak_totals += peak_val;
+    peak_readings++;
+    // Serial.print(id);Serial.print(" pr : ");Serial.print(peak_readings);
+    // Serial.print("\tpt: ");Serial.println(peak_totals);
+  }
+}
+
+void FeatureCollector::resetPeakAvgLog() {
+  if (last_peak_reset > PEAK_LOG_RESET_MIN) {
+    peak_totals = 0.0;
+    peak_readings = 0;
+    last_peak_reset = 0;
   }
 }
 
@@ -189,6 +224,13 @@ double FeatureCollector::getPeakVal() {
   Serial.println("ERROR  - Peak IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
   return -1.0;
 
+}
+
+double FeatureCollector::getPeakAvg() {
+  if (peak_readings > 0 && peak_totals > 0) {
+    return ((double)peak_totals / (double)peak_readings);
+  }
+  return peak_val;
 }
 
 double FeatureCollector::getFreq() {
@@ -247,11 +289,14 @@ void FeatureCollector::printFFTVals() {
       Serial.println();
       Serial.print(l); Serial.print("\t");
       for (int i = l; i < 128; i = i + w) {
-        if (i != l) {Serial.print(", ");};
+        if (i != l) {
+          Serial.print(", ");
+        };
         Serial.print(fft_vals[i]);
       }
     }
     Serial.println();
+    Serial.print("Bin with highest energy: "); Serial.println(highest_energy_idx);
   }
 }
 
@@ -265,7 +310,7 @@ void FeatureCollector::printFreqVals() {
 
 void FeatureCollector::printRMSVals() {
   if (rms_active > 0) {
-    Serial.print(id); Serial.println(" RMS vals\t");
+    Serial.print(id); Serial.print(" RMS vals\t");
     Serial.println(rms_val);
   }
 }
@@ -273,7 +318,7 @@ void FeatureCollector::printRMSVals() {
 
 void FeatureCollector::printPeakVals() {
   if (peak_active > 0) {
-    Serial.print(id); Serial.println(" Peak vals\t");
+    Serial.print(id); Serial.print(" Peak vals\t");
     Serial.println(peak_val);
   }
 }
