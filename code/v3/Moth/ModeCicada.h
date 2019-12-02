@@ -2,23 +2,39 @@
 #define __MODE_CICADA_H__
 #include <Audio.h>
 #include <WS2812Serial.h>
-#include "Datalog.h"
+#include "DatalogManager/DatalogManager.h"
 #include "Configuration.h"
-#include "Configuration_pitch.h"
-#include "Neos.h"
-#include "Lux.h"
+#include "Configuration_cicadas.h"
+#include "NeopixelManager/NeopixelManager.h"
+#include "LuxManager/LuxManager.h"
 #include <Audio.h>
 
+////////////////////////////////////////////////////////////////////////
+
 WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
+
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
   NeoGroup(&leds, 5, 10, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
-Lux lux_sensors[NUM_LUX_SENSORS] = {
-  Lux(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
-  Lux(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
+LuxManager lux_managers[NUM_LUX_SENSORS] = {
+  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
+  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
+
+DatalogManager datalog_manager(datalog_timer_lens, datalog_timer_num);
+
+////////////////////////////// Datalogging ////////////////////////////
+#if AUTOLOG_LUX && front_lux_active
+// todo double check the addr
+Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
+datalogM.addLog(&luxLog_f);
+#endif
+#if AUTOLOG_LUX && rear_lux_active
+Datalog lux_log_r = Datalog(EEPROM_LUX_LOG_START, "Lux Rear", lux_managers->lux, true);
+datalogM.addLog(&luxLog_r);
+#endif
 
 /////////////////////////////// Lux Sensors //////////////////////////////
 double combined_lux;
@@ -30,24 +46,13 @@ double combined_max_lux_reading;
 uint8_t audio_usage_max = 0;
 elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 
-// for the update to EEPROM on how long the program has been running for
-elapsedMillis last_runtime_update;
-
 // for creating a second "ten second loop"
 elapsedMillis ten_second_timer;
+
 
 elapsedMillis last_auto_gain_adjustment; // the time in which the last auto_gain_was_calculated
 
 ////////////////////////// EEPROM //////////////////////////////////////
-unsigned int cpm_eeprom_idx = EEPROM_CPM_LOG_START;
-const long EEPROM_CPM_LOG_END = EEPROM_CPM_LOG_START + (4 * 2 * EEPROM_CPM_LOG_LENGTH);//4 bits to double, front and rear, log length
-const long EEPROM_LUX_LOG_END = EEPROM_LUX_LOG_START + (4 * 2 * EEPROM_LUX_LOG_LENGTH);//4 bits to double, front and rear, log length
-
-elapsedMillis log_timer;
-const long LOG_POLLING_RATE = (long)((double)LOG_TIME_FRAME / (double)EEPROM_LUX_LOG_LENGTH * 2.0);
-
-unsigned int lux_eeprom_idx = EEPROM_LUX_LOG_START;
-
 
 AudioInputI2S            i2s1;           //xy=76.66667938232422,1245.6664371490479
 AudioAnalyzeRMS          rms_input1;     //xy=260.00000762939453,1316.6666345596313
@@ -118,10 +123,6 @@ AudioConnection          patchCord32(song_post_amp1, 0, usb1, 1);
 AudioConnection          patchCord33(click_post_amp2, click_rms2);
 AudioConnection          patchCord34(click_post_amp2, click_peak2);
 
-// keeping track of clicks //////
-long total_clicks_detected[2] = {0, 0}; // number of clicks which has occurred since boot
-long num_past_clicks[2];            // number of clicks since last auto-gain adjustment
-long num_cpm_clicks[2];
 
 // click gain //////////////////
 double click_gain[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN}; // starting click gain level
@@ -208,6 +209,7 @@ void writeAudioUsageToEEPROM(uint8_t used) {
   }
 }
 
+/*
 void checkAudioUsage() {
   // TODO instead perhaps log the audio usage...
   if (last_usage_print > AUDIO_USAGE_POLL_RATE) {
@@ -223,6 +225,7 @@ void checkAudioUsage() {
     last_usage_print = 0;
   }
 }
+*/
 
 void updateLuxSensors() {
   // Return a 1 if the lux sensors are read and a 0 if they are not
@@ -230,12 +233,12 @@ void updateLuxSensors() {
   // and it has been long-enough to warrent a new reading
   // dprintln(PRINT_LUX_DEBUG,"\nchecking lux sensors: ");
   combined_lux = 0;
-  for (unsigned int i = 0; i < sizeof(lux_sensors) / sizeof(lux_sensors[0]); i++) {
+  for (unsigned int i = 0; i < sizeof(lux_managers) / sizeof(lux_managers[0]); i++) {
     // for each lux sensor, if the LEDs are off, have been off for longer than the LED_SHDN_LEN
     // and it has been longer than the
     // min reading delay then read the sensors
-    lux_sensors[i].update();
-    combined_lux += lux_sensors[i].getLux();
+    lux_managers[i].update();
+    combined_lux += lux_managers[i].getLux();
   }
 }
 
@@ -318,7 +321,7 @@ void updateClicks() {
     neos[i].updateFlash();
   }
 };
-
+/*
 void updateSongGain(double song_gain[]) {
   // todo right now it just updates the song gain for everything
   for (unsigned int i = 0; i < num_channels; i++) {
@@ -326,7 +329,7 @@ void updateSongGain(double song_gain[]) {
       song_input_amp1.gain(song_gain[i]);
       song_mid_amp1.gain(song_gain[i]);
       song_post_amp1.gain(song_gain[i]);
-      dprint(PRINT_SONG_DATA, "\nupdated song gain "); dprint(PRINT_SONG_DATA, frText(i));dprint(PRINT_SONG_DATA, ":\t");
+      dprint(PRINT_SONG_DATA, "\nupdated song gain "); dprint(PRINT_SONG_DATA, frText(i)); dprint(PRINT_SONG_DATA, ":\t");
       dprintln(PRINT_SONG_DATA, song_gain[i]);
       writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + (i * 4), song_gain[i]);
     } else if (i == 1) {
@@ -339,6 +342,7 @@ void updateSongGain(double song_gain[]) {
     }
   }
 }
+*/
 
 void cicadaSetup() {
   /////////////////////////////////
@@ -505,7 +509,7 @@ void songDisplay() {
           neos[1].colorWipe(song_peak_weighted[i], 0, 0);
         } else if (rear_mic_active == true && i == 1) {
           neos[0].colorWipe(song_peak_weighted[i], 0, 0);
-          neos[1].colorWipe(song_peak_weighted[i], 0, 0);          
+          neos[1].colorWipe(song_peak_weighted[i], 0, 0);
         }
       } else {
         neos[i].colorWipe(song_peak_weighted[i], 0, 0);
@@ -518,7 +522,7 @@ void songDisplay() {
           neos[1].colorWipe(song_rms_weighted[i], 0, 0);
         } else if (rear_mic_active == true && i == 1) {
           neos[0].colorWipe(song_rms_weighted[i], 0, 0);
-          neos[1].colorWipe(song_rms_weighted[i], 0, 0);          
+          neos[1].colorWipe(song_rms_weighted[i], 0, 0);
         }
       } else  {
         neos[i].colorWipe(song_rms_weighted[i], 0, 0);
@@ -682,67 +686,6 @@ void updateClickGain(double click_gain[], double click_gain_min[], double click_
   Serial.println("WARNING UPDATECLICKGAIN IS NOT IMPLEMENTED YET");
 }
 
-
-uint8_t testRearMicrophone () {
-  // go through and gather 10 features from each channel and make sure it is picking up audio
-  uint8_t readings = 0;
-  double values = 0.0;
-  unsigned long a_time = millis();
-  Serial.print("Testing Rear Microphone");
-  while (readings < 10 && millis() < a_time + 2000) {
-    if (click_rms2.available()) {
-      values += click_rms2.read();
-      readings++;
-      Serial.print(".");
-      delay(20);
-    }
-  }
-  if (values > 0) {
-    Serial.println("\nRear Microphone is good");
-    return true;
-  } else {
-    Serial.println("\nERROR, Rear Microphone does not work");
-    printDivideLn();
-    return false;
-  }
-}
-
-uint8_t testFrontMicrophone () {
-  // go through and gather 10 features from each channel and make sure it is picking up audio
-  uint8_t readings = 0;
-  double values = 0.0;
-  unsigned long a_time = millis();
-  Serial.print("Testing Front Microphone");
-  while (readings < 10 && millis() < a_time + 2000) {
-    if (click_rms1.available()) {
-      values += click_rms1.read();
-      readings++;
-      Serial.print(".");
-      delay(20);
-    }
-  }
-  if (values > 0) {
-    Serial.println("\nFront Microphone is good");
-    return true;
-  } else {
-    Serial.println("\nERROR, Front Microphone does not work");
-    return false;
-  }
-}
-
-void testMicrophones() {
-  if (testFrontMicrophone() == false) {
-    // todo - do something to deactive this audio channel
-    Serial.println("setting front_mic_active to false");
-    front_mic_active = false;
-  }
-  if (testRearMicrophone() == false) {
-    // todo - do something to deactive this audio channel
-    Serial.println("setting rear_mic_active to false");
-    rear_mic_active = false;
-  }
-  printDivideLn();
-}
 // #endif // CICADA_CONFIG_H
 // #endif // __CIDADA_MODE_H__
 
@@ -752,7 +695,7 @@ void testMicrophones() {
   // #include "Mode_Cicada.h"
 */
 /*
-class FeatureCollector {
+  class FeatureCollector {
   public:
     FeatureCollector(AudioAnalyzeRMS *r, AudioAnalyzePeak *p);
     void update();
@@ -765,25 +708,25 @@ class FeatureCollector {
     double rms_pos_delta;
     double peak;
     double peak_pos_delta;
-};
+  };
 
-class AutoGain {
+  class AutoGain {
   public:
     AutoGain(AudioAnalyzeRMS *r, AudioAnalyzePeak *p);
     void update();
   private:
     FeatureCollector fc;
 
-};
+  };
 
-void FeatureCollector::update() {
+  void FeatureCollector::update() {
 
-}
+  }
 
-FeatureCollector::FeatureCollector(AudioAnalyzeRMS *r, AudioAnalyzePeak *p) {
+  FeatureCollector::FeatureCollector(AudioAnalyzeRMS *r, AudioAnalyzePeak *p) {
   rms_ana = r;
   peak_ana = p;
-}
+  }
 */
 
 void calculateSongAudioFeatures() {
@@ -902,370 +845,6 @@ void autoGainAdjust() {
   dprintln(PRINT_AUTO_GAIN, " ------------------------------------------------- ");
 }
 
-uint8_t updateLuxLog() {
-  // if datalogging is active
-  // if enough time has passed since last logging and the log still has space allowcated to it
-  if (log_timer > LOG_POLLING_RATE && lux_eeprom_idx < EEPROM_LUX_LOG_END) {
-    dprint(PRINT_LOG_WRITE, "Logging Lux Data into EEPROM location: "); dprintln(PRINT_LOG_WRITE, (int)lux_eeprom_idx);
-    dprint(PRINT_LOG_WRITE, "lux_average                          :\t");  
-    // store the current lux readings
-    // increment the index, 4 bytes to a double
-    if (front_lux_active) {
-      dprint(PRINT_LOG_WRITE, lux_sensors[0].getAvgLux()); 
-      writeDoubleToEEPROM(lux_eeprom_idx, lux_sensors[0].getAvgLux());
-      lux_eeprom_idx += 4;
-    } else{
-      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
-    }
-    if (rear_lux_active) {
-      writeDoubleToEEPROM(lux_eeprom_idx, lux_sensors[1].getAvgLux());
-      lux_eeprom_idx += 4;
-      dprint(PRINT_LOG_WRITE, "\t");
-      dprintln(PRINT_LOG_WRITE, lux_sensors[1].getAvgLux());
-    } else {
-      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
-    }
-    return 1;
-  }
-  return 0;
-}
-
-bool updateLuxMinMaxDatalog() {
-  // give the program some time to settle
-  if (data_logging_active && millis() > 20000) {
-    // front
-    for (int i = 0; i < NUM_LUX_SENSORS; i++) {
-      // is the current reading more than the max recorded?
-      // if the current reading is the same then nothing is written, if it is different something is writen
-      writeDoubleToEEPROM(EEPROM_MAX_LUX_READINGS + (i * 4) , lux_sensors[i].getMaxLux());
-      dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
-      dprint(PRINT_LOG_WRITE, " max_lux_reading to EEPROM at addr: "); dprint(PRINT_LOG_WRITE, EEPROM_MAX_LUX_READINGS + (i * 4));
-      dprint(PRINT_LOG_WRITE, " :\t"); dprintln(PRINT_LOG_WRITE, lux_sensors[i].getMaxLux());
-      dprint(PRINT_LOG_WRITE, " read back:\t");dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + (i*4)));
-
-      writeDoubleToEEPROM(EEPROM_MIN_LUX_READINGS + (i * 4) , lux_sensors[i].getMinLux());
-      dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[i].getName());
-      dprint(PRINT_LOG_WRITE, " min_lux_reading to EEPROM\t"); dprint(PRINT_LOG_WRITE, lux_sensors[i].getMinLux());
-      dprint(PRINT_LOG_WRITE, " read back:\t"); dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + (i * 4)));
-    }
-  }
-  // combined
-  if (combined_lux > combined_max_lux_reading) {
-    combined_max_lux_reading = combined_lux;
-    writeDoubleToEEPROM(EEPROM_MAX_LUX_READING_COMBINED, combined_max_lux_reading);
-    dprint(PRINT_LOG_WRITE, "logged new combined max_lux_reading to EEPROM\t"); dprintln(PRINT_LOG_WRITE, combined_max_lux_reading);
-    return 1;
-  } else if (combined_lux < combined_min_lux_reading) {
-    combined_min_lux_reading = combined_lux;
-    writeDoubleToEEPROM(EEPROM_MIN_LUX_READING_COMBINED , combined_min_lux_reading);
-    dprint(PRINT_LOG_WRITE, "logged new combined min_lux_reading to EEPROM\t"); dprintln(PRINT_LOG_WRITE, combined_max_lux_reading);
-    return 1;
-  }
-  return 0;
-}
-
-uint8_t updateBrightnessScalerAvgLog() {
-  // TODO
-  // write the current brightness scaler average to EEPROM
-  if (log_timer > LOG_POLLING_RATE && cpm_eeprom_idx < EEPROM_CPM_LOG_END) {
-    dprint(PRINT_LOG_WRITE,"Logging the average brightness scalers  :");
-    for (int  i = 0; i < 2; i++) { // replace 2 with something variable
-      dprint(PRINT_LOG_WRITE,"\t");
-      writeDoubleToEEPROM(EEPROM_AVG_BRIGHTNESS_SCALER + (i * 4), neos[i].getAvgBrightnessScaler());
-      dprint(PRINT_LOG_WRITE,neos[i].getAvgBrightnessScaler());
-    }
-    dprintln(PRINT_LOG_WRITE);
-    return 1;
-  }
-  return 0;
-}
-
-void printBrightnessAverageLog() {
-  // TODO
-  // write the current brightness scaler average to EEPROM
-  Serial.print("Printing the average brightness scalers :");
-  for (int  i = 0; i < 3; i++) {
-    Serial.print("\t");
-    Serial.print(readDoubleFromEEPROM(EEPROM_AVG_BRIGHTNESS_SCALER + (i * 4)));
-  }
-  Serial.println();
-}
-
-uint8_t updateOnRateLog() {
-  // TODO
-  if (log_timer > LOG_POLLING_RATE) {
-    dprint(PRINT_LOG_WRITE, "Logging the LED on rates                :");
-    for (int  i = 0; i < 2; i++) {
-      dprint(PRINT_LOG_WRITE,"\t");
-      writeDoubleToEEPROM(EEPROM_LED_ON_RATIO + (i * 4), neos[i].getOnRatio());
-      Serial.print(neos[i].getOnRatio());
-    }
-    dprintln(PRINT_LOG_WRITE);
-    return 1;
-  }
-  return 0;
-}
-
-void printOnRatioLog() {
-  dprint(PRINT_LOG_WRITE,"Reading the LED on rates                :");
-  for (int  i = 0; i < 2; i++) {
-    dprint(PRINT_LOG_WRITE,"\t");
-    dprint(PRINT_LOG_WRITE,readDoubleFromEEPROM(EEPROM_LED_ON_RATIO + (i * 4)));
-  }
-  dprintln(PRINT_LOG_WRITE);
-}
-
-
-void writeTotalClicksToEEPROM() {
-  if (data_logging_active) {
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS, total_clicks_detected[0]);
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS + 4, total_clicks_detected[1]);
-    dprint(PRINT_LOG_WRITE, "Updated EEPROM with total clicks detected front/rear: ");
-    dprint(PRINT_LOG_WRITE, (int)total_clicks_detected[0]);
-    dprint(PRINT_LOG_WRITE, "\t"); dprintln(PRINT_LOG_WRITE, (int)total_clicks_detected[1]);
-  }
-}
-
-void updateRuntimeAndClicks() {
-  if (last_runtime_update > RUNTIME_POLL_DELAY) {
-    // dprint(PRINT_LOG_WRITE,"time to update runtime");
-    writeRuntimeToEEPROM();
-    writeTotalClicksToEEPROM();
-    last_runtime_update = 0;
-  }
-}
-
-uint8_t updateCPMLog() {
-  // if enough time has passed since last logging and the log still has space allowcated to it
-  if (log_timer > LOG_POLLING_RATE && cpm_eeprom_idx < EEPROM_CPM_LOG_END) {
-    double cpm[2];
-    for (int i = 0; i < 2; i++) {
-      dprint(PRINT_LOG_WRITE, "num_cpm_clicks / cpm "); 
-      if ( i == 0) {
-        dprint(PRINT_LOG_WRITE, "Front           :\t");
-      } else{
-        dprint(PRINT_LOG_WRITE, "Rear            :\t");
-      }
-      dprint(PRINT_LOG_WRITE, num_cpm_clicks[i]);
-      cpm[i] = (double)num_cpm_clicks[i] / ((double)log_timer / 60000);
-      dprint(PRINT_LOG_WRITE, "/"); dprintln(PRINT_LOG_WRITE, cpm[i]);
-      // reset the average values
-      num_cpm_clicks[i] = 0;
-    }
-    dprint(PRINT_LOG_WRITE, "Logging CPM Data into EEPROM location: "); dprint(PRINT_LOG_WRITE, cpm_eeprom_idx);
-    dprint(PRINT_LOG_WRITE, "\tcpm :\t"); dprint(PRINT_LOG_WRITE, cpm[0]); dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, cpm[1]);
-    dprintMinorDivide(PRINT_LOG_WRITE);
-    // store the current lux readings
-    // increment the index, 4 bytes to a double
-    writeDoubleToEEPROM(cpm_eeprom_idx, cpm[0]);
-    cpm_eeprom_idx += 4;
-    writeDoubleToEEPROM(cpm_eeprom_idx, cpm[1]);
-    cpm_eeprom_idx += 4;
-    return 1;
-  }
-  return 0;
-}
-
-void updateEEPROMLogs() {
-  if (data_logging_active) {
-    // if enough time has passed since init for data-logging to be active
-    uint8_t updates = 0;
-    if (millis() > LOG_START_DELAY) {
-      //  if one of the logs update then update the log timer
-      updates += updateOnRateLog();
-      updates += updateBrightnessScalerAvgLog();
-      updates += updateLuxLog();
-      updates += updateCPMLog();
-      updates += updateLuxMinMaxDatalog();
-    }
-    if (updates) {
-      log_timer = 0;
-      Serial.print("A Total of "); Serial.print(updates); Serial.println(" logs were updated");
-      printDivide();
-    }
-  }
-}
-
-void writeSetupConfigsToEEPROM() {
-  if (data_logging_active) {
-    #if JUMPERS_POPULATED
-    EEPROM.update(EEPROM_JMP1, cicada_mode);
-    EEPROM.update(EEPROM_JMP2, stereo_audio);
-    EEPROM.update(EEPROM_JMP3, NUM_LUX_SENSORS);
-    EEPROM.update(EEPROM_JMP4, combine_lux_readings);
-    EEPROM.update(EEPROM_JMP5, gain_adjust_active);
-    EEPROM.update(EEPROM_JMP6, data_logging_active);
-    dprintln(PRINT_LOG_WRITE, "logged jumper values to EEPROM");
-    #endif // jumpers_populated
-
-    #if FIRMWARE_MODE == CICADA_MODE
-    // log the starting gains to the min/max EEPROM
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MIN + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_START + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_START + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_MAX + 4, click_gain[1]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX + 4, song_gain[1]);
-
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT, song_gain[0]);
-    writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + 4, song_gain[1]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT, click_gain[0]);
-    writeDoubleToEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4, click_gain[1]);
-
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS, 0);
-    writeLongToEEPROM(EEPROM_TOTAL_CLICKS + 4, 0);
-
-    #endif // cicada_mode
-
-    EEPROM.update(EEPROM_AUDIO_MEM_MAX, AUDIO_MEMORY);
-    dprintln(PRINT_LOG_WRITE, "logged AUDIO_MEMORY to EEPROM");
-    
-    // auto-log values
-    EEPROM.update(EEPROM_LOG_ACTIVE, data_logging_active);
-    writeLongToEEPROM(EEPROM_LOG_POLLING_RATE, LOG_POLLING_RATE);
-    writeLongToEEPROM(EEPROM_LOG_START_TIME, LOG_START_DELAY);
-    writeLongToEEPROM(EEPROM_LOG_END_TIME,  LOG_START_DELAY + LOG_TIME_FRAME);
-    dprintln(PRINT_LOG_WRITE, "Logged Log info (in minutes):");
-    dprint(PRINT_LOG_WRITE, "Datalog Active :\t"); dprintln(PRINT_LOG_WRITE, data_logging_active);
-    dprint(PRINT_LOG_WRITE, "Start time     :\t"); dprintln(PRINT_LOG_WRITE, LOG_START_DELAY / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "End time       :\t"); dprintln(PRINT_LOG_WRITE, (LOG_START_DELAY + LOG_TIME_FRAME) / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "Logging Rate   :\t"); dprintln(PRINT_LOG_WRITE, (String)(LOG_POLLING_RATE / ONE_MINUTE));
-
-    EEPROM.update(EEPROM_SERIAL_ID, SERIAL_ID);
-    dprint(PRINT_LOG_WRITE, "logged serial number : ");
-    dprintln(PRINT_LOG_WRITE, SERIAL_ID);
-
-    // the software and hardware version numbers
-    dprint(PRINT_LOG_WRITE, "Software Version:\t"); 
-    dprint(PRINT_LOG_WRITE, S_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, S_VERSION_MINOR);
-    dprint(PRINT_LOG_WRITE,".");dprintln(PRINT_LOG_WRITE, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_SUBVERION, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_VERSION_MINOR, S_VERSION_MINOR);
-    EEPROM.update(EEPROM_S_VERSION_MAJOR, S_VERSION_MAJOR);
-
-    dprint(PRINT_LOG_WRITE, "hardware Version:\t"); 
-    dprint(PRINT_LOG_WRITE, H_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MINOR, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MAJOR, H_VERSION_MAJOR);
-    
-    dprintln(PRINT_LOG_WRITE, "\nFinished logging setup configs to EEPROM");
-    dprintln(PRINT_LOG_WRITE, "|||||||||||||||||||||||||||||||||||||||||");
-  }
-}
-
-void printEEPROMContents() {
-  // todo add printing for the serial_id
-  printMajorDivide((String)"Printing EEPROM CONTENTS ...");
-  Serial.print("hardware version    :\t");Serial.print(EEPROM.read(EEPROM_H_VERSION_MAJOR));
-  Serial.print(".");Serial.println(EEPROM.read(EEPROM_H_VERSION_MINOR));
-  
-  Serial.print("firmware version    :\t");Serial.print(EEPROM.read(EEPROM_S_VERSION_MAJOR));
-  Serial.print(".");Serial.print(EEPROM.read(EEPROM_S_VERSION_MINOR));Serial.print(".");
-  Serial.println(EEPROM.read(EEPROM_S_SUBVERION));
-  
-  Serial.print("bot serial number   :\t");
-  Serial.println(EEPROM.read(EEPROM_SERIAL_ID));
-  Serial.print("run time in ms      :\t");
-  Serial.println(readLongFromEEPROM(EEPROM_RUN_TIME));
-  Serial.print("run time in minutes :\t");
-  double rt = readLongFromEEPROM(EEPROM_RUN_TIME) / 1000 / 60;
-  Serial.println(rt);
-  printMinorDivide();
-  Serial.print("onboard jumper settings\t\t");
-  Serial.print(EEPROM.read(EEPROM_JMP1));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP2));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP3));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP4));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP5));
-  Serial.print("\t");
-  Serial.println(EEPROM.read(EEPROM_JMP6));
-  printMinorDivide();
-
-  Serial.println("\nDatalogging settings");
-  printMinorDivide();
-  Serial.print("Datalog Active :\t"); Serial.println(EEPROM.read(EEPROM_LOG_ACTIVE));
-  Serial.print("Start time     :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_START_TIME) / 60000);
-  Serial.print("End time       :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_END_TIME) / 60000);
-  Serial.print("Logging Rate   :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_POLLING_RATE) / 60000);
-
-  Serial.println("\nAudio Settings");
-  printMinorDivide();
-  Serial.print("Audio memory usage/max            :\t"); Serial.print(EEPROM.read(EEPROM_AUDIO_MEM_USAGE));
-  Serial.print("\t"); Serial.println(EEPROM.read(EEPROM_AUDIO_MEM_MAX));
-
-  Serial.println("\n - CLICK");
-  printMinorDivide();
-  Serial.print("front/rear starting gain          :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START + 4));
-  Serial.print("front min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX));
-  Serial.print("rear  min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX + 4));
-  Serial.print("last recorded gain front/rear     :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_CURRENT)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4));
-  Serial.print("total clicks detected front/rear  :\t");
-  Serial.print(readLongFromEEPROM(EEPROM_TOTAL_CLICKS)); Serial.print("\t");
-  Serial.println(readLongFromEEPROM(EEPROM_TOTAL_CLICKS + 4));
-  Serial.print("Average number of CPM front/rear  :\t");
-  Serial.print(readLongFromEEPROM(EEPROM_TOTAL_CLICKS) / rt); Serial.print("\t");
-  Serial.println(readLongFromEEPROM(EEPROM_TOTAL_CLICKS + 4) / rt);
-  printAndClearDoubleLog(EEPROM_CPM_LOG_START, EEPROM_CPM_LOG_END, "Clicks Per Minute ");
-
-  Serial.println("\n -  SONG  ");
-  printMinorDivide();
-  Serial.print("front/read starting gain          :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_START)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_START + 4));
-  Serial.print("front min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MIN)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MAX));
-  Serial.print("rear min/max recorded gain        :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MIN + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MAX + 4));
-  Serial.print("last recorded gain front/rear     :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT)); Serial.print("\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT + 4)); Serial.println();
-
-  Serial.println("\nLux Settings");
-  printDivide();
-  Serial.print("min/max front lux reading         : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS));
-  Serial.print("min/max rear lux reading          : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + 4));
-  Serial.print("min/max combined lux reading      : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READING_COMBINED)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READING_COMBINED));
-  printAndClearDoubleLog(EEPROM_LUX_LOG_START, EEPROM_LUX_LOG_END, " LUX ");
-
-  Serial.println("\nLED Settings");
-  printDivide();
-  printOnRatioLog();
-  printBrightnessAverageLog();
-
-  printMajorDivide("Finished Printing EEPROM Datalog");
-}
-
 
 void mothSetup() {
   Serial.begin(57600);
@@ -1289,7 +868,7 @@ void mothSetup() {
   }
   if (PRINT_EEPROM_CONTENTS  > 0) {
     delay(1000);
-    printEEPROMContents();
+    datalog_manager.printLogs();
   } else {
     Serial.println("Not printing the EEPROM Datalog Contents");
   }
@@ -1298,18 +877,21 @@ void mothSetup() {
 
   Serial.println("Testing Microphones");
   printTeensyDivide();
-  testMicrophones();
+  // todo make this adapt to when microphones are broken on one or more side...
+  for (int i = 0; i < num_channels; i++) {
+    fc[i].testMicrophone();
+  }
 
   if (data_logging_active) {
-    writeSetupConfigsToEEPROM();
+    writeSetupConfigsToEEPROM(); n
   }
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
-    lux_sensors[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-    lux_sensors[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
-    lux_sensors[0].calibrate(LUX_CALIBRATION_TIME);
-    lux_sensors[1].calibrate(LUX_CALIBRATION_TIME);
+    lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
+    lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+    lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
+    lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
   printMajorDivide("Setup Loop Finished");
 }
@@ -1320,8 +902,7 @@ void tenSecondUpdate() {
 #if (AUTO_GAIN)
     autoGainAdjust(); // will call rear as well if in stereo mode
 #endif
-    updateEEPROMLogs();
-    updateRuntimeAndClicks();
+    updateEEPROMLogs(neos, lux_managers);
     ten_second_timer = 0;
   }
 }
@@ -1334,9 +915,24 @@ void updateSong() {
 
 void mothLoop() {
   tenSecondUpdate(); // this creates a slower ten second update loop (should likely be using a timer inturrupt thing)
-  updateLuxSensors(); 
+  updateLuxSensors();
   updateSong();
   updateClicks();
+  datalog_manager.update();
 }
-
+/*
+void testMicrophones() {
+  if (testMicrophone(&input, front) == false) {
+    // todo - do something to deactive this audio channel
+    Serial.println("setting front_mic_active to false");
+    front_mic_active = false;
+  }
+  if (testRearMicrophone() == false) {
+    // todo - do something to deactive this audio channel
+    Serial.println("setting rear_mic_active to false");
+    rear_mic_active = false;
+  }
+  printDivideLn();
+}
+*/
 #endif // __MODE_CICADA_H__

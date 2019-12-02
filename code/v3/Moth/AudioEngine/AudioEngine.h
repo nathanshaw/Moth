@@ -1,13 +1,12 @@
 #ifndef __AUDIOENGINE_H__
 #define __AUDIOENGINE_H__
 
-#define PEAK_SCALER 10.0
-
-#include "Configuration.h"
+#include "../Configuration.h"
 
 class FeatureCollector {
   public:
     FeatureCollector(String _id);
+    bool testMicrophone();
     void printFeatures();
     String getName() {
       return id;
@@ -61,9 +60,11 @@ class FeatureCollector {
 
     //////////////// General ///////////////////////
     void update();
+    bool isActive() {return microphone_active;};
 
   private:
     String id = "";
+    bool microphone_active = true;
 
     //////////////// RMS /////////////////////////
     AudioAnalyzeRMS *rms_ana;
@@ -114,6 +115,39 @@ class AutoGain {
 
 };
 
+bool FeatureCollector::testMicrophone () {
+  // go through and gather 10 features from each channel and make sure it is picking up audio
+  if (!rms_active) {
+      Serial.println("Sorry unable to test microphone as the RMS feature is not active");
+      return false;
+  }
+  uint8_t readings = 0;
+  double values = 0.0;
+  unsigned long a_time = millis();
+  Serial.print("Testing ");Serial.print(id);Serial.println(" Microphone");
+  while (readings < 10 && millis() < a_time + 2000) {
+    if (rms_ana->available()) {
+      values += rms_ana->read();
+      readings++;
+      Serial.print(".");
+      delay(20);
+    }
+  }
+  if (values > 0) {
+    Serial.println();
+    Serial.print(id);
+    Serial.println(" Microphone is good");
+    microphone_active = true;
+    return true;
+  } else {
+    Serial.println("\nERROR, ");
+    Serial.print(id);Serial.println(" Microphone does not work");
+    printDivideLn();
+    microphone_active = false;
+    return false;
+  }
+}
+
 //////////////// Update Functions ///////////////////////////////
 void FeatureCollector::calculateFFT() {
   if (fft_active && fft_ana->available()) {
@@ -124,6 +158,8 @@ void FeatureCollector::calculateFFT() {
       fft_vals[i] = fft_ana->read(i);
       fft_tot_energy += fft_vals[i];
     }
+    highest_energy_idx = highest;
+    printFFTVals();
   }
 }
 
@@ -145,12 +181,14 @@ void FeatureCollector::calculateScaledFFT() {
       fft_vals[i] = fft_vals[i] / fft_tot_energy;
     }
     highest_energy_idx = highest;
+    printFFTVals();
   }
 }
 
 void FeatureCollector::calculateTone() {
   if (tone_active && tone_ana->available()) {
     tone_level = tone_ana->read();
+    printToneVals();
   }
 }
 
@@ -158,6 +196,7 @@ void FeatureCollector::calculateFreq() {
   if (freq_active  && freq_ana->available()) {
     freq_val = freq_ana->read();
     freq_prob = freq_ana->probability();
+    printFreqVals();
   }
 }
 
@@ -168,6 +207,7 @@ void FeatureCollector::calculatePeak() {
     peak_readings++;
     // Serial.print(id);Serial.print(" pr : ");Serial.print(peak_readings);
     // Serial.print("\tpt: ");Serial.println(peak_totals);
+    printPeakVals();
   }
 }
 
@@ -326,18 +366,22 @@ void FeatureCollector::printPeakVals() {
 /////////////////////////////////// UPDATE / INIT //////////////////////////////////////
 
 void FeatureCollector::update() {
-  if (USE_SCALED_FFT) {
-    calculateScaledFFT();
-  }
-  else {
-    calculateFFT();
-  }
-
-  calculateTone();
-  calculatePeak();
-  calculateRMS();
-  calculateFreq();
-  printFeatures();
+    if (microphone_active == true) {
+      if (USE_SCALED_FFT) {
+        calculateScaledFFT();
+      }
+      else {
+        calculateFFT();
+      }
+      calculateTone();
+      calculatePeak();
+      calculateRMS();
+      calculateFreq();
+      // printFeatures();
+    }
+    else { 
+      //Serial.print(id);Serial.println(" Sorry the microphone does not work, not updating the feature collector");
+    }
 }
 
 FeatureCollector::FeatureCollector(String _id) {

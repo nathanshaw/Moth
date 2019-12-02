@@ -4,64 +4,14 @@
 #include <Audio.h>
 #include <Arduino.h>
 #include <PrintUtils.h>
-#include "AudioEngine.h"
-#include "Neos.h"
+#include "AudioEngine/AudioEngine.h"
+#include "NeopixelManager/NeopixelManager.h"
 #include <WS2812Serial.h>
 #include "Configuration.h"
 #include "ColorConverter.h"
+#include "DatalogManager/DatalogManager.h"
 
-#define INPUT_START_GAIN            12.0
-
-// logic to link left and right values? todo?
-#define BQL_Q                       0.8
-#define BQL_THRESH                  200
-#define BQR_Q                       0.8
-#define BQR_THRESH                  200
-
-#define PRINT_RMS_VALS              0
-#define PRINT_FREQ_VALS             0
-#define PRINT_TONE_VALS             0
-#define PRINT_FFT_VALS              1
-
-#define FFT_ACTIVE                  1
-#define PEAK_ACTIVE                 1
-#define RMS_ACTIVE                  0
-#define TONE_ACTIVE                 0
-#define FREQ_ACTIVE                 0
-
-#define USE_HSB_MAPPING             1
-
-#define FEATURE_RMS                 1
-#define FEATURE_PEAK                2
-#define FEATURE_FREQ                3
-#define FEATURE_TONE                4
-#define FEATURE_FFT                 5
-
-#define HUE_FEATURE                 (FEATURE_FFT)
-#define BRIGHTNESS_FEATURE          (FEATURE_PEAK)
-#define SATURATION_FEATURE          (FEATURE_PEAK)
-
-#define MODE_RGB                    0
-#define MODE_HSB                    1
-
-#define COLOR_MAP_MODE              (MODE_HSB)
-
-#define  MODE_SINGLE_RANGE          0
-#define  MODE_ALL_BINS              1
-
-#define FFT_MODE                    (MODE_ALL_BINS)
-// #define HUE_MAPPING
-#define FFT_LOWEST_BIN              3
-
-#define FREQ_UNCERTANITY_ALLOWED    0.99
-#define USE_FFT_RANGE_FOR_COLOR     1
-
-#define FFT_LOWEST_BIN 2
-
-uint8_t red[2];
-uint8_t green[2];
-uint8_t blue[2];
-
+uint8_t rgb[2][3];
 double hsb[2][3] = {{1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}};
 
 double brightness_scalers[2];
@@ -145,6 +95,8 @@ void linkFeatureCollector() {
   };
 }
 
+
+
 void mothSetup() {
   AudioMemory(AUDIO_MEMORY);
   Serial.begin(57600);
@@ -158,7 +110,6 @@ void mothSetup() {
   neos[1].colorWipe(120, 70, 0); // turn off the LEDs
   Serial.println("Leds turned yellow for setup loop\n");
   delay(2000);
-
   /*
     if (JUMPERS_POPULATED) {
     printMinorDivide();
@@ -167,13 +118,14 @@ void mothSetup() {
     } else {
     printMajorDivide("Jumpers are not populated, not printing values");
     }
-    if (PRINT_EEPROM_CONTENTS  > 0) {
-    delay(1000);
-    printEEPROMContents();
-    } else {
-    Serial.println("Not printing the EEPROM Datalog Contents");
-    }
   */
+  if (PRINT_EEPROM_CONTENTS  > 0) {
+    delay(1000);
+    // TODO, add the datalogger and print the log contents
+    // printEEPROMContents();
+  } else {
+    Serial.println("Not printing the EEPROM Datalog Contents");
+  }
   Serial.println("Running Use Specific Setup Loop...");
   Serial.println("starting moth setup loop");
   printMinorDivide();
@@ -204,22 +156,22 @@ void mothSetup() {
   Serial.println("Finished Audio Setup Loop");
   printDivide();
 
-
+  Serial.println("Testing Microphones");
+  printTeensyDivide();
+  for (int i = 0; i < num_channels; i++) {
+    fc[i].testMicrophone();;
+  }
   /*
-    Serial.println("Testing Microphones");
-    printTeensyDivide();
-    testMicrophones();
-
     if (data_logging_active) {
     writeSetupConfigsToEEPROM();
     }
     if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
-    lux_sensors[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-    lux_sensors[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
-    lux_sensors[0].calibrate(LUX_CALIBRATION_TIME);
-    lux_sensors[1].calibrate(LUX_CALIBRATION_TIME);
+    lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
+    lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+    lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
+    lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
     }
   */
   printMajorDivide("Setup Loop Finished");
@@ -253,6 +205,13 @@ bool getColorFromFFTSingleRange(FeatureCollector *f, uint8_t s, uint8_t e) {
   tot = f->getFFTRange(FFT_LOWEST_BIN, 128);
   frac = frac / tot;
   // RGBConverter::HsvToRgb(frac, 0.5, 1, 0, red, green, blue);
+  return 1;
+}
+
+bool getColorFromTone(FeatureCollector *f, uint8_t chan) {
+  Serial.print("WARNING - getColorFromTone is not currently implemented\t");
+  Serial.println(f->getToneLevel());
+  return true;
 }
 
 bool getColorFromFFTAllBins(FeatureCollector *f, uint8_t chan) {
@@ -265,17 +224,20 @@ bool getColorFromFFTAllBins(FeatureCollector *f, uint8_t chan) {
     red_d   = red_d / tot;
     green_d = green_d / tot;
     blue_d  = blue_d / tot;
-    red[chan] = red_d * MAX_BRIGHTNESS;
-    green[chan] = green_d * MAX_BRIGHTNESS;
-    blue[chan] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
+    rgb[chan][0] = red_d * MAX_BRIGHTNESS;
+    rgb[chan][1] = green_d * MAX_BRIGHTNESS;
+    rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
   }
   else if (COLOR_MAP_MODE == MODE_HSB) {
     double h = (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
     // dprint(PRINT_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(PRINT_FFT_VALS, h);
     hsb[chan][0] = h;
+    return 1;
   } else {
     Serial.println("ERROR - the COLOR_MAP_MODE is not currently implemented");
+    return 0;
   }
+  return 1;
 }
 
 
@@ -283,11 +245,11 @@ void printColors() {
   for (int i = 0; i < 2; i++)  {
     //Serial.print(f->getName());Serial.print("\t");
     Serial.print(i);
-    Serial.print("  red  "); Serial.print(red[i]);
-    Serial.print("\tgreen  "); Serial.print(green[i]);
+    Serial.print("  red  "); Serial.print(rgb[i][0]);
+    Serial.print("\tgreen  "); Serial.print(rgb[i][1]);
     Serial.print("\tblue  ");
-    Serial.print(blue[i]);
-    Serial.print("  =  "); Serial.print(red[i] + green[i] + blue[i]);
+    Serial.print(rgb[i][2]);
+    Serial.print("  =  "); Serial.print(rgb[i][0] + rgb[i][1] + rgb[i][0]);
     Serial.print("\thue "); Serial.print(hsb[i][0]);
     Serial.print("\tsat "); Serial.print(hsb[i][1]);
     Serial.print("\tbgt "); Serial.println(hsb[i][2]);
@@ -296,7 +258,7 @@ void printColors() {
 
 void calculateBrightness() {
   if (BRIGHTNESS_FEATURE == FEATURE_PEAK) {
-    for (int i;  i < 2; i++) {
+    for (int i  = 0;  i < 2; i++) {
       hsb[i][2] = fc[i].getPeakAvg();
       if (hsb[i][2] > 1.0) {
         hsb[i][2] =  1.0;
@@ -310,7 +272,7 @@ void calculateBrightness() {
 
 void calculateSaturation() {
   if (SATURATION_FEATURE == FEATURE_PEAK) {
-    for (int i;  i < 2; i++) {
+    for (int i = 0;  i < 2; i++) {
       hsb[i][1] = fc[i].getPeakAvg();
       if (hsb[i][1] > 1.0) {
         hsb[i][1] =  1.0;
@@ -324,12 +286,16 @@ void calculateSaturation() {
 }
 
 void calculateHue() {
-  for (int i; i <  2; i++) {
-    if (FFT_MODE == MODE_SINGLE_RANGE) {
-      getColorFromFFTSingleRange(&fc[i], 3, 20);
-    } else if (FFT_MODE == MODE_ALL_BINS) {
-      getColorFromFFTAllBins(&fc[i], i);
+  for (int i = 0; i <  2; i++) {
+    if (HUE_FEATURE == FEATURE_FFT) {
+      if (FFT_MODE == MODE_SINGLE_RANGE) {
+        getColorFromFFTSingleRange(&fc[i], 3, 20);
+      } else if (FFT_MODE == MODE_ALL_BINS) {
+        getColorFromFFTAllBins(&fc[i], i);
+      }
     }
+    else if (HUE_FEATURE == FEATURE_TONE)
+      getColorFromTone(&fc[i], i);
   }
 }
 
@@ -338,15 +304,36 @@ void updateNeos() {
     calculateSaturation();
     calculateBrightness();
     calculateHue();
-    for (int chan = 0; chan < 2; chan++) {
-      converter.HsvToRgb(hsb[chan][0], hsb[chan][1], hsb[chan][2], red[chan], green[chan], blue[chan]);
+    uint8_t inactive = 0;
+    for (int chan = 0; chan < num_channels; chan++) {
+      if (fc[chan].isActive() == true) {
+        uint8_t r, g, b;
+        r = rgb[chan][0];
+        g = rgb[chan][1];
+        b = rgb[chan][2];
+        converter.HsvToRgb(hsb[chan][0], hsb[chan][1], hsb[chan][2], r, g, b);
+      } else {
+        inactive++;
+      };
     }
-  } else {
+    if (inactive > num_channels) {
+      Serial.println("ERROR - not able to updateNeos() as there is no active audio channels");
+      return;
+    } else if (inactive > 0) {
+      if (fc[0].isActive() == false) {
+        converter.HsvToRgb(hsb[1][0], hsb[1][1], hsb[1][2], rgb[0][0], rgb[0][1], rgb[0][2]);
+      } else if (fc[1].isActive() == false) {
+        converter.HsvToRgb(hsb[0][0], hsb[0][1], hsb[0][2], rgb[1][0], rgb[1][1], rgb[1][2]);
+      }
+    }
+  }
+  else {
     Serial.println("ERROR = that color mode is not implemented in update neos");
   }
+
   // now actually update the Neopixels
-  for (int i; i < 2; i++) {
-    neos[i].colorWipe(red[i], green[i], blue[i]);
+  for (int i = 0; i < 2; i++) {
+    neos[i].colorWipe(rgb[i][0], rgb[i][1], rgb[i][2]);
   }
 }
 
@@ -356,7 +343,7 @@ void mothLoop() {
     fc[i].update();
     updateNeos();
   }
-  if (print_color_timer > 200) {
+  if (print_color_timer > 2000) {
     print_color_timer = 0;
     printColors();
   }

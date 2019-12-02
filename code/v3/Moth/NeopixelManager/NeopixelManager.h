@@ -22,7 +22,7 @@
   double led_on_ratio[2];
 */
 #include <WS2812Serial.h>
-#include "Configuration.h"
+#include "../Configuration.h"
 
 #include <PrintUtils.h>
 // #include <elapsedMillis.h>
@@ -325,8 +325,8 @@ bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
     }
   } else {
     dprintln(PRINT_CLICK_DEBUG, "Flash skipped due to FLASH_DEBOUNCE_TIME");
-    return false;
   }
+  return false;
 }
 
 bool NeoGroup::flashOn() {

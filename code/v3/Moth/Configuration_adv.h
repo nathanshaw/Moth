@@ -3,19 +3,23 @@
 
 #include "Datalog_Configuration.h"
 #include "Hardware_Configuration.h"
+#include <Audio.h>
+
 ////////////////////////// Lux Sensors /////////////////////////////////////////
-// TODO these need to change into variables which are set with the jumpers?
-
-// turn this flag off if no I2C multiplexer is present
-#define I2C_MULTI 1
-
 // how long the lux sensors need the LEDs to be turned off in order to get an accurate reading
 #define LUX_SHDN_LEN 40
 
+////////////////////////// TCA Bus Expanders ///////////////////////////////////
+// I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
+// I2C MULTI should be 1 if a TCA I2C bus expander is present
+#define I2C_MULTI 1
+
 ///////////////////////// Audio //////////////////////////////////////////////////
+// these are the default values which set front_mic_active
+// if the microphone test is run and it is found that one of the microphones is
+// not working properly, then the variables will be switched to false
 #define FRONT_MICROPHONE_INSTALLED    true
 #define REAR_MICROPHONE_INSTALLED     true
-
 bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
 bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
 
@@ -44,6 +48,8 @@ bool cicada_mode = true;
 #define JMP2_PIN 11
 bool stereo_audio = true;
 uint8_t num_channels = stereo_audio + 1;
+uint8_t active_channels[2];
+
 #define FRONT_MIC true
 #define REAR_MIC true
 
@@ -67,8 +73,13 @@ bool gain_adjust_active = true;
 bool data_logging_active = true;
 
 // #endif // __PINS_H__
-#define AUDIO_MEMORY 24
+#define AUDIO_MEMORY 40
 
+// the number of active channels on the TCA (can in theory support 8 sensors, etc.)
 #define TCA_CHANNELS 2
+
+// for scaling the peak readings in the Audio Engine, to make it easier to debug things, etc.
+#define PEAK_SCALER 10.0
+#define RMS_SCALER 10.0
 
 #endif // CONFIGURATION_ADV_H

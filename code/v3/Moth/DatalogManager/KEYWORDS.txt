@@ -1,0 +1,16 @@
+
+DatalogManager          KEYWORD1
+Datalog                 KEYWORD1
+
+addLog                  KEYWORD2
+configureAutolog        KEYWORD2
+update                  KEYWORD2
+
+printLog                KEYWORD2
+printLogs               KEYWORD2
+clearLog                KEYWORD2
+
+write                   KEYWORD2
+read                    KEYWORD2
+
+

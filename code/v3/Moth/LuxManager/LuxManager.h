@@ -3,16 +3,16 @@
 
 #include "Adafruit_VEML7700.h"
 #include <Wire.h>
-#include "Configuration.h"
-#include "Neos.h"
+#include "../Configuration.h"
+#include "../NeopixelManager/NeopixelManager.h"
 
 // TODO add code so if the TCA is not available things are cool... also add firmware #define to control this
 #define TCAADDR 0x70
 
-class Lux {
+class LuxManager {
     // initalises its own lux sensors and then handles the readings
   public:
-    Lux(long minrt, long maxrt, int tca, String _name, NeoGroup *n);
+    LuxManager(long minrt, long maxrt, int tca, String _name, NeoGroup *n);
     double getLux() {
       return lux;
     };
@@ -31,7 +31,7 @@ class Lux {
     };
 
     double getAvgLux();
-    double resetAvgLux();
+    void   resetAvgLux();
 
     String getName() {return id;};
 
@@ -72,7 +72,7 @@ class Lux {
 
 //////////////////////////// lux and stuff /////////////////////////
 
-Lux::Lux (long minrt, long maxrt, int tca, String _name, NeoGroup *n) {
+LuxManager::LuxManager (long minrt, long maxrt, int tca, String _name, NeoGroup *n) {
   tca_addr = tca;
   id = _name;
   neo = n;
@@ -80,13 +80,13 @@ Lux::Lux (long minrt, long maxrt, int tca, String _name, NeoGroup *n) {
   max_reading_time = maxrt;
 }
 
-double Lux::getAvgLux() {
+double LuxManager::getAvgLux() {
   return lux_total / (double) lux_readings;
 }
 
-double Lux::resetAvgLux() {
+void LuxManager::resetAvgLux() {
   lux_total = 0;
-  lux_readings = 0;  
+  lux_readings = 0;
   dprintln(PRINT_LUX_DEBUG, "reset lux_total and lux_readings");
 }
 
@@ -97,7 +97,7 @@ void tcaselect(uint8_t i) {
   Wire.endTransmission();
 }
 
-void Lux::startSensor(byte g, byte r) {
+void LuxManager::startSensor(byte g, byte r) {
   Wire.begin();
   if (tca_addr > -1) {
     tcaselect(tca_addr);
@@ -118,7 +118,7 @@ void Lux::startSensor(byte g, byte r) {
   }
 }
 
-double Lux::checkForLuxOverValue() {
+double LuxManager::checkForLuxOverValue() {
   // sometimes the sensor will give an incorrect extremely high reading, this compensates for this...
   if (lux > 100000) {
     dprintln(PRINT_LUX_DEBUG, "lux "); dprintln(PRINT_LUX_DEBUG, id); dprintln(PRINT_LUX_DEBUG, " reading error: ");
@@ -137,7 +137,7 @@ double Lux::checkForLuxOverValue() {
   return lux;
 }
 
-void Lux::readLux() {
+void LuxManager::readLux() {
   dprint(PRINT_LUX_DEBUG, last_reading); dprint(PRINT_LUX_DEBUG, " readLux("); dprint(PRINT_LUX_DEBUG, id); dprint(PRINT_LUX_DEBUG, ")\t");
   if (tca_addr > -1) {
     tcaselect(tca_addr);
@@ -165,13 +165,16 @@ void Lux::readLux() {
   // todo have the brightness scaler mapping
   brightness_scaler = calculateBrightnessScaler();
   neo->setBrightnessScaler(brightness_scaler);
-  if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0){dprint(PRINT_LUX_READINGS, "\tbs: "); dprintln(PRINT_LUX_READINGS, brightness_scaler);};
+  if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0) {
+      dprint(PRINT_LUX_READINGS, "\tbs: "); 
+      dprintln(PRINT_LUX_READINGS, brightness_scaler);
+  };
   updateMinMax();
   last_reading = 0;
 }
 
 
-double Lux::calculateBrightnessScaler() {
+double LuxManager::calculateBrightnessScaler() {
   // todo need to make this function better... linear mapping does not really work, need to map li
   // dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
   dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tconstrained:\t");
@@ -188,7 +191,7 @@ double Lux::calculateBrightnessScaler() {
   return bs;
 }
 
-void Lux::updateMinMax() {
+void LuxManager::updateMinMax() {
   if (lux < min_reading && lux > 0.0) {
     min_reading = lux;
   } else if (lux > max_reading && lux < 10000) {
@@ -196,12 +199,12 @@ void Lux::updateMinMax() {
   }
 }
 
-void Lux::resetMinMax() {
+void LuxManager::resetMinMax() {
   min_reading = 10000;
   max_reading = 0;
 }
 // todo move me to the correct place
-void Lux::calibrate(long len, bool first_time = true) {
+void LuxManager::calibrate(long len, bool first_time = true) {
   // todo change this function so it takes the average of these readings
   Serial.println("------------------------");
   Serial.println("Starting Lux Calibration");
@@ -229,12 +232,12 @@ void Lux::calibrate(long len, bool first_time = true) {
   Serial.println("------------------------\n");
 }
 
-double Lux::forceLuxReading() {
+double LuxManager::forceLuxReading() {
   readLux();
   return lux;
 }
 
-void Lux::update() {
+void LuxManager::update() {
   if ((neo->getLedsOn() == false && neo->getOnOffLen() >= LUX_SHDN_LEN) || (neo->getShdnLen() > LUX_SHDN_LEN)) {
     readLux();
     if (neo->getShdnLen() > LUX_SHDN_LEN) {
