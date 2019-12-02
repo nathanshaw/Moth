@@ -7,9 +7,10 @@
 #include "Configuration_cicadas.h"
 #include "NeopixelManager/NeopixelManager.h"
 #include "LuxManager/LuxManager.h"
+#include "AudioEngine/AudioEngine.h"
 #include <Audio.h>
 
-////////////////////////////////////////////////////////////////////////
+//////////////////////////////// Global Objects /////////////////////////
 
 WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
 
@@ -24,6 +25,8 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
 };
 
 DatalogManager datalog_manager(datalog_timer_lens, datalog_timer_num);
+
+FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
 
 ////////////////////////////// Datalogging ////////////////////////////
 #if AUTOLOG_LUX && front_lux_active
@@ -122,7 +125,6 @@ AudioConnection          patchCord31(song_post_amp1, song_peak1);
 AudioConnection          patchCord32(song_post_amp1, 0, usb1, 1);
 AudioConnection          patchCord33(click_post_amp2, click_rms2);
 AudioConnection          patchCord34(click_post_amp2, click_peak2);
-
 
 // click gain //////////////////
 double click_gain[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN}; // starting click gain level
@@ -429,7 +431,7 @@ void cicadaSetup() {
   /////////////////////////////////
   // VEML sensors through TCA9543A
   /////////////////////////////////
-
+  /*
   Serial.println();
   printMinorDivide();
   Serial.println("Searching for Lux Sensors");
@@ -454,7 +456,7 @@ void cicadaSetup() {
     Serial.println(lux_min_reading_delay);
   }
   delay(200);
-
+  */
   /////////////////////////////////
   // Start the LEDs ///////////////
   /////////////////////////////////
@@ -536,6 +538,7 @@ void songDisplay() {
   }
 }
 
+/*
 void updateSongGainMinMax() {
   if (song_gain[0] > song_gain_max[0]) {
     song_gain_max[0] = song_gain[0];
@@ -556,6 +559,7 @@ void updateSongGainMinMax() {
     dprint(PRINT_SONG_DATA, "logged new rear song gain low   : "); dprintln(PRINT_SONG_DATA, song_gain_min[1]);
   }
 }
+*/
 
 bool adjustSongGainLedOnRatio() {
   bool success = false;
@@ -584,8 +588,9 @@ bool adjustSongGainLedOnRatio() {
     }
   }
   if (success) {
-    updateSongGain(song_gain);
-    updateSongGainMinMax();
+    // todo add back
+    // updateSongGain(song_gain);
+    // updateSongGainMinMax();
     return 1;
   }
   return 0;
@@ -649,8 +654,9 @@ void checkSongAutoGain() {
     num_song_peaks[i] = 0;
   }
   if (success) {
-    updateSongGain(song_gain);
-    updateSongGainMinMax();
+    // todo add back in
+    // updateSongGain(song_gain);
+    // updateSongGainMinMax();
   };
 }
 // #endif // __CICADA_SONG_H__
@@ -869,6 +875,7 @@ void mothSetup() {
   if (PRINT_EEPROM_CONTENTS  > 0) {
     delay(1000);
     datalog_manager.printLogs();
+    datalog_manager.printTimerConfigs();
   } else {
     Serial.println("Not printing the EEPROM Datalog Contents");
   }
@@ -881,10 +888,11 @@ void mothSetup() {
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();
   }
-
+  /*
   if (data_logging_active) {
-    writeSetupConfigsToEEPROM(); n
+    writeSetupConfigsToEEPROM();
   }
+  */
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
@@ -898,12 +906,15 @@ void mothSetup() {
 
 void tenSecondUpdate() {
   if (ten_second_timer > TEN_SECONDS) {
-    checkAudioUsage();
+    // todo add back
+    // checkAudioUsage();
 #if (AUTO_GAIN)
-    autoGainAdjust(); // will call rear as well if in stereo mode
+    // todo add back
+    // autoGainAdjust(); // will call rear as well if in stereo mode
 #endif
-    updateEEPROMLogs(neos, lux_managers);
-    ten_second_timer = 0;
+    // todo add back
+    // updateEEPROMLogs(neos, lux_managers);
+    // ten_second_timer = 0;
   }
 }
 

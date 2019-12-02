@@ -20,6 +20,7 @@ class DatalogManager {
 
         void update();
         void printLogs();
+        void printTimerConfigs();
 
     private:
         uint8_t add_log_idx = 0;
@@ -37,6 +38,28 @@ DatalogManager::DatalogManager(unsigned long timer_lengths[], uint8_t num_timers
     }
 }
 
+void DatalogManager::printLogs() {
+    printMajorDivide(" Printing All Datalogs ");
+    for (int i = 0; i < active_logs; i++) {
+        logs[i]->printLog(8);
+    }
+}
+
+void DatalogManager::printTimerConfigs()  {
+    printMinorDivide();
+    Serial.println("Printing the Timer Configurations for the Datalog Manager");
+    for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
+        Serial.print("current: ");Serial.print(log_timers[i]);Serial.print("\tmax\t");
+        Serial.println(log_refresh_length[i]);
+    }
+    Serial.print("log_timer_map:\t");
+    for (int i = 0; i < DATALOG_MANAGER_MAX_LOGS; i++) {
+        Serial.print(log_timer_map[i]);Serial.print("\t");
+    }
+    Serial.println();
+    printMinorDivide();
+}
+
 void DatalogManager::addLog(Datalog *log, uint8_t timer_num) {
     if (add_log_idx >= DATALOG_MANAGER_MAX_LOGS) {
         Serial.println("ERROR, Datalog Manager can only handle ");
@@ -48,6 +71,8 @@ void DatalogManager::addLog(Datalog *log, uint8_t timer_num) {
     log_timer_map[add_log_idx] = timer_num;
     active_logs = max(add_log_idx, active_logs);
     add_log_idx++;
+    Serial.print("Added log to the datamanager under timer ");
+    Serial.println(timer_num);
 }
 
 void DatalogManager::update() {
@@ -61,6 +86,7 @@ void DatalogManager::update() {
          if (log_timer_map[l] == i && u_time > log_refresh_length[i]) {
             logs[l]->update();
             updates++;
+            Serial.print("Updating the ");Serial.print(i);Serial.println(" timer logs");
          }
         }
         if (updates > 0) {

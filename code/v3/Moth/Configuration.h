@@ -72,11 +72,12 @@ unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 #define DATALOG_TIME_FRAME_3  (1000*60*60*0.5)
 #define DATALOG_TIME_FRAME_4  (1000*60*60*0.5)
 
-const uint8_t datalog_timer_num = 4;
-const long datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
+uint8_t datalog_timer_num = 4;
+unsigned long datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
 
 // will the lux readings be logged?
 #define AUTOLOG_LUX        1
+// the number of values to store in the logging process
 #define LUX_LOG_LENGTH     40
 
 #define AUTOLOG_FLASHES    0
