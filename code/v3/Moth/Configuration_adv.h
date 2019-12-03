@@ -82,4 +82,24 @@ bool data_logging_active = true;
 #define PEAK_SCALER 10.0
 #define RMS_SCALER 10.0
 
+///////////////////////////////// Datalogging shizzzz /////////////////
+#define DATATYPE_DOUBLE        0
+#define DATATYPE_SHORT         1
+#define DATATYPE_LONG          2
+#define DATATYPE_BYTE          3
+
+//////////////////////////// Operating Modes for the Datalog /////////////////////
+// will be written once at the setup loop then will never write again
+#define DATALOG_TYPE_INIT       0
+// will write to the same addr over and over again when commanded to do so
+#define DATALOG_TYPE_UPDATE     1
+// log consists of several memory locations for its values and will increment its index
+// with each read until the space runs out then it will stop logging
+// Note that the timing of the updates are determined by the datalogmanager class
+#define DATALOG_TYPE_AUTO       2
+
+#define UPDATING_LOG 0
+#define ONE_TIME_LOG 1
+#define DATALOG_MANAGER_MAX_LOGS  10
+#define DATALOG_MANAGER_TIMER_NUM 4
 #endif // CONFIGURATION_ADV_H

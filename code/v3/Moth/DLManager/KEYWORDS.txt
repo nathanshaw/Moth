@@ -1,16 +1,22 @@
 
-DatalogManager          KEYWORD1
+DLManager          KEYWORD1
 Datalog                 KEYWORD1
 
 addLog                  KEYWORD2
 configureAutolog        KEYWORD2
 update                  KEYWORD2
+createAutolog           KEYWORD2
+configureTimer          KEYWORD2
+printTimerConfigs       KEYWORD2
 
-printLog                KEYWORD2
 printLogs               KEYWORD2
 clearLog                KEYWORD2
 
+
 write                   KEYWORD2
 read                    KEYWORD2
+writeCheck              KEYWORD2
+clearLog                KEYWORD2
+printLog                KEYWORD2
 
 

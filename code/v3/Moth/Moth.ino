@@ -8,7 +8,7 @@
 */
 // todo need logic for which libraries to include
 #include "Configuration.h"
-
+// to ensure the compiler can see the cpp files alright...
 #if FIRMWARE_MODE == CICADA_MODE
 #include "ModeCicada.h"
 #elif FIRMWARE_MODE == PITCH_MODE

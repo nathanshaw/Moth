@@ -1,7 +1,7 @@
 // contains all the datalogging configuration goodies
 #ifndef __DATALOG_CONFIGURATION_H__
 #define __DATALOG_CONFIGURATION_H__
-#define DOUBLE_PRECISION 1000000.0
+#define DOUBLE_PRECISION ((double)100000.0)
 
 // EEPROM MEMORY ADDRESSES
 #define EEPROM_JMP1                       0
@@ -76,7 +76,7 @@ const long EEPROM_LUX_LOG_END = EEPROM_LUX_LOG_START + (4 * 2 * EEPROM_LUX_LOG_L
 //
 #define EEPROM_LOG_SIZE                 2000
 // How much space will be allocated for the write once logs
-#define WRITE_ONCE_LOG_SPACE            400
+#define EEPROM_WRITE_ONCE_LOG_SIZE      400
 #define AUTO_LOG_SPACE                  (EEPROM_LOG_SIZE - WRITE_ONCE_LOG_SPACE)
 
 

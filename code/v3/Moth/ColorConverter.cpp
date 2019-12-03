@@ -114,7 +114,7 @@ void RGBConverter::HsvToRgb(double hue, double saturation, double value, uint8_t
 
 void RGBConverter::HslToRgb(double hue, double saturation, double lightness, uint8_t& red, uint8_t& green, uint8_t& blue)
 {
-	double r, g, b;
+	double r, g, b = 0.0;
 
 	if (saturation == 0)
 	{

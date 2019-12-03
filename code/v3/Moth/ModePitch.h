@@ -9,7 +9,7 @@
 #include <WS2812Serial.h>
 #include "Configuration.h"
 #include "ColorConverter.h"
-#include "DatalogManager/DatalogManager.h"
+#include "DLManager/DLManager.h"
 
 uint8_t rgb[2][3];
 double hsb[2][3] = {{1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}};

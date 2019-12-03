@@ -46,8 +46,8 @@ bool rear_lux_active = true;
 #define BRIGHTNESS_SCALER_MIN     0.5
 #define BRIGHTNESS_SCALER_MAX     1.5
 
-unsigned long lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
-unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
+uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
+uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 
 ///////////////////////// NeoPixel Settings ///////////////////////////////
 #define MIN_BRIGHTNESS            10
@@ -57,23 +57,23 @@ unsigned long lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // record the run time // last value is number of minutes
-#define DATALOG_TIMER_1       (1000*60*5)
-#define DATALOG_TIMER_2       (1000*60*60)
-#define DATALOG_TIMER_3       (1000*60*60)
+#define DATALOG_TIMER_1       (1000*60*1)
+#define DATALOG_TIMER_2       (1000*60*10)
+#define DATALOG_TIMER_3       (1000*60*30)
 #define DATALOG_TIMER_4       (1000*60*60)
 
-#define DATALOG_START_DELAY_1 (1000*60*1)
+#define DATALOG_START_DELAY_1 (1000*60*0)
 #define DATALOG_START_DELAY_2 (1000*60*1)
-#define DATALOG_START_DELAY_3 (1000*60*1)
-#define DATALOG_START_DELAY_4 (1000*60*1)
+#define DATALOG_START_DELAY_3 (1000*60*10)
+#define DATALOG_START_DELAY_4 (1000*60*60)
 
-#define DATALOG_TIME_FRAME_1  (1000*60*60*0.5)
-#define DATALOG_TIME_FRAME_2  (1000*60*60*0.5)
+#define DATALOG_TIME_FRAME_1  (1000*60*60*0.1)
+#define DATALOG_TIME_FRAME_2  (1000*60*60*0.25)
 #define DATALOG_TIME_FRAME_3  (1000*60*60*0.5)
-#define DATALOG_TIME_FRAME_4  (1000*60*60*0.5)
+#define DATALOG_TIME_FRAME_4  (1000*60*60*50)
 
 uint8_t datalog_timer_num = 4;
-unsigned long datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
+uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
 
 // will the lux readings be logged?
 #define AUTOLOG_LUX        1
@@ -101,7 +101,7 @@ unsigned long datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG
 #define PRINT_LUX_READINGS            true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG false
 // TODO
-#define PRINT_SONG_DATA               true
+#define PRINT_SONG_DATA               false
 // TODO
 #define PRINT_CLICK_FEATURES          false
 #define PRINT_CLICK_DEBUG             false

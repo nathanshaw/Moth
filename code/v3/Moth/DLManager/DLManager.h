@@ -1,51 +1,108 @@
-#ifndef __DATALOG_MANAGER_CONF_H__
-#define __DATALOG_MANAGER_CONF_H__
+#ifndef __DLMANAGER_H__
+#define __DLMANAGER_H__
 
 #include "../Configuration.h"
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "Datalog.h"
 
-#define UPDATING_LOG 0
-#define ONE_TIME_LOG 1
-#define DATALOG_MANAGER_MAX_LOGS  10
-#define DATALOG_MANAGER_TIMER_NUM 4
+class DLManager {
+    private:
+        String id = "";
+        // for keeping track of the datalogging shizzz
+        uint32_t total_log_size = EEPROM_LOG_SIZE;
+        // how much memory there is to store the single value logs
+        uint32_t single_value_log_size = EEPROM_WRITE_ONCE_LOG_SIZE;
+        // how much unallocated single value space is left?
+        uint32_t remaining_single_value_size = single_value_log_size;
+        // what is the next unallocated space?
+        uint32_t next_single_value_start_idx = 0;
 
-class DatalogManager {
+        //////////// autolog ////////////////////
+        uint32_t autolog_start_idx = single_value_log_size;
+        uint32_t next_free_log_start_idx;
+        uint32_t remaining_autolog_space = total_log_size - single_value_log_size;
+
+
+        // Start and stop indexes for each log
+        Datalog logs[DATALOG_MANAGER_MAX_LOGS];
+        bool first_reading[DATALOG_MANAGER_MAX_LOGS];
+        uint8_t log_timer_map[DATALOG_MANAGER_MAX_LOGS]; // what timer is associated with the log
+        uint8_t active_logs = 0;
+        // for keeping track of which is the next index for a log to add
+        uint8_t add_log_idx = 0;
+
+        // for handling pointer logs
+        Datalog *logs_p[DATALOG_MANAGER_MAX_LOGS];
+        bool first_reading_p[DATALOG_MANAGER_MAX_LOGS];
+        uint8_t log_timer_map_p[DATALOG_MANAGER_MAX_LOGS]; // what timer is associated with the log
+        uint8_t active_logs_p = 0;
+        // for keeping track of which is the next index for a log to add
+        uint8_t add_log_idx_p = 0;
+
+        // for keeping track of the timers / triggers
+        elapsedMillis log_timers[DATALOG_MANAGER_TIMER_NUM];
+        uint32_t log_refresh_length[DATALOG_MANAGER_TIMER_NUM]; // how long each timer lasts for
+        uint32_t start_delays[DATALOG_MANAGER_TIMER_NUM];
+        uint32_t remaining_logs[DATALOG_MANAGER_TIMER_NUM];
     public:
-        DatalogManager(unsigned long timer_lengths[], uint8_t num_timers);
-
-        void addLog(Datalog *, uint8_t timer);
-        bool configureAutolog(uint8_t timer_group, unsigned long wait, unsigned long length, unsigned int vals);
+        // DLManager();
+        DLManager();
+        DLManager(String _id);
+        ~DLManager();
+        // DLManager(Datalog &l[], uint8_t);
+        void addLog(Datalog *, uint8_t);
+        void createAutolog(uint8_t);
+        void startAutolog(uint8_t timer_group, uint32_t wait, uint32_t length, unsigned int vals);
+        bool configureAutolog();
+        void configureTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested);
 
         void update();
         void printLogs();
         void printTimerConfigs();
 
-    private:
-        uint8_t add_log_idx = 0;
-        Datalog *logs[DATALOG_MANAGER_MAX_LOGS];
-        uint8_t log_timer_map[DATALOG_MANAGER_MAX_LOGS]; // what timer is associated with the log
-        uint8_t active_logs = 0;
-
-        elapsedMillis log_timers[DATALOG_MANAGER_TIMER_NUM];
-        unsigned long log_refresh_length[DATALOG_MANAGER_TIMER_NUM]; // how long each timer lasts for
 };
+DLManager::DLManager(){};
+DLManager::~DLManager(){};
+/*
+DatalogManager::DatalogManager(Datalog &l[], uint8_t num_logs) {
+    id = _id;
+    for (int i = 0; i < DATALOG_MANAGER_MAX_LOGS; i++ ) {
+        first_reading[i] = true;
+    }
+    for (int i = 0; i < num_logs; i++ ) {
+        logs[i] = &l[i];
+    }
+}
+*/
 
-DatalogManager::DatalogManager(unsigned long timer_lengths[], uint8_t num_timers) {
-    for (int i = 0; i <  num_timers; i++) {
-        log_refresh_length[i] = timer_lengths[i];
+DLManager::DLManager(String _id) {
+    id = _id;
+    for (int i = 0; i < DATALOG_MANAGER_MAX_LOGS; i++ ) {
+        first_reading[i] = true;
     }
 }
 
-void DatalogManager::printLogs() {
+void DLManager::configureTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested) {
+    log_refresh_length[num] = log_time / logs_requested;
+    start_delays[num] = start_delay;
+    remaining_logs[num] = logs_requested;
+}
+
+void DLManager::createAutolog(uint8_t _timer) {
+    //  addLog(Datalog(), _timer);
+    //  remianing_logs[x] = x;
+}
+
+void DLManager::printLogs() {
     printMajorDivide(" Printing All Datalogs ");
     for (int i = 0; i < active_logs; i++) {
-        logs[i]->printLog(8);
+        logs[i].printLog(8);
     }
+    printMinorDivide();
 }
 
-void DatalogManager::printTimerConfigs()  {
+void DLManager::printTimerConfigs()  {
     printMinorDivide();
     Serial.println("Printing the Timer Configurations for the Datalog Manager");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
@@ -60,37 +117,43 @@ void DatalogManager::printTimerConfigs()  {
     printMinorDivide();
 }
 
-void DatalogManager::addLog(Datalog *log, uint8_t timer_num) {
-    if (add_log_idx >= DATALOG_MANAGER_MAX_LOGS) {
+void DLManager::addLog(Datalog *log, uint8_t timer_num) {
+    if (add_log_idx_p >= DATALOG_MANAGER_MAX_LOGS) {
         Serial.println("ERROR, Datalog Manager can only handle ");
         Serial.print(DATALOG_MANAGER_MAX_LOGS);
         Serial.println(" logs at a time, resetting index to 0");
-        add_log_idx = 0;
+        add_log_idx_p = 0;
     }
-    logs[add_log_idx] = log;
-    log_timer_map[add_log_idx] = timer_num;
-    active_logs = max(add_log_idx, active_logs);
-    add_log_idx++;
+    logs_p[add_log_idx_p] = log;
+    log_timer_map_p[add_log_idx_p] = timer_num;
+    active_logs_p = max(add_log_idx_p, active_logs_p);
+    add_log_idx_p++;
     Serial.print("Added log to the datamanager under timer ");
     Serial.println(timer_num);
 }
 
-void DatalogManager::update() {
+void DLManager::update() {
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
+        // if it is the first reading then only update if it has been longer than the start delay
         // take the elapsedd millis value at start of loop to ensure that
         // all related logs either update or dont update at the same time
         unsigned long u_time = log_timers[i];
-        // if it is time to update these logs then do so
-        uint8_t updates = 0;
-        for (int l = 0; l < active_logs; l++) {
-         if (log_timer_map[l] == i && u_time > log_refresh_length[i]) {
-            logs[l]->update();
-            updates++;
-            Serial.print("Updating the ");Serial.print(i);Serial.println(" timer logs");
-         }
-        }
-        if (updates > 0) {
-            log_timers[i] = 0;
+        if ((first_reading[i] == true && u_time > start_delays[i]) || (first_reading[i] == false )) {
+            // if it is time to update these logs then do so
+            uint8_t updates = 0;
+            for (int l = 0; l < active_logs; l++) {
+             if (log_timer_map[l] == i && u_time > log_refresh_length[i]) {
+                logs[l].update();
+                updates++;
+                Serial.print("Updating the ");Serial.print(i);Serial.println(" timer logs");
+             }
+             else {
+                 Serial.print(u_time);Serial.print("\t");Serial.println(log_refresh_length[i]);
+             }
+            }
+            if (updates > 0) {
+                log_timers[i] = 0;
+            }
         }
     }
 }
@@ -363,5 +426,4 @@ void printEEPROMContents() {
 }
 
 */ 
-
 #endif // datalog_manager_h

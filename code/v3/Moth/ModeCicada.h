@@ -2,7 +2,7 @@
 #define __MODE_CICADA_H__
 #include <Audio.h>
 #include <WS2812Serial.h>
-#include "DatalogManager/DatalogManager.h"
+#include "DLManager/DLManager.h"
 #include "Configuration.h"
 #include "Configuration_cicadas.h"
 #include "NeopixelManager/NeopixelManager.h"
@@ -19,25 +19,31 @@ NeoGroup neos[2] = {
   NeoGroup(&leds, 5, 10, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
+// lux managers to keep track of the VEML readings
 LuxManager lux_managers[NUM_LUX_SENSORS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
-DatalogManager datalog_manager(datalog_timer_lens, datalog_timer_num);
+DLManager datalog_manager = DLManager((String)"Main");
+
+// record the run time // last value is number of minutes
+#define DATALOG_TIMER_1       (1000*60*1)
+#define DATALOG_TIMER_2       (1000*60*10)
+#define DATALOG_TIMER_3       (1000*60*30)
+#define DATALOG_TIMER_4       (1000*60*60)
+
+#define DATALOG_START_DELAY_1 (1000*60*0)
+#define DATALOG_START_DELAY_2 (1000*60*1)
+#define DATALOG_START_DELAY_3 (1000*60*10)
+#define DATALOG_START_DELAY_4 (1000*60*60)
+
+#define DATALOG_TIME_FRAME_1  (1000*60*60*0.1)
+#define DATALOG_TIME_FRAME_2  (1000*60*60*0.25)
+#define DATALOG_TIME_FRAME_3  (1000*60*60*0.5)
+#define DATALOG_TIME_FRAME_4  (1000*60*60*50)
 
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
-
-////////////////////////////// Datalogging ////////////////////////////
-#if AUTOLOG_LUX && front_lux_active
-// todo double check the addr
-Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
-datalogM.addLog(&luxLog_f);
-#endif
-#if AUTOLOG_LUX && rear_lux_active
-Datalog lux_log_r = Datalog(EEPROM_LUX_LOG_START, "Lux Rear", lux_managers->lux, true);
-datalogM.addLog(&luxLog_r);
-#endif
 
 /////////////////////////////// Lux Sensors //////////////////////////////
 double combined_lux;
@@ -152,7 +158,7 @@ uint8_t song_rms_weighted[2] = {0, 0};  // 0 -255 depending on the RMS of the so
 // song peak
 uint8_t song_peak_weighted[2] = {0, 0}; // 0 -255 depending on the peak of the song band...
 double total_song_peaks[2];
-unsigned long num_song_peaks[2];
+uint32_t num_song_peaks[2];
 
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
@@ -183,9 +189,9 @@ void updateClickAudioFeaturesRMS(uint8_t i) {
     // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
     // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
     if (neos[i].flashOn() ==  true) { // all flash logic is conducted in the NeoGroup instance
-      Serial.print(neos[i].getName());
-      Serial.print(" num clicks increased : ");
-      Serial.println(neos[i].getNumFlashes());
+      dprint(PRINT_CLICK_DEBUG, neos[i].getName());
+      dprint(PRINT_CLICK_DEBUG, " num clicks increased : ");
+      dprintln(PRINT_CLICK_DEBUG, neos[i].getNumFlashes());
     }
   }
 }
@@ -195,8 +201,8 @@ void updateClickAudioFeaturesPeak(uint8_t i) {
   if (click_peak_delta[i] > CLICK_PEAK_DELTA_THRESH) {
     if (neos[i].flashOn() == true) { // all flash logic is conducted in the NeoGroup instance
       num_cpm_clicks[i]++;
-      Serial.print("cpm clicks increased : ");
-      Serial.println(num_cpm_clicks[i]);
+      dprint(PRINT_CLICK_DEBUG, "cpm clicks increased : ");
+      dprintln(PRINT_CLICK_DEBUG, num_cpm_clicks[i]);
     }
   }
 }
@@ -212,7 +218,7 @@ void writeAudioUsageToEEPROM(uint8_t used) {
 }
 
 /*
-void checkAudioUsage() {
+  void checkAudioUsage() {
   // TODO instead perhaps log the audio usage...
   if (last_usage_print > AUDIO_USAGE_POLL_RATE) {
     uint8_t use = AudioMemoryUsageMax();
@@ -226,7 +232,7 @@ void checkAudioUsage() {
     }
     last_usage_print = 0;
   }
-}
+  }
 */
 
 void updateLuxSensors() {
@@ -324,7 +330,7 @@ void updateClicks() {
   }
 };
 /*
-void updateSongGain(double song_gain[]) {
+  void updateSongGain(double song_gain[]) {
   // todo right now it just updates the song gain for everything
   for (unsigned int i = 0; i < num_channels; i++) {
     if (i == 0) {
@@ -343,7 +349,7 @@ void updateSongGain(double song_gain[]) {
       writeDoubleToEEPROM(EEPROM_SONG_GAIN_CURRENT + (i * 4), song_gain[i]);
     }
   }
-}
+  }
 */
 
 void cicadaSetup() {
@@ -432,30 +438,30 @@ void cicadaSetup() {
   // VEML sensors through TCA9543A
   /////////////////////////////////
   /*
-  Serial.println();
-  printMinorDivide();
-  Serial.println("Searching for Lux Sensors");
-  Serial.print("Log Polling Rate (ms)              :\t");
-  Serial.println(LOG_POLLING_RATE);
-  if (lux_max_reading_delay > LOG_POLLING_RATE) {
+    Serial.println();
+    printMinorDivide();
+    Serial.println("Searching for Lux Sensors");
+    Serial.print("Log Polling Rate (ms)              :\t");
+    Serial.println(LOG_POLLING_RATE);
+    if (lux_max_reading_delay > LOG_POLLING_RATE) {
     lux_max_reading_delay = LOG_POLLING_RATE;
     Serial.print("updated lux_max_reading_delay to   :\t");
     Serial.println(lux_max_reading_delay);
-  }
-  else {
+    }
+    else {
     Serial.print("lux_max_reading_delay is set to    :\t");
     Serial.println(lux_max_reading_delay);
-  }
-  if (lux_min_reading_delay > LOG_POLLING_RATE) {
+    }
+    if (lux_min_reading_delay > LOG_POLLING_RATE) {
     lux_min_reading_delay = LOG_POLLING_RATE;
     Serial.print("updated lux_min_reading_delay to   :\t");
     Serial.println(lux_min_reading_delay);
-  }
-  else {
+    }
+    else {
     Serial.print("lux_min_reading_delay is set to    :\t");
     Serial.println(lux_min_reading_delay);
-  }
-  delay(200);
+    }
+    delay(200);
   */
   /////////////////////////////////
   // Start the LEDs ///////////////
@@ -539,7 +545,7 @@ void songDisplay() {
 }
 
 /*
-void updateSongGainMinMax() {
+  void updateSongGainMinMax() {
   if (song_gain[0] > song_gain_max[0]) {
     song_gain_max[0] = song_gain[0];
     writeDoubleToEEPROM(EEPROM_SONG_GAIN_MAX, song_gain_max[0]);
@@ -558,7 +564,7 @@ void updateSongGainMinMax() {
     writeDoubleToEEPROM(EEPROM_SONG_GAIN_MIN + 4, song_gain_min[1]);
     dprint(PRINT_SONG_DATA, "logged new rear song gain low   : "); dprintln(PRINT_SONG_DATA, song_gain_min[1]);
   }
-}
+  }
 */
 
 bool adjustSongGainLedOnRatio() {
@@ -692,49 +698,6 @@ void updateClickGain(double click_gain[], double click_gain_min[], double click_
   Serial.println("WARNING UPDATECLICKGAIN IS NOT IMPLEMENTED YET");
 }
 
-// #endif // CICADA_CONFIG_H
-// #endif // __CIDADA_MODE_H__
-
-/*#ifndef __CICADA_GAIN_CONTROL_H__
-  #define __CICADA_GAIN_CONTROL_H__
-  #include "MothConfig.h"
-  // #include "Mode_Cicada.h"
-*/
-/*
-  class FeatureCollector {
-  public:
-    FeatureCollector(AudioAnalyzeRMS *r, AudioAnalyzePeak *p);
-    void update();
-  private:
-    AudioAnalyzeRMS *rms_ana;
-    AudioAnalyzePeak *peak_ana;
-    void calculateRMS();
-    void calculatePeak();
-    double rms;
-    double rms_pos_delta;
-    double peak;
-    double peak_pos_delta;
-  };
-
-  class AutoGain {
-  public:
-    AutoGain(AudioAnalyzeRMS *r, AudioAnalyzePeak *p);
-    void update();
-  private:
-    FeatureCollector fc;
-
-  };
-
-  void FeatureCollector::update() {
-
-  }
-
-  FeatureCollector::FeatureCollector(AudioAnalyzeRMS *r, AudioAnalyzePeak *p) {
-  rms_ana = r;
-  peak_ana = p;
-  }
-*/
-
 void calculateSongAudioFeatures() {
   // TODO, rework the whole calculate weighted song brigtness to something that makes more sense
   // TODO rework to only calculate the features which are the features used
@@ -848,9 +811,26 @@ void autoGainAdjust() {
   checkSongAutoGain();
 
   last_auto_gain_adjustment = 0;
-  dprintln(PRINT_AUTO_GAIN, " ------------------------------------------------- ");
+  dprintMinorDivide(PRINT_AUTO_GAIN);
 }
 
+void setupDLManager() {
+/*
+#if AUTOLOG_LUX && front_lux_active
+  // todo double check the addr
+  Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
+  datalog_manager.addLog(&luxLog_f);
+#endif
+#if AUTOLOG_LUX && rear_lux_active
+  Datalog lux_log_r = Datalog(EEPROM_LUX_LOG_START, "Lux Rear", lux_managers->lux, true);
+  datalog_manager.addLog(&luxLog_r);
+#endif
+*/
+  datalog_manager.configureTimer((uint8_t)0, (uint32_t)DATALOG_START_DELAY_1, (uint32_t)DATALOG_TIME_FRAME_1, 40);
+  datalog_manager.configureTimer((uint8_t)1, (uint32_t)DATALOG_START_DELAY_2, (uint32_t)DATALOG_TIME_FRAME_2, 40);
+  datalog_manager.configureTimer((uint8_t)2, (uint32_t)DATALOG_START_DELAY_3, (uint32_t)DATALOG_TIME_FRAME_3, 40);
+  datalog_manager.configureTimer((uint8_t)3, (uint32_t)DATALOG_START_DELAY_4, (uint32_t)DATALOG_TIME_FRAME_4, 40);
+}
 
 void mothSetup() {
   Serial.begin(57600);
@@ -888,11 +868,9 @@ void mothSetup() {
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();
   }
-  /*
   if (data_logging_active) {
-    writeSetupConfigsToEEPROM();
+    setupDLManager();
   }
-  */
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
@@ -932,7 +910,7 @@ void mothLoop() {
   datalog_manager.update();
 }
 /*
-void testMicrophones() {
+  void testMicrophones() {
   if (testMicrophone(&input, front) == false) {
     // todo - do something to deactive this audio channel
     Serial.println("setting front_mic_active to false");
@@ -944,6 +922,6 @@ void testMicrophones() {
     rear_mic_active = false;
   }
   printDivideLn();
-}
+  }
 */
 #endif // __MODE_CICADA_H__

@@ -1,46 +1,13 @@
-#ifndef __DATALOG_CONF_H__
-#define __DATALOG_CONF_H__
+#ifndef __DATALOG_H__
+#define __DATALOG_H__
 
-#define DATATYPE_DOUBLE        0
-#define DATATYPE_SHORT         1
-#define DATATYPE_LONG          2
-#define DATATYPE_BYTE          3
-
-//////////////////////////// Operating Modes for the Datalog /////////////////////
-// will be written once at the setup loop then will never write again
-#define DATALOG_TYPE_INIT       0
-// will write to the same addr over and over again when commanded to do so
-#define DATALOG_TYPE_UPDATE     1
-// log consists of several memory locations for its values and will increment its index
-// with each read until the space runs out then it will stop logging
-// Note that the timing of the updates are determined by the datalogmanager class
-#define DATALOG_TYPE_AUTO       2
+#include "../Configuration.h"
+#include <EEPROM.h>
 
 class Datalog {
-    public:
-        Datalog(String _id, unsigned long address, double *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, unsigned long address, uint8_t *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, unsigned long address, uint16_t *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, unsigned long address, uint32_t *val, int length, bool move, uint8_t _type);
-
-        bool update(); // could this be a while loop at some point?
-
-        bool write(double data);
-        bool write(uint8_t data);
-        bool write(uint16_t data);
-        bool write(uint32_t data);
-
-        bool writeCheck(double);
-        bool writeCheck(uint8_t);
-        bool writeCheck(uint16_t);
-        bool writeCheck(uint32_t);
-
-        void clearLog();
-        void printLog(uint8_t lines);
-
     private:
         // to reduce code on the overloaded init functions
-        void _setup(String, unsigned long, int, bool, uint8_t);
+        void _setup(String, uint32_t, int, bool, uint8_t);
         // for keeping track of index moving for autolog
         bool moving_index = false;
         // this is the user assigned name to the datalog
@@ -54,7 +21,7 @@ class Datalog {
         // todo ...
         bool autolog_active = false;
 
-        // pointers to the variables we want to track
+        // references to the variables we want to track
         double   *dval;
         uint8_t  *bval;
         uint16_t *sval;
@@ -64,10 +31,10 @@ class Datalog {
         bool active = false;
 
         // for keeping track of where to write
-        unsigned long addr;
+        uint32_t addr;
         unsigned int start_addr; // the starting addr
         unsigned int end_addr;   // if multiple values are stored by this log, then this is the end addr.
-        unsigned long log_length;
+        uint32_t log_length;
 
         // writing to EEPROM
         void writeDouble(double data);
@@ -84,32 +51,56 @@ class Datalog {
         uint16_t  readShort();
         uint32_t  readLong(int);
         uint32_t  readLong();
-};
+    public:
+        Datalog();
+        ~Datalog();
+        Datalog(String _id, uint32_t address, double *val, int length, bool move, uint8_t _type);
+        Datalog(String _id, uint32_t address, uint8_t *val, int length, bool move, uint8_t _type);
+        Datalog(String _id, uint32_t address, uint16_t *val, int length, bool move, uint8_t _type);
+        Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move, uint8_t _type);
 
+        bool update(); // could this be a while loop at some point?
+
+        bool write(double data);
+        bool write(uint8_t data);
+        bool write(uint16_t data);
+        bool write(uint32_t data);
+
+        bool writeCheck(double);
+        bool writeCheck(uint8_t);
+        bool writeCheck(uint16_t);
+        bool writeCheck(uint32_t);
+
+        void clearLog();
+        void printLog(uint8_t lines);
+
+};
+Datalog::Datalog(){};
+Datalog::~Datalog(){};
 
 //////////////////////// High Level Methods /////////////////////////////////
-Datalog::Datalog(String _id, unsigned long address, double *val, int length, bool move, uint8_t _type) {
+Datalog::Datalog(String _id, uint32_t address, double *val, int length, bool move, uint8_t _type) {
     _setup(_id, address, length, move, _type);
     data_type = DATATYPE_DOUBLE;
     value_size = 4;
     dval = val;
 }
 
-Datalog::Datalog(String _id, unsigned long address, uint8_t *val, int length, bool move, uint8_t _type) {
+Datalog::Datalog(String _id, uint32_t address, uint8_t *val, int length, bool move, uint8_t _type) {
     _setup(_id, address, length, move, _type);
     data_type = DATATYPE_BYTE;
     value_size = 1;
     bval = val;
 }
 
-Datalog::Datalog(String _id, unsigned long address, uint16_t *val, int length, bool move, uint8_t _type) {
+Datalog::Datalog(String _id, uint32_t address, uint16_t *val, int length, bool move, uint8_t _type) {
     _setup(_id, address, length, move, _type);
     data_type = DATATYPE_SHORT;
     value_size = 2;
     sval = val;
 }
 
-Datalog::Datalog(String _id, unsigned long address, uint32_t *val, int length, bool move, uint8_t _type) {
+Datalog::Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move, uint8_t _type) {
     _setup(_id, address, length, move, _type);
     data_type = DATATYPE_LONG;
     value_size = 4;
@@ -117,7 +108,7 @@ Datalog::Datalog(String _id, unsigned long address, uint32_t *val, int length, b
 }
 
 // to save code repitition
-void Datalog::_setup(String _id, unsigned long address, int length, bool move, uint8_t _type) {
+void Datalog::_setup(String _id, uint32_t address, int length, bool move, uint8_t _type) {
     start_addr = address;
     addr = address;
     id = _id;
@@ -128,9 +119,9 @@ void Datalog::_setup(String _id, unsigned long address, int length, bool move, u
 }
 
 //////////////////////// Writing Methods /////////////////////////////////
+// to do this is aweful, need to rewrite todo
+// store the dat with least significant bytes in lower index
 void Datalog::writeDouble(double data) {
-    // to do this is aweful, need to rewrite todo
-    // store the dat with least significant bytes in lower index
     uint8_t b[4];
     uint32_t d = data * DOUBLE_PRECISION;
     for (int i = 0; i < 4; i++) {
@@ -177,7 +168,7 @@ void Datalog::writeLong(uint32_t data) {
 void Datalog::writeLong() {
     uint8_t b[4];
     for (int i = 0; i < 4; i++) {
-      b[i] = *dval> 8 * i;
+      b[i] = *lval >> 8 * i;
       EEPROM.update(addr + i, b[i]);
     }
 }
@@ -308,19 +299,19 @@ bool Datalog::update() {
     switch(data_type) {
         case DATATYPE_SHORT:
             writeShort();
-            dprintln(PRINT_LOG_WRITE, (String)*sval);
+            // dprintln(PRINT_LOG_WRITE, sval);
             break;
         case DATATYPE_DOUBLE:
             writeDouble();
-            dprintln(PRINT_LOG_WRITE, (String)*dval);
+            // dprintln(PRINT_LOG_WRITE, dval);
             break;
         case DATATYPE_BYTE:
             EEPROM.update(addr, *bval);
-            dprintln(PRINT_LOG_WRITE, (String)*bval);
+            // dprintln(PRINT_LOG_WRITE, bval);
             break;
         case DATATYPE_LONG:
             writeLong();
-            dprintln(PRINT_LOG_WRITE, (String)*lval);
+            // dprintln(PRINT_LOG_WRITE, lval);
             break;
     }
     // print some feedback if the appropiate flag is set
