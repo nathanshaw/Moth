@@ -69,6 +69,7 @@ class NeoGroup {
 
     uint32_t getNumFlashes() {return num_flashes;};
     uint32_t num_flashes = 0;
+    uint32_t total_flashes = 0;
    
     uint32_t getShdnLen();
 
@@ -97,16 +98,16 @@ class NeoGroup {
     };
     double getAvgBrightnessScaler();
     double getAvgBrightness(String type);
-    uint32_t getRemainingFlashDelay() {
+    long getRemainingFlashDelay() {
       return remaining_flash_delay;
     };
-    void addToRemainingFlashDelay(uint32_t i) {
+    void addToRemainingFlashDelay(long i) {
       remaining_flash_delay += i;
       if (remaining_flash_delay > flash_max_time) {
         remaining_flash_delay = flash_max_time;
       }
     };
-    void setRemainingFlashDelay(uint32_t d) {
+    void setRemainingFlashDelay(long d) {
       remaining_flash_delay = d;
     };
 
@@ -135,11 +136,11 @@ class NeoGroup {
     uint8_t flash_red = 0;
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
-    uint32_t remaining_flash_delay = 0;// negative values expected, can not be a variable
+    long remaining_flash_delay = 0;// negative values expected, can not be a variable
     
     bool flash_on = false;
-    uint32_t flash_min_time;
-    uint32_t flash_max_time;
+    long flash_min_time;
+    long flash_max_time;
     elapsedMillis fpm_timer;
 
     // related to auto-calibration and datalogging
@@ -174,6 +175,7 @@ class NeoGroup {
 };
 
 void NeoGroup::resetFlashPerMinuteAvg() {
+  total_flashes += num_flashes;
   num_flashes = 0;
   fpm_timer = 0;
 }

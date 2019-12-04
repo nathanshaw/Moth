@@ -27,7 +27,7 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
 
 DLManager datalog_manager = DLManager((String)"Main");
 
-FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
+FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
 
@@ -100,25 +100,24 @@ AudioConnection          patchCord32(song_post_amp1, 0, usb1, 1);
 AudioConnection          patchCord33(click_post_amp2, click_rms2);
 AudioConnection          patchCord34(click_post_amp2, click_peak2);
 
-// click gain //////////////////
-double click_gain[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN}; // starting click gain level
-double click_gain_min[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN};
-double click_gain_max[2] = {STARTING_CLICK_GAIN, STARTING_CLICK_GAIN};
-
-// click rms ///////////////////
-double click_rms_val[2] = {0.0, 0.0};
-double last_click_rms_val[2] = {0.0, 0.0};
-double click_rms_delta[2] = {0.0, 0.0};
-
-// click peak //////////////////
-double click_peak_val[2] = {0.0, 0.0};
-double last_click_peak_val[2] = {0.0, 0.0};
-double click_peak_delta[2] = {0.0, 0.0};
-
-////////////////////////////////
-double song_gain[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};   // starting song gain level
-double song_gain_min[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};
-double song_gain_max[2] = {STARTING_SONG_GAIN, STARTING_SONG_GAIN};
+void linkFeatureCollectors() {
+  if (RMS_ACTIVE) {
+    // fc 0-1 are for the song front/rear
+    fc[0].linkRMS(&song_rms1);
+    fc[1].linkRMS(&song_rms2);
+    // fc 2-3 are for the click front/rear
+    fc[2].linkRMS(&click_rms1);
+    fc[3].linkRMS(&click_rms2);
+  }
+  if (PEAK_ACTIVE) {
+    // fc 0-1 are for the song front/rear
+    fc[0].linkPeak(&song_peak1);
+    fc[1].linkPeak(&song_peak2);
+    // fc 2-3 are for the click front/rear
+    fc[2].linkPeak(&click_peak1);
+    fc[3].linkPeak(&click_peak2);
+  }
+}
 
 // song rms
 uint8_t song_rms_weighted[2] = {0, 0};  // 0 -255 depending on the RMS of the song band...
@@ -129,52 +128,6 @@ double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
-
-///////////////////////////////// Printing Functions /////////////////////////////////////////
-void printClickStats() {
-  if (PRINT_CLICK_FEATURES) {
-    // TODO update this to have a stereo option
-    Serial.print("1000* Click | rms: ");
-    Serial.print(click_rms_val[0] * 1000);
-    Serial.print(" delta: ");
-    Serial.print(click_rms_delta[0] * 1000);
-    Serial.print(" peak: ");
-    Serial.print(click_peak_val[0] * 1000);
-    if (stereo_audio) {
-      Serial.print(" R: ");
-      Serial.print(click_rms_val[1] * 1000);
-      Serial.print(" delta: ");
-      Serial.print(click_rms_delta[1] * 1000);
-      Serial.print(" peak: ");
-      Serial.print(click_peak_val[1] * 1000);
-    }
-    Serial.println();
-  }
-}
-///////////////////////////////// Audio Functions /////////////////////////////////////////////
-void updateClickAudioFeaturesRMS(uint8_t i) {
-  click_rms_delta[i] = last_click_rms_val[i] - click_rms_val[i];
-  if (click_rms_delta[i] > CLICK_RMS_DELTA_THRESH) {
-    // incrment num_past_clicks which keeps tract of the total number of clicks detected throughout the boot lifetime
-    // If a click is detected set the flash timer to 20ms, if flash timer already set increase count by 1
-    if (neos[i].flashOn() ==  true) { // all flash logic is conducted in the NeoGroup instance
-      dprint(PRINT_CLICK_DEBUG, neos[i].getName());
-      dprint(PRINT_CLICK_DEBUG, " num clicks increased : ");
-      dprintln(PRINT_CLICK_DEBUG, neos[i].getNumFlashes());
-    }
-  }
-}
-
-void updateClickAudioFeaturesPeak(uint8_t i) {
-  click_peak_delta[i] = last_click_peak_val[i]  - click_peak_val[i];
-  if (click_peak_delta[i] > CLICK_PEAK_DELTA_THRESH) {
-    if (neos[i].flashOn() == true) { // all flash logic is conducted in the NeoGroup instance
-      num_cpm_clicks[i]++;
-      dprint(PRINT_CLICK_DEBUG, "cpm clicks increased : ");
-      dprintln(PRINT_CLICK_DEBUG, num_cpm_clicks[i]);
-    }
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////
 //                       TCA9532A I2C bus expander
@@ -255,39 +208,6 @@ void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
 
 // this should be in the main audio loop
 void updateClicks() {
-  // Serial.println("WARNING CALCCULATECLICKAUDIOFEATURES IS BROKEN!");
-  for (int i = 0; i < num_channels; i++) {
-    if ( (CLICK_FEATURE == RMS_DELTA) || (CLICK_FEATURE == ALL_FEATURES)) {
-      if (click_rms1.available() && i == 0) {
-        last_click_rms_val[i] = click_rms_val[i];
-        click_rms_val[i] = click_rms1.read();
-        updateClickAudioFeaturesRMS(i);
-      }
-      else if (click_rms2.available() && i == 1) {
-        last_click_rms_val[i] = click_rms_val[i];
-        click_rms_val[i] = click_rms2.read();
-        updateClickAudioFeaturesRMS(i);
-      }
-    }
-    if (CLICK_FEATURE == PEAK_DELTA || CLICK_FEATURE == ALL_FEATURES) {
-      if (click_peak1.available() && i == 0 ) {
-        last_click_peak_val[i] = click_peak_val[i];
-        click_peak_val[i] = click_peak1.read();
-        updateClickAudioFeaturesPeak(i);
-      }
-      else if (click_peak2.available() && i == 1 ) {
-        last_click_peak_val[i] = click_peak_val[i];
-        click_peak_val[i] = click_peak2.read();
-        updateClickAudioFeaturesPeak(i);
-      }
-    }
-    if (CLICK_FEATURE != PEAK_DELTA && CLICK_FEATURE != RMS_DELTA) {
-      Serial.print("sorry the CLICK_FEATURE ");
-      Serial.print(CLICK_FEATURE);
-      Serial.println(" is not implemented/available");
-    }
-  }
-  printClickStats();
   for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
     neos[i].updateFlash();
   }
@@ -378,23 +298,23 @@ void cicadaSetup() {
   Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(SONG_BQ2_Q); Serial.print("\tdB"); Serial.println(SONG_BQ2_DB);
 
-  click_input_amp1.gain(click_gain[0]);
-  click_mid_amp1.gain(click_gain[0]);
-  click_post_amp1.gain(click_gain[0]);
-  click_input_amp2.gain(click_gain[1]);
-  click_mid_amp2.gain(click_gain[1]);
-  click_post_amp2.gain(click_gain[1]);
+  click_input_amp1.gain(fc[2].gain);
+  click_mid_amp1.gain(fc[2].gain);
+  click_post_amp1.gain(fc[2].gain);
+  click_input_amp2.gain(fc[3].gain);
+  click_mid_amp2.gain(fc[3].gain);
+  click_post_amp2.gain(fc[3].gain);
   Serial.print("\nClick gains all set to                :\t");
-  Serial.print(click_gain[0]); Serial.print("\t"); Serial.println(click_gain[1]);
+  Serial.print(fc[2].gain); Serial.print("\t"); Serial.println(fc[3].gain);
 
-  song_input_amp1.gain(song_gain[0]);
-  song_mid_amp1.gain(song_gain[0]);
-  song_post_amp1.gain(song_gain[0]);
-  song_input_amp2.gain(song_gain[1]);
-  song_mid_amp2.gain(song_gain[1]);
-  song_post_amp2.gain(song_gain[1]);
+  song_input_amp1.gain(fc[0].gain);
+  song_mid_amp1.gain(fc[0].gain);
+  song_post_amp1.gain(fc[0].gain);
+  song_input_amp2.gain(fc[1].gain);
+  song_mid_amp2.gain(fc[1].gain);
+  song_post_amp2.gain(fc[1].gain);
   Serial.print("Song gains all set to                 :\t");
-  Serial.print(song_gain[0]); Serial.print("\t"); Serial.println(song_gain[1]);
+  Serial.print(fc[0].gain); Serial.print("\t"); Serial.println(fc[1].gain);
   delay(1000);
 
   /////////////////////////////////
@@ -535,20 +455,20 @@ bool adjustSongGainLedOnRatio() {
   for (int i = 0; i < num_channels; i++) {
     double cost = 0.5;
     if (neos[i].getOnRatio() > MAX_LED_ON_RATIO) {
-      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
-      song_gain[i] -= change;
+      double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
+      fc[i].gain -= change;
       // ensure that what we have is not less than the min
-      song_gain[i] = max(song_gain[i], MIN_SONG_GAIN);
+      fc[i].gain = max(fc[i].gain, MIN_SONG_GAIN);
       dprint(PRINT_AUTO_GAIN, "led_on_ratio is too high ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
       dprint(PRINT_AUTO_GAIN, ") lowering the song gain "); dprintln(PRINT_AUTO_GAIN, i);
       dprint(PRINT_AUTO_GAIN, change);
       dprint(PRINT_AUTO_GAIN, " ");
       success = true;
     } else if (neos[i].getOnRatio() < MIN_LED_ON_RATIO) {
-      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
-      song_gain[i] += change;
+      double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
+      fc[i].gain += change;
       // ensure that what we have is not less than the min
-      song_gain[i] = min(song_gain[i], MAX_SONG_GAIN);
+      fc[i].gain = min(fc[i].gain, MAX_SONG_GAIN);
       dprint(PRINT_AUTO_GAIN, "led_on_ratio is too low ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
       dprint(PRINT_AUTO_GAIN, ") raising the song gain "); dprintln(PRINT_AUTO_GAIN, i);
       dprint(PRINT_AUTO_GAIN, change);
@@ -585,10 +505,10 @@ void checkSongAutoGain() {
       // calculate cost between 0 and 1 with higher cost resulting in higher gain amplification
       cost = 1.0 - (MAX_SONG_PEAK_AVG / avg_song_peak);
       // calculate what the new song_gain will be
-      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
-      song_gain[i] -= change;
+      double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
+      fc[i].gain -= change;
       // ensure that what we have is not less than the min
-      song_gain[i] = max(song_gain[i], MIN_SONG_GAIN);
+      fc[i].gain = max(fc[i].gain, MIN_SONG_GAIN);
       dprint(PRINT_AUTO_GAIN, "song gain decreased by ");
       dprint(PRINT_AUTO_GAIN, change);
       dprint(PRINT_AUTO_GAIN, " ");
@@ -604,10 +524,10 @@ void checkSongAutoGain() {
       dprint(PRINT_AUTO_GAIN, "cost : ");
       dprintln(PRINT_AUTO_GAIN, cost);
       // calculate the new song gain
-      double change = song_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
-      song_gain[i] += change;
+      double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
+      fc[i].gain += change;
       // ensure what we have is not less than the max...
-      song_gain[i] = min(song_gain[i], MAX_SONG_GAIN);
+      fc[i].gain = min(fc[i].gain, MAX_SONG_GAIN);
       dprint(PRINT_AUTO_GAIN, "song gain increased by ");
       dprint(PRINT_AUTO_GAIN, change);
       dprint(PRINT_AUTO_GAIN, " ");
@@ -713,8 +633,8 @@ void checkClickAutoGain() {
       // printDouble(clicks_per_minute, 1000000);
       dprintln(PRINT_AUTO_GAIN, clicks_per_minute);
       if (clicks_per_minute == 0) {                                             // if we read 0 clicks since the last auto-gain-adjust then increase click gain by the max allowed.
-        click_gain[i] += click_gain[i] * MAX_GAIN_ADJUSTMENT;
-        click_gain[i] = min(click_gain[i], MAX_CLICK_GAIN);
+        fc[i + 2].gain += fc[i + 2].gain * MAX_GAIN_ADJUSTMENT;
+        fc[i + 2].gain = min(fc[i + 2].gain, MAX_CLICK_GAIN);
         update_gain = true;
       }
       // then check if there are too few clicks_per_minute
@@ -723,22 +643,23 @@ void checkClickAutoGain() {
         // first we calculate the factor by which the clicks are off
         // the higher the number the more it is off
         cost = 1.0 - (clicks_per_minute / MIN_CLICKS_PER_MINUTE);              // max amount that can be adjusted
-        click_gain[i] += click_gain[i] * MAX_GAIN_ADJUSTMENT * cost;
-        click_gain[i] = min(click_gain[i], MAX_CLICK_GAIN);                    // make sure that the click_gain is not more than the max_click_gain
+        fc[i + 2].gain += fc[i + 2].gain * MAX_GAIN_ADJUSTMENT * cost;
+        fc[i + 2].gain = min(fc[i + 2].gain, MAX_CLICK_GAIN);                // make sure that the click_gain is not more than the max_click_gain
         update_gain = true;
       }
       // then check to see if there are too many clicks per-minute
       else if (clicks_per_minute > MAX_CLICKS_PER_MINUTE) {
         cost = 1.0 - (MAX_CLICKS_PER_MINUTE / clicks_per_minute);              // determine a cost function... the higher the value the more the cost
-        click_gain[i] -= click_gain[i] * MAX_GAIN_ADJUSTMENT * cost;           // adjust the click_gain
-        click_gain[i] = max(click_gain[i], MIN_CLICK_GAIN);                    // make sure that the gain is not set too low
+        fc[i + 2].gain -= fc[i + 2].gain * MAX_GAIN_ADJUSTMENT * cost;       // adjust the click_gain
+        fc[i + 2].gain = max(fc[i + 2].gain, MIN_CLICK_GAIN);                // make sure that the gain is not set too low
         update_gain = true;
       }
       num_past_clicks[i] = 0;
     }
   }
   if (update_gain == true) {
-    updateClickGain(click_gain, click_gain_min, click_gain_max);          // update the click gain in the three gain stages
+    Serial.print("ERROR update_gain unimplemented");
+    // updateClickGain(click_gain, click_gain_min, click_gain_max);          // update the click gain in the three gain stages
   }
 }
 
@@ -781,10 +702,10 @@ void setupDLManager() {
   // log data to EEPROM if datalogging is active
   if (data_logging_active) {
     Serial.println("configuring datalog_manager timers");
-    datalog_manager.configureTimer(0, DATALOG_START_DELAY_1, DATALOG_TIME_FRAME_1, DATALOG_1_LENGTH);
-    datalog_manager.configureTimer(1, DATALOG_START_DELAY_2, DATALOG_TIME_FRAME_2, DATALOG_2_LENGTH);
-    datalog_manager.configureTimer(2, DATALOG_START_DELAY_3, DATALOG_TIME_FRAME_3, DATALOG_3_LENGTH);
-    datalog_manager.configureTimer(3, DATALOG_START_DELAY_4, DATALOG_TIME_FRAME_4, DATALOG_4_LENGTH);
+    datalog_manager.configureAutoTimer(0, DATALOG_START_DELAY_1, DATALOG_TIME_FRAME_1, DATALOG_1_LENGTH);
+    datalog_manager.configureAutoTimer(1, DATALOG_START_DELAY_2, DATALOG_TIME_FRAME_2, DATALOG_2_LENGTH);
+    datalog_manager.configureStaticTimer(2, DATALOG_START_DELAY_3, STATICLOG_RATE_FAST);
+    datalog_manager.configureStaticTimer(3, DATALOG_START_DELAY_4, STATICLOG_RATE_SLOW);
     datalog_manager.printTimerConfigs();
 
     // Hardware / Software / Serial Numbers
@@ -794,21 +715,77 @@ void setupDLManager() {
     datalog_manager.logSetupConfigByte("Software Version majo       : ", S_VERSION_MINOR);
     datalog_manager.logSetupConfigByte("Software Version majo       : ", S_SUBVERSION);
     datalog_manager.logSetupConfigByte("Bot ID Number               : ", SERIAL_ID);
-    datalog_manager.logSetupConfigByte("Datalog Active              : ", data_logging_active); 
-    datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE); 
+    datalog_manager.logSetupConfigByte("Datalog Active              : ", data_logging_active);
+    datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE);
     // Lux Sensors
-    datalog_manager.logSetupConfigByte("Smooth Lux Readings         : ", SMOOTH_LUX_READINGS); 
-    datalog_manager.logSetupConfigDouble("Lux Low Threshold           : ", LOW_LUX_THRESHOLD); 
-    datalog_manager.logSetupConfigDouble("Lux Mid Threshold           : ", MID_LUX_THRESHOLD); 
-    datalog_manager.logSetupConfigDouble("Lux High Threshold          : ", HIGH_LUX_THRESHOLD); 
-    datalog_manager.logSetupConfigDouble("Brightness Scaler Min       : ", BRIGHTNESS_SCALER_MIN); 
-    datalog_manager.logSetupConfigDouble("Brightness Scaler Max       : ", BRIGHTNESS_SCALER_MAX); 
-    datalog_manager.logSetupConfigByte("Min Brightness              : ", MIN_BRIGHTNESS); 
-    datalog_manager.logSetupConfigByte("Max Brightness              : ", MAX_BRIGHTNESS); 
+    datalog_manager.logSetupConfigByte("Smooth Lux Readings         : ", SMOOTH_LUX_READINGS);
+    datalog_manager.logSetupConfigDouble("Lux Low Threshold           : ", LOW_LUX_THRESHOLD);
+    datalog_manager.logSetupConfigDouble("Lux Mid Threshold           : ", MID_LUX_THRESHOLD);
+    datalog_manager.logSetupConfigDouble("Lux High Threshold          : ", HIGH_LUX_THRESHOLD);
+    datalog_manager.logSetupConfigDouble("Brightness Scaler Min       : ", BRIGHTNESS_SCALER_MIN);
+    datalog_manager.logSetupConfigDouble("Brightness Scaler Max       : ", BRIGHTNESS_SCALER_MAX);
+    datalog_manager.logSetupConfigByte("Min Brightness              : ", MIN_BRIGHTNESS);
+    datalog_manager.logSetupConfigByte("Max Brightness              : ", MAX_BRIGHTNESS);
     // Auto Gain
-    datalog_manager.logSetupConfigByte("Autogain Active             : ", BRIGHTNESS_SCALER_MAX); 
-    datalog_manager.logSetupConfigDouble("Max Autogain Adjustment     : ", MAX_GAIN_ADJUSTMENT); 
-    datalog_manager.logSetupConfigLong("Autogain Frequency          : ", autogain_frequency); 
+    datalog_manager.logSetupConfigByte("Autogain Active             : ", BRIGHTNESS_SCALER_MAX);
+    datalog_manager.logSetupConfigDouble("Max Autogain Adjustment     : ", MAX_GAIN_ADJUSTMENT);
+    datalog_manager.logSetupConfigLong("Autogain Frequency          : ", autogain_frequency);
+    // Autolog settings
+    datalog_manager.logSetupConfigLong("Timer 0 Start Time             : ", datalog_manager.getTimerStart(0));
+    datalog_manager.logSetupConfigLong("Timer 0 End Time               : ", datalog_manager.getTimerEnd(0));
+    datalog_manager.logSetupConfigLong("Timer 0 Logging Rate           : ", datalog_manager.getTimerRate(0));
+    datalog_manager.logSetupConfigLong("Timer 1 Start Time             : ", datalog_manager.getTimerStart(1));
+    datalog_manager.logSetupConfigLong("Timer 1 End Time               : ", datalog_manager.getTimerEnd(1));
+    datalog_manager.logSetupConfigLong("Timer 1 Logging Rate           : ", datalog_manager.getTimerRate(1));
+    datalog_manager.logSetupConfigLong("Timer 2 Start Time             : ", datalog_manager.getTimerStart(2));
+    datalog_manager.logSetupConfigLong("Timer 2 End Time               : ", datalog_manager.getTimerEnd(2));
+    datalog_manager.logSetupConfigLong("Timer 2 Logging Rate           : ", datalog_manager.getTimerRate(2));
+    datalog_manager.logSetupConfigLong("Timer 3 Start Time             : ", datalog_manager.getTimerStart(3));
+    datalog_manager.logSetupConfigLong("Timer 3 End Time               : ", datalog_manager.getTimerEnd(3));
+    datalog_manager.logSetupConfigLong("Timer 3 Logging Rate           : ", datalog_manager.getTimerRate(3));
+
+    // the constantly updating logs
+    if (STATICLOG_LUX_VALUES) {
+      datalog_manager.addStaticLog("Lowest Front Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].min_reading );
+      datalog_manager.addStaticLog("Highest Front Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].max_reading );
+      datalog_manager.addStaticLog("Lowest Rear Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[1].min_reading );
+      datalog_manager.addStaticLog("Highest Rear Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[1].max_reading );
+
+    }
+    if (STATICLOG_SONG_GAIN) {
+      datalog_manager.addStaticLog("Lowest Front Song Gain  : ",
+                                   STATICLOG_SONG_GAIN_TIMER, &fc[0].min_gain);
+      datalog_manager.addStaticLog("Highest Front Song Gain ",
+                                   STATICLOG_SONG_GAIN_TIMER, &fc[0].max_gain);
+      datalog_manager.addStaticLog("Lowest Rear Song Gain  : ",
+                                   STATICLOG_SONG_GAIN_TIMER, &fc[1].min_gain);
+      datalog_manager.addStaticLog("Highest Rear Song Gain ",
+                                   STATICLOG_SONG_GAIN_TIMER, &fc[1].max_gain);
+      datalog_manager.logSetupConfigDouble("Song Starting Gain   : ", STARTING_SONG_GAIN);
+
+    }
+    if (STATICLOG_CLICK_GAIN) {
+      datalog_manager.addStaticLog("Lowest Front Click Gain  : ",
+                                   STATICLOG_CLICK_GAIN_TIMER, &fc[2].min_gain);
+      datalog_manager.addStaticLog("Highest Front Click Gain ",
+                                   STATICLOG_CLICK_GAIN_TIMER, &fc[2].max_gain);
+      datalog_manager.addStaticLog("Lowest Rear Click Gain  : ",
+                                   STATICLOG_CLICK_GAIN_TIMER, &fc[3].min_gain);
+      datalog_manager.addStaticLog("Highest Rear Click Gain ",
+                                   STATICLOG_CLICK_GAIN_TIMER, &fc[3].max_gain);
+      datalog_manager.logSetupConfigDouble("Click Starting Gain  : ", STARTING_CLICK_GAIN);
+    }
+
+    if (STATICLOG_FLASHES) {
+      datalog_manager.addStaticLog("Front Total Flashes Detected  : ",
+                                   STATICLOG_FLASHES_TIMER, &neos[0].total_flashes);
+      datalog_manager.addStaticLog("Rear Total Flashes Detected   : ",
+                                   STATICLOG_FLASHES_TIMER, &neos[1].total_flashes);
+    }
 
     // todo double check the addr
     // Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
@@ -829,18 +806,35 @@ void setupDLManager() {
       ptr = &neos[0].on_ratio;
       Serial.println("adding front led on/off ratio autolog to datalog_manager");
       datalog_manager.addAutolog("Front Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
-    } 
+    }
     if (AUTOLOG_LED_ON_OFF_R > 0) {
       ptr = &neos[1].on_ratio;
       Serial.println("adding rear led on/off ratio autolog to datalog_manager");
       datalog_manager.addAutolog("Rear Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
     }
+    if (AUTOLOG_BRIGHTNESS_SCALER_F > 0) {    
+      ptr = &lux_managers[0].brightness_scaler_avg;
+      lux_managers[0].resetBrightnessScalerAvg();
+      Serial.println("adding front brightness scaler autolog to datalog_manager");
+      datalog_manager.addAutolog("Front Brightness Scaler Averages ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);    
+    }
+    if (AUTOLOG_BRIGHTNESS_SCALER_R > 0) {    
+      ptr = &lux_managers[1].brightness_scaler_avg;
+      lux_managers[1].resetBrightnessScalerAvg();
+      Serial.println("adding rear brightness scaler autolog to datalog_manager");
+      datalog_manager.addAutolog("Rear Brightness Scaler Averages  ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);    
+    }
+// the brightness scaler avg log
+#define AUTOLOG_BRIGHTNESS_SCALER_F     1
+#define AUTOLOG_BRIGHTNESS_SCALER_R     1
+#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
+    
     uint32_t * lptr;
     if (AUTOLOG_FLASHES_F > 0) {
       lptr = &neos[0].num_flashes;
       Serial.println("adding front led flash number  autolog to datalog_manager");
       datalog_manager.addAutolog("Front Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, lptr);
-    } 
+    }
     if (AUTOLOG_FLASHES_R > 0) {
       lptr = &neos[1].num_flashes;
       Serial.println("adding rear led flash number autolog to datalog_manager");
@@ -859,7 +853,7 @@ void setupDLManager() {
   } else {
     if (PRINT_EEPROM_CONTENTS > 0) {
       datalog_manager.printAllLogs();
-  }
+    }
   }
   if (CLEAR_EEPROM_CONTENTS > 0) {
     delay(100);
@@ -871,19 +865,19 @@ void setupDLManager() {
 }
 
 void mothSetup() {
-  Serial.begin(57600); delay(5000);Serial.println("Setup Loop has started");
+  Serial.begin(57600); delay(5000); Serial.println("Setup Loop has started");
   if (JUMPERS_POPULATED) {
     // readJumpers();
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
-  leds.begin();Serial.println("LEDS have been initalised");delay(250);
+  leds.begin(); Serial.println("LEDS have been initalised"); delay(250);
   // create either front and back led group, or just one for both
   neos[0].colorWipe(120, 70, 0); // turn off the LEDs
   neos[1].colorWipe(120, 70, 0); // turn off the LEDs
   Serial.println("Leds turned yellow for setup loop\n");
   delay(2000);
-  
+
   setupDLManager();
 
   Serial.println("Running Use Specific Setup Loop...");
@@ -912,8 +906,12 @@ void mothLoop() {
   calculateSongAudioFeatures();
   songDisplay();
   updateClicks();
+  fc[0].update();
+  fc[2].update();
+  fc[3].update();
+  fc[4].update();
   datalog_manager.update();
-    // todo add back
+  // todo add back
   // checkAudioUsage();
   // todo add back
   // autoGainAdjust(); // will call rear as well if in stereo mode

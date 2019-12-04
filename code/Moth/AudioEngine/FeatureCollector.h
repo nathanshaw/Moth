@@ -9,6 +9,12 @@ class FeatureCollector {
     String getName() {
       return id;
     };
+    //////////////// Gain Tracking /////////////////////////
+    double gain = 1.0;
+    double min_gain = 1.0;
+    double max_gain = 1.0;
+    void updateGain(double g);
+
     //////////////// RMS /////////////////////////
     void linkRMS(AudioAnalyzeRMS *r) {
       rms_ana = r;
@@ -28,6 +34,7 @@ class FeatureCollector {
     double getPeakAvg();
     void   resetPeakAvgLog();
     void   printPeakVals();
+    double peak_pos_delta;
 
     //////////////// Tone /////////////////////////
     void linkTone(AudioAnalyzeToneDetect *r) {
@@ -64,6 +71,12 @@ class FeatureCollector {
     String id = "";
     bool microphone_active = true;
 
+    //////////////// Gain Tracking ///////////////
+    bool gain_active = false;
+    uint8_t gain_add_idx = 0;
+    // TODO, make it so linking of gains and tracking is all dones through fc
+    // AudioAmplifier *gain_ana[4];
+
     //////////////// RMS /////////////////////////
     AudioAnalyzeRMS *rms_ana;
     bool rms_active = false;
@@ -76,7 +89,6 @@ class FeatureCollector {
     bool peak_active = false;
     void calculatePeak();
     double peak_val;
-    double peak_pos_delta;
     double peak_totals = 0;
     unsigned long peak_readings = 0;
     elapsedMillis last_peak_reset;
@@ -103,6 +115,16 @@ class FeatureCollector {
     double fft_tot_energy;
     int highest_energy_idx;
 };
+
+void FeatureCollector::updateGain(double g) {
+    gain = g;
+    if (gain > max_gain) {
+        max_gain = gain;
+    }
+    if (gain < min_gain) {
+        min_gain = gain;
+    }
+}
 
 bool FeatureCollector::testMicrophone () {
   // go through and gather 10 features from each channel and make sure it is picking up audio
@@ -210,7 +232,13 @@ void FeatureCollector::resetPeakAvgLog() {
 
 void FeatureCollector::calculateRMS() {
   if (rms_active  && rms_ana->available()) {
-    rms_val = rms_ana->read();
+    double temp = rms_ana->read();
+    if (temp > rms_val) {
+        rms_pos_delta = temp - rms_val;
+    } else {
+        rms_pos_delta = 0;
+    }
+    rms_val = temp;
   }
 }
 
@@ -340,7 +368,8 @@ void FeatureCollector::printFreqVals() {
 void FeatureCollector::printRMSVals() {
   if (rms_active > 0) {
     Serial.print(id); Serial.print(" RMS vals\t");
-    Serial.println(rms_val);
+    Serial.print(rms_val);printTab();
+    Serial.print("delta\t");Serial.println(rms_pos_delta);
   }
 }
 
@@ -348,7 +377,8 @@ void FeatureCollector::printRMSVals() {
 void FeatureCollector::printPeakVals() {
   if (peak_active > 0) {
     Serial.print(id); Serial.print(" Peak vals\t");
-    Serial.println(peak_val);
+    Serial.print(peak_val);printTab();
+    Serial.print("delta\t");Serial.println(peak_pos_delta);
   }
 }
 

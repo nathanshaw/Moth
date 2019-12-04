@@ -61,27 +61,32 @@ bool data_logging_active = true;
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS 0
 
-// how long will each of the four different auto-log options be?
+// how long will each of the four different auto-log options be? 
+// // a -1 means that the log will keep updating forever
 #define DATALOG_1_LENGTH      40
 #define DATALOG_2_LENGTH      40
-#define DATALOG_3_LENGTH      40
-#define DATALOG_4_LENGTH      40
+#define DATALOG_3_LENGTH      -1
+#define DATALOG_4_LENGTH      -1
 
 // record the run time // last value is number of minutes
 #define DATALOG_TIMER_1       (1000*60*1)
 #define DATALOG_TIMER_2       (1000*60*1)
-#define DATALOG_TIMER_3       (1000*60*5)
-#define DATALOG_TIMER_4       (1000*60*5)
+#define DATALOG_TIMER_3       (1000*60*1)
+#define DATALOG_TIMER_4       (1000*60*1)
 
-#define DATALOG_START_DELAY_1 (1000*60*0)
-#define DATALOG_START_DELAY_2 (1000*60*1)
-#define DATALOG_START_DELAY_3 (1000*60*10)
-#define DATALOG_START_DELAY_4 (1000*60*60)
+#define DATALOG_START_DELAY_1 (1000*60*0.05)
+#define DATALOG_START_DELAY_2 (1000*60*0.05)
+#define DATALOG_START_DELAY_3 (1000*60*0.05)
+#define DATALOG_START_DELAY_4 (1000*60*0.05)
 
 #define DATALOG_TIME_FRAME_1  (1000*60*60*0.25)
-#define DATALOG_TIME_FRAME_2  (1000*60*60*0.5)
-#define DATALOG_TIME_FRAME_3  (1000*60*60*2)
-#define DATALOG_TIME_FRAME_4  (1000*60*60*50)
+#define DATALOG_TIME_FRAME_2  (1000*60*60*5)
+#define DATALOG_TIME_FRAME_3  (1000*60*60*0.25)
+#define DATALOG_TIME_FRAME_4  (1000*60*60*5)
+
+// refresh rates for the static logs
+#define STATICLOG_RATE_FAST   (1000*60*1)
+#define STATICLOG_RATE_SLOW   (1000*60*10)
 
 uint8_t datalog_timer_num = 4;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
@@ -98,6 +103,21 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define AUTOLOG_FLASHES_F               1
 #define AUTOLOG_FLASHES_R               1
 #define AUTOLOG_FLASHES_TIMER           0
+// the brightness scaler avg log
+#define AUTOLOG_BRIGHTNESS_SCALER_F     1
+#define AUTOLOG_BRIGHTNESS_SCALER_R     1
+#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
+
+/////////////////// for the static logging ///////////////////
+#define STATICLOG_CLICK_GAIN            1
+#define STATICLOG_SONG_GAIN             1
+#define STATICLOG_LUX_VALUES            1
+#define STATICLOG_FLASHES               1
+
+#define STATICLOG_LUX_MIN_MAX_TIMER     3
+#define STATICLOG_CLICK_GAIN_TIMER      3
+#define STATICLOG_SONG_GAIN_TIMER       3
+#define STATICLOG_FLASHES_TIMER         3
 
 ///////////////////////// Auto-Gain Settings /////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
@@ -128,7 +148,7 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 
 #define PRINT_LED_DEBUG               false
 
-#define PRINT_LOG_WRITE               true
+#define PRINT_LOG_WRITE               false
 
 #define EEPROM_WRITE_CHECK            false
 

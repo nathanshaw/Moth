@@ -23,12 +23,8 @@ class LuxManager {
 
     void resetMinMax();
 
-    double getMinLux() {
-      return min_reading;
-    };
-    double getMaxLux() {
-      return max_reading;
-    };
+    double min_reading = 9999.9;
+    double max_reading = 0.0;
 
     double getAvgLux();
     void   resetAvgLux();
@@ -36,6 +32,13 @@ class LuxManager {
     String getName() {return id;};
 
     double lux;
+
+    // brightness and brightness scalers
+    double getBrightnessScaler();
+    double getBrightnessScalerAvg();
+    void resetBrightnessScalerAvg();
+    double brightness_scaler = 0.0;
+    double brightness_scaler_avg = 0.0;
 
   private:
     Adafruit_VEML7700 sensor = Adafruit_VEML7700();
@@ -45,8 +48,6 @@ class LuxManager {
     NeoGroup *neo;
     String id = "";
 
-    double min_reading = 9999.9;
-    double max_reading = 0.0;
     void updateMinMax();
 
     double past_readings[10];
@@ -63,7 +64,9 @@ class LuxManager {
     double lux_readings;
 
     // for brightness
-    double brightness_scaler = 0.0;
+    double brightness_scaler_total;
+    uint32_t num_brightness_scaler_vals;
+
     double calculateBrightnessScaler();
 
     double checkForLuxOverValue();
@@ -165,6 +168,10 @@ void LuxManager::readLux() {
   // update the brightness scales TODO , this logic does not work if the number of lux sensors is less than the number of groups
   // todo have the brightness scaler mapping
   brightness_scaler = calculateBrightnessScaler();
+  num_brightness_scaler_vals++;
+  brightness_scaler_total += brightness_scaler;
+  brightness_scaler_avg = brightness_scaler_total / num_brightness_scaler_vals;
+
   neo->setBrightnessScaler(brightness_scaler);
   if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0) {
       dprint(PRINT_LUX_READINGS, "\tbs: "); 
@@ -190,6 +197,20 @@ double LuxManager::calculateBrightnessScaler() {
   dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, t); dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tbrightness_scaler:\t");
   dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, bs);
   return bs;
+}
+
+double LuxManager::getBrightnessScaler() {
+    return brightness_scaler;
+}
+
+double LuxManager::getBrightnessScalerAvg() {
+    return brightness_scaler_avg;
+}
+
+void LuxManager::resetBrightnessScalerAvg() {
+    brightness_scaler_avg = 0;
+    num_brightness_scaler_vals = 0;
+    brightness_scaler_total = 0;
 }
 
 void LuxManager::updateMinMax() {

@@ -319,7 +319,7 @@ bool Datalog::update() {
     }
     // print some feedback if the appropiate flag is set
     /////////// autolog stuff
-    if (autolog_active == true) {
+    if (autolog_active == true && moving_index == true) {
         // increment the addr counter
         addr += value_size;
         // dprint(PRINT_LOG_WRITE, "\t");
@@ -348,8 +348,13 @@ void Datalog::printLog(uint8_t lines) {
   //printDivide(PRINT_LOG_WRITE);
   dprint(PRINT_LOG_WRITE, "Printing the ");
   dprint(PRINT_LOG_WRITE, id);
-  dprintln(PRINT_LOG_WRITE, " datalog:");
-  uint32_t per_line = (end_addr - start_addr) / value_size / lines;
+  dprint(PRINT_LOG_WRITE, " :\t");
+  uint32_t per_line;
+  if (end_addr > start_addr) {
+    per_line = (end_addr - start_addr) / value_size / lines;
+  } else {
+      per_line =  1;
+  }
   dprint(PRINT_LOG_WRITE, "per line ");dprint(PRINT_LOG_WRITE, per_line);
   dprint(PRINT_LOG_WRITE, " from start/end addr : ");dprint(PRINT_LOG_WRITE, start_addr);dprintTab(PRINT_LOG_WRITE);
   dprintln(PRINT_LOG_WRITE, end_addr);

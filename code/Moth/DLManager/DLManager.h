@@ -91,14 +91,26 @@ class DLManager {
         void addAutolog(String, uint8_t, double *);
         void addAutolog(String, uint8_t, uint32_t *);
 
+        void addStaticLog(String, uint8_t, double *);
+        void addStaticLog(String, uint8_t, uint8_t *);
+        void addStaticLog(String, uint8_t, uint16_t *);
+        void addStaticLog(String, uint8_t, uint32_t  *);
+
         bool configureAutolog();
-        void configureTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested);
+        void configureAutoTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested);
+        void configureStaticTimer(uint8_t num, uint32_t start_delay, uint32_t logging_rate);
         void update();
 
         void printAutologs();
         void printOneOffLogs();
         void printOneOffLog(OneOffLog log);
         void printAllLogs();
+
+        uint32_t getTimerStart(uint8_t which) {return start_delays[which];};
+        uint32_t getTimerEnd(uint8_t which) {
+            return start_delays[which] + (remaining_logs[which] * log_refresh_length[which]);
+        };
+        uint32_t getTimerRate(uint8_t which) {return log_refresh_length[which];};
 
         void printTimerConfigs();
         void clearLogs();
@@ -107,6 +119,8 @@ class DLManager {
         String id = "";
         // for keeping track of the datalogging shizzz
         uint32_t total_log_size = EEPROM_LOG_SIZE;
+        ///////////////////// Static Logs //////////////////
+        void _addStaticLog(uint32_t log_size);
 
         ///////////////////// One-off Logs /////////////////
         // These are logs which are only intended to be written to once
@@ -155,7 +169,7 @@ class DLManager {
         elapsedMillis log_timers[DATALOG_MANAGER_TIMER_NUM];
         uint32_t log_refresh_length[DATALOG_MANAGER_TIMER_NUM]; // how long each timer lasts for
         uint32_t start_delays[DATALOG_MANAGER_TIMER_NUM];
-        uint32_t remaining_logs[DATALOG_MANAGER_TIMER_NUM];
+        long remaining_logs[DATALOG_MANAGER_TIMER_NUM];
 };
 
 ///////////////////////// constructors ///////////////////////////////////////////
@@ -282,7 +296,56 @@ void DLManager::logSetupConfigDouble(String str, double data) {
     }
 }
 
+ /////////////////////////////// Static Logs ////////////////////////////////////////////
+void DLManager::_addStaticLog(uint32_t log_size){
+        autolog_write_idx += log_size;
+        remaining_autolog_space -= log_size;
+        printMinorDivide();
+        Serial.print("Adding a new static log with size:\t");dprintln(PRINT_LOG_WRITE, log_size);
+        Serial.print("remaining static log (autolog) space       :\t");dprintln(PRINT_LOG_WRITE, remaining_autolog_space);
+        Serial.print("starting EEPROM idx           :\t");dprintln(PRINT_LOG_WRITE, autolog_write_idx - log_size);
+        printMinorDivide();
+}
 
+void DLManager::addStaticLog(String _id,  uint8_t _timer, double*_val) {
+    uint32_t log_size = 4;
+    if (log_size < remaining_autolog_space) {
+        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
+        _addStaticLog(log_size);
+    } else {
+        Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
+    }
+}
+
+void DLManager::addStaticLog(String _id,  uint8_t _timer, uint8_t*_val) {
+    uint32_t log_size = 1;
+    if (log_size < remaining_autolog_space) {
+        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
+        _addStaticLog(log_size);
+    } else {
+        Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
+    }
+}
+
+void DLManager::addStaticLog(String _id,  uint8_t _timer, uint16_t*_val) {
+    uint32_t log_size = 2;
+    if (log_size < remaining_autolog_space) {
+        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
+        _addStaticLog(log_size);
+    } else {
+        Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
+    }
+}
+
+void DLManager::addStaticLog(String _id,  uint8_t _timer, uint32_t *_val) {
+    uint32_t log_size = 4;
+    if (log_size < remaining_autolog_space) {
+        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
+        _addStaticLog(log_size);
+    } else {
+        Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
+    }
+}
 
 /////////////////////////////// Adding External Datalog Objects ////////////////////////////////
 
@@ -349,6 +412,7 @@ void DLManager::addAutolog(String _id,  uint8_t _timer, uint32_t *_val) {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
 }
+
 /////////////////////////////// Update Functions ////////////////////////////////
 void DLManager::update() {
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
@@ -382,16 +446,23 @@ void DLManager::update() {
             }
             if (updates > 0) {
                 log_timers[i] = 0;
+                remaining_logs[i]--;
             }
         }
     }
 }
 //
 /////////////////////////////////// Utility Functions /////////////////////////////////////////
-void DLManager::configureTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested) {
+void DLManager::configureAutoTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested) {
     log_refresh_length[num] = log_time / logs_requested;
     start_delays[num] = start_delay;
     remaining_logs[num] = logs_requested;
+}
+
+void DLManager::configureStaticTimer(uint8_t num, uint32_t start_delay, uint32_t logging_rate) {
+    log_refresh_length[num] = logging_rate;
+    start_delays[num] = start_delay;
+    remaining_logs[num] = 100000;// the number of writes which are allowed before the EEPROM turns bad
 }
 
 void DLManager::clearLogs() {
@@ -402,7 +473,6 @@ void DLManager::clearLogs() {
         logs_p[i]->clear();
     }
 }
-
 
 ////////////////////////////////////// Printing Functions //////////////////////////////
 void DLManager::printOneOffLog(OneOffLog log) {
@@ -431,11 +501,11 @@ void DLManager::printOneOffLogs() {
 
 void DLManager::printAutologs() {
     for (int i = 0; i <= active_logs; i++) {
-        Serial.print("printing log                    :\t");Serial.println(i);
+        Serial.print(i);printTab();
         logs[i].printLog(8);
     }
     for (int i = 0; i <= active_logs_p; i++) {
-        Serial.print("printing pointer log            :\t");Serial.println(i);
+        Serial.print(i);Serial.print("p\t");
         logs_p[i]->printLog(8);
     }
     Serial.println();
@@ -456,273 +526,31 @@ void DLManager::printTimerConfigs()  {
         Serial.println(log_refresh_length[i]);
     }
 
-    Serial.print("start_delays :\t");
+    Serial.print("start_delays           :\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
         Serial.print(start_delays[i]);printTab();
     }
     Serial.println();
 
-    Serial.print("remaining_logs:\t");
+    Serial.print("remaining_logs        :\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
         Serial.print(remaining_logs[i]);printTab();
 
     }
     Serial.println();
 
-    Serial.print("log_refresh_length:\t");
+    Serial.print("log_refresh_length   :\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
         Serial.print(log_refresh_length[i]);printTab();
 
     }
     Serial.println();
 
-    Serial.print("log_timer_map:\t");
+    Serial.print("log_timer_map       :\t");
     for (int i = 0; i < DATALOG_MANAGER_MAX_LOGS; i++) {
         Serial.print(log_timer_map[i]);Serial.print("\t");
     }
     Serial.println();
     printMinorDivide();
 }
-
-/*
-uint8_t updateLuxLog(LuxManager *lux_mng[]) {
-  // if datalogging is active
-  // if enough time has passed since last logging and the log still has space allowcated to it
-  if (log_timer > LOG_POLLING_RATE && lux_eeprom_idx < EEPROM_LUX_LOG_END) {
-    dprint(PRINT_LOG_WRITE, "Logging Lux Data into EEPROM location: "); dprintln(PRINT_LOG_WRITE, (int)lux_eeprom_idx);
-    dprint(PRINT_LOG_WRITE, "lux_average                          :\t");
-    // store the current lux readings
-    // increment the index, 4 bytes to a double
-    if (front_lux_active) {
-      dprint(PRINT_LOG_WRITE, lux_mng[0]->getLux()); 
-      writeDouble(lux_eeprom_idx, lux_mng[0]->getLux());
-      lux_eeprom_idx += 4;
-    } else{
-      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
-    }
-    if (rear_lux_active) {
-      writeDouble(lux_eeprom_idx, lux_mng[1]->getLux());
-      lux_eeprom_idx += 4;
-      dprint(PRINT_LOG_WRITE, "\t");
-      dprintln(PRINT_LOG_WRITE, lux_mng[1]->getLux());
-    } else {
-      dprint(PRINT_LOG_WRITE, "Front sensor deactivated ");
-    }
-    return 1;
-  }
-  return 0;
-}
-
-bool updateLuxMinMaxDatalog(LuxManager *lux_sensors[]) {
-  // give the program some time to settle
-  if (data_logging_active && millis() > LOG_START_DELAY) {
-      for (int channel = 0; channel < 2; channel++) {
-          // front
-          // is the current reading more than the max recorded?
-          // if the current reading is the same then nothing is written, if it is different something is writen
-          writeDouble(EEPROM_MAX_LUX_READINGS + (channel * 4) , lux_sensors[channel]->getMaxLux());
-          dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[channel]->getName());
-          dprint(PRINT_LOG_WRITE, " max_lux_reading to EEPROM at addr: "); dprint(PRINT_LOG_WRITE, EEPROM_MAX_LUX_READINGS + (channel * 4));
-          dprint(PRINT_LOG_WRITE, " :\t"); dprintln(PRINT_LOG_WRITE, lux_sensors[channel]->getMaxLux());
-          dprint(PRINT_LOG_WRITE, " read back:\t");dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + (channel * 4)));
-
-          writeDouble(EEPROM_MIN_LUX_READINGS + (channel * 4) , lux_sensors[channel]->getMinLux());
-          dprint(PRINT_LOG_WRITE, "logged new "); dprint(PRINT_LOG_WRITE, lux_sensors[channel]->getName());
-          dprint(PRINT_LOG_WRITE, " min_lux_reading to EEPROM\t"); dprint(PRINT_LOG_WRITE, lux_sensors[channel]->getMinLux());
-          dprint(PRINT_LOG_WRITE, " read back:\t"); dprintln(PRINT_LOG_WRITE, readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + (channel * 4)));
-          return 1;
-    }
-  }
-  return 0;
-}
-
-uint8_t updateBrightnessScalerAvgLog(NeoGroup neos[]) {
-  // TODO
-  // write the current brightness scaler average to EEPROM
-  if (log_timer > LOG_POLLING_RATE && cpm_eeprom_idx < EEPROM_CPM_LOG_END) {
-    dprint(PRINT_LOG_WRITE,"Logging the average brightness scalers  :");
-    for (int  i = 0; i < 2; i++) { // replace 2 with something variable
-      dprint(PRINT_LOG_WRITE,"\t");
-      writeDouble(EEPROM_AVG_BRIGHTNESS_SCALER + (i * 4), neos[i].getAvgBrightnessScaler());
-      dprint(PRINT_LOG_WRITE, neos[i].getAvgBrightnessScaler());
-    }
-    dprintln(PRINT_LOG_WRITE);
-    return 1;
-  }
-  return 0;
-}
-
-void updateEEPROMLogs(NeoGroup neos[], LuxManager lux_mng[]) {
-  if (data_logging_active) {
-    // if enough time has passed since init for data-logging to be active
-    uint8_t updates = 0;
-    if (millis() > LOG_START_DELAY) {
-      //  if one of the logs update then update the log timer
-      updates += updateOnRateLog(neos);
-      updates += updateBrightnessScalerAvgLog(neos);
-      updates += updateLuxLog(&lux_mng);
-      updates += updateCPMLog();
-      updates += updateLuxMinMaxDatalog(&lux_mng);
-    }
-    if (updates) {
-      log_timer = 0;
-      Serial.print("A Total of "); Serial.print(updates); Serial.println(" logs were updated");
-      printDivide();
-    }
-  }
-}
-
-void writeSetupConfigsToEEPROM() {
-  if (data_logging_active) {
-    #if JUMPERS_POPULATED
-    EEPROM.update(EEPROM_JMP1, cicada_mode);
-    EEPROM.update(EEPROM_JMP2, stereo_audio);
-    EEPROM.update(EEPROM_JMP3, NUM_LUX_SENSORS);
-    EEPROM.update(EEPROM_JMP4, combine_lux_readings);
-    EEPROM.update(EEPROM_JMP5, gain_adjust_active);
-    EEPROM.update(EEPROM_JMP6, data_logging_active);
-    dprintln(PRINT_LOG_WRITE, "logged jumper values to EEPROM");
-    #endif // jumpers_populated
-
-    #if FIRMWARE_MODE == CICADA_MODE
-    // log the starting gains to the min/max EEPROM
-    writeDouble(EEPROM_CLICK_GAIN_MIN, click_gain[0]);
-    writeDouble(EEPROM_CLICK_GAIN_MIN + 4, click_gain[1]);
-    writeDouble(EEPROM_SONG_GAIN_MIN, song_gain[0]);
-    writeDouble(EEPROM_SONG_GAIN_MIN + 4, song_gain[1]);
-
-    writeDouble(EEPROM_CLICK_GAIN_START, click_gain[0]);
-    writeDouble(EEPROM_CLICK_GAIN_START + 4, click_gain[1]);
-    writeDouble(EEPROM_SONG_GAIN_START, song_gain[0]);
-    writeDouble(EEPROM_SONG_GAIN_START + 4, song_gain[1]);
-
-    writeDouble(EEPROM_CLICK_GAIN_MAX, click_gain[0]);
-    writeDouble(EEPROM_CLICK_GAIN_MAX + 4, click_gain[1]);
-    writeDouble(EEPROM_SONG_GAIN_MAX, song_gain[0]);
-    writeDouble(EEPROM_SONG_GAIN_MAX + 4, song_gain[1]);
-
-    writeDouble(EEPROM_SONG_GAIN_CURRENT, song_gain[0]);
-    writeDouble(EEPROM_SONG_GAIN_CURRENT + 4, song_gain[1]);
-    writeDouble(EEPROM_CLICK_GAIN_CURRENT, click_gain[0]);
-    writeDouble(EEPROM_CLICK_GAIN_CURRENT + 4, click_gain[1]);
-
-    writeLong(EEPROM_TOTAL_CLICKS, 0);
-    writeLong(EEPROM_TOTAL_CLICKS + 4, 0);
-
-    #endif // cicada_mode
-
-    EEPROM.update(EEPROM_AUDIO_MEM_MAX, AUDIO_MEMORY);
-    dprintln(PRINT_LOG_WRITE, "logged AUDIO_MEMORY to EEPROM");
-    
-    // auto-log values
-    EEPROM.update(EEPROM_LOG_ACTIVE, data_logging_active);
-    writeLong(EEPROM_LOG_POLLING_RATE, LOG_POLLING_RATE);
-    writeLong(EEPROM_LOG_START_TIME, LOG_START_DELAY);
-    writeLong(EEPROM_LOG_END_TIME,  LOG_START_DELAY + LOG_TIME_FRAME);
-    dprintln(PRINT_LOG_WRITE, "Logged Log info (in minutes):");
-    dprint(PRINT_LOG_WRITE, "Datalog Active :\t"); dprintln(PRINT_LOG_WRITE, data_logging_active);
-    dprint(PRINT_LOG_WRITE, "Start time     :\t"); dprintln(PRINT_LOG_WRITE, LOG_START_DELAY / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "End time       :\t"); dprintln(PRINT_LOG_WRITE, (LOG_START_DELAY + LOG_TIME_FRAME) / ONE_MINUTE);
-    dprint(PRINT_LOG_WRITE, "Logging Rate   :\t"); dprintln(PRINT_LOG_WRITE, (String)(LOG_POLLING_RATE / ONE_MINUTE));
-
-    EEPROM.update(EEPROM_SERIAL_ID, SERIAL_ID);
-    dprint(PRINT_LOG_WRITE, "logged serial number : ");
-    dprintln(PRINT_LOG_WRITE, SERIAL_ID);
-
-    // the software and hardware version numbers
-    dprint(PRINT_LOG_WRITE, "Software Version:\t"); 
-    dprint(PRINT_LOG_WRITE, S_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, S_VERSION_MINOR);
-    dprint(PRINT_LOG_WRITE,".");dprintln(PRINT_LOG_WRITE, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_SUBVERION, S_SUBVERSION);
-    EEPROM.update(EEPROM_S_VERSION_MINOR, S_VERSION_MINOR);
-    EEPROM.update(EEPROM_S_VERSION_MAJOR, S_VERSION_MAJOR);
-
-    dprint(PRINT_LOG_WRITE, "hardware Version:\t"); 
-    dprint(PRINT_LOG_WRITE, H_VERSION_MAJOR);
-    dprint(PRINT_LOG_WRITE,".");dprint(PRINT_LOG_WRITE, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MINOR, H_VERSION_MINOR);
-    EEPROM.update(EEPROM_H_VERSION_MAJOR, H_VERSION_MAJOR);
-    
-    dprintln(PRINT_LOG_WRITE, "\nFinished logging setup configs to EEPROM");
-    dprintln(PRINT_LOG_WRITE, "|||||||||||||||||||||||||||||||||||||||||");
-  }
-}
-
-void printEEPROMContents() {
-  // todo add printing for the serial_id:
-  
-  Serial.print("run time in ms      :\t");
-  Serial.println(readLongFromEEPROM(EEPROM_RUN_TIME));
-  Serial.print("run time in minutes :\t");
-  Serial.println(rt);
-
-
-  Serial.println("\nDatalogging settings");
-  printMinorDivide();
-
-  Serial.println("\nAudio Settings");
-  printMinorDivide();
-  Serial.print("Audio memory usage/max            :\t"); Serial.print(EEPROM.read(EEPROM_AUDIO_MEM_USAGE));
-  Serial.print("\t"); Serial.println(EEPROM.read(EEPROM_AUDIO_MEM_MAX));
-
-  Serial.println("\n - CLICK");
-  printMinorDivide();
-  Serial.print("front/rear starting gain          :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_START + 4));
-  Serial.print("front min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX));
-  Serial.print("rear  min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MIN + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_MAX + 4));
-  Serial.print("last recorded gain front/rear     :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_CURRENT)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_CLICK_GAIN_CURRENT + 4));
-  Serial.print("total clicks detected front/rear  :\t");
-  Serial.print(readLongFromEEPROM(EEPROM_TOTAL_CLICKS)); Serial.print("\t");
-  Serial.println(readLongFromEEPROM(EEPROM_TOTAL_CLICKS + 4));
-  Serial.print("Average number of CPM front/rear  :\t");
-  Serial.print(readLongFromEEPROM(EEPROM_TOTAL_CLICKS) / rt); Serial.print("\t");
-  Serial.println(readLongFromEEPROM(EEPROM_TOTAL_CLICKS + 4) / rt);
-  // printAndClearDoubleLog(EEPROM_CPM_LOG_START, EEPROM_CPM_LOG_END, "Clicks Per Minute ");
-
-  Serial.println("\n -  SONG  ");
-  printMinorDivide();
-  Serial.print("front/read starting gain          :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_START)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_START + 4));
-  Serial.print("front min/max recorded gain       :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MIN)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MAX));
-  Serial.print("rear min/max recorded gain        :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MIN + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_SONG_GAIN_MAX + 4));
-  Serial.print("last recorded gain front/rear     :\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT)); Serial.print("\t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_SONG_GAIN_CURRENT + 4)); Serial.println();
-
-  Serial.println("\nLux Settings");
-  printDivide();
-  Serial.print("min/max front lux reading         : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS));
-  Serial.print("min/max rear lux reading          : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READINGS + 4)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READINGS + 4));
-  Serial.print("min/max combined lux reading      : \t");
-  Serial.print(readDoubleFromEEPROM(EEPROM_MIN_LUX_READING_COMBINED)); Serial.print("\t");
-  Serial.println(readDoubleFromEEPROM(EEPROM_MAX_LUX_READING_COMBINED));
-  printAndClearDoubleLog(EEPROM_LUX_LOG_START, EEPROM_LUX_LOG_END, " LUX ");
-
-  Serial.println("\nLED Settings");
-  printDivide();
-  // printOnRatioLog();
-  // printBrightnessAverageLog();
-
-  printMajorDivide("Finished Printing EEPROM Datalog");
-}
-
-*/ 
 #endif // datalog_manager_h

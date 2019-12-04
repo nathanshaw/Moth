@@ -3,6 +3,10 @@
 
 #include "configuration.h"
 
+// include RMS and/or PEAK in the feature collector?
+#define PEAK_ACTIVE                 1
+#define RMS_ACTIVE                  1
+
 ///////////////////////////////////////////////////////////// CICADA MODE /////////////////////////////////////////////////////////////////
 // TODO - add bin magnitude as a feature
 // which audio feature to use to test
