@@ -761,7 +761,7 @@ void autoGainAdjust() {
 
   // dont run this logic unless the firmware has been running for one minute, any less time will result in erroneous values
   // if it has not been long enough since the last check then exit now
-  if (last_auto_gain_adjustment < auto_gain_frequency || millis() < 60000) {
+  if (last_auto_gain_adjustment < autogain_frequency || millis() < 60000) {
     return;
   };
   dprintln(PRINT_AUTO_GAIN, "-------------------- Auto Gain Start ---------------------------");
@@ -781,32 +781,72 @@ void setupDLManager() {
   // log data to EEPROM if datalogging is active
   if (data_logging_active) {
     Serial.println("configuring datalog_manager timers");
-    datalog_manager.configureTimer((uint8_t)0, (uint32_t)DATALOG_START_DELAY_1, (uint32_t)DATALOG_TIME_FRAME_1, 40);
-    datalog_manager.configureTimer((uint8_t)1, (uint32_t)DATALOG_START_DELAY_2, (uint32_t)DATALOG_TIME_FRAME_2, 40);
-    datalog_manager.configureTimer((uint8_t)2, (uint32_t)DATALOG_START_DELAY_3, (uint32_t)DATALOG_TIME_FRAME_3, 40);
-    datalog_manager.configureTimer((uint8_t)3, (uint32_t)DATALOG_START_DELAY_4, (uint32_t)DATALOG_TIME_FRAME_4, 40);
+    datalog_manager.configureTimer(0, DATALOG_START_DELAY_1, DATALOG_TIME_FRAME_1, DATALOG_1_LENGTH);
+    datalog_manager.configureTimer(1, DATALOG_START_DELAY_2, DATALOG_TIME_FRAME_2, DATALOG_2_LENGTH);
+    datalog_manager.configureTimer(2, DATALOG_START_DELAY_3, DATALOG_TIME_FRAME_3, DATALOG_3_LENGTH);
+    datalog_manager.configureTimer(3, DATALOG_START_DELAY_4, DATALOG_TIME_FRAME_4, DATALOG_4_LENGTH);
     datalog_manager.printTimerConfigs();
 
-    datalog_manager.logSetupConfigByte("Hardware Version major: ", H_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Hardware Version minor: ", H_VERSION_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version major: ", S_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Software Version major: ", S_VERSION_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version major: ", S_SUBVERSION);
+    // Hardware / Software / Serial Numbers
+    datalog_manager.logSetupConfigByte("Hardware Version majo       : ", H_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Hardware Version mino       : ", H_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_SUBVERSION);
+    datalog_manager.logSetupConfigByte("Bot ID Number               : ", SERIAL_ID);
+    datalog_manager.logSetupConfigByte("Datalog Active              : ", data_logging_active); 
+    datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE); 
+    // Lux Sensors
+    datalog_manager.logSetupConfigByte("Smooth Lux Readings         : ", SMOOTH_LUX_READINGS); 
+    datalog_manager.logSetupConfigDouble("Lux Low Threshold           : ", LOW_LUX_THRESHOLD); 
+    datalog_manager.logSetupConfigDouble("Lux Mid Threshold           : ", MID_LUX_THRESHOLD); 
+    datalog_manager.logSetupConfigDouble("Lux High Threshold          : ", HIGH_LUX_THRESHOLD); 
+    datalog_manager.logSetupConfigDouble("Brightness Scaler Min       : ", BRIGHTNESS_SCALER_MIN); 
+    datalog_manager.logSetupConfigDouble("Brightness Scaler Max       : ", BRIGHTNESS_SCALER_MAX); 
+    datalog_manager.logSetupConfigByte("Min Brightness              : ", MIN_BRIGHTNESS); 
+    datalog_manager.logSetupConfigByte("Max Brightness              : ", MAX_BRIGHTNESS); 
+    // Auto Gain
+    datalog_manager.logSetupConfigByte("Autogain Active             : ", BRIGHTNESS_SCALER_MAX); 
+    datalog_manager.logSetupConfigDouble("Max Autogain Adjustment     : ", MAX_GAIN_ADJUSTMENT); 
+    datalog_manager.logSetupConfigLong("Autogain Frequency          : ", autogain_frequency); 
+
     // todo double check the addr
     // Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
     // datalog_manager.startAutolog(0);
     double * ptr;
-    if (AUTOLOG_LUXF > 0 && front_lux_active > 0) {
+    if (AUTOLOG_LUX_F > 0 && front_lux_active > 0) {
       ptr = &lux_managers[0].lux;
       Serial.println("adding front lux autolog to datalog_manager");
-      datalog_manager.addAutolog("Front Lux Log: ", 0, ptr);
+      datalog_manager.addAutolog("Front Lux Log ", AUTOLOG_LUX_TIMER, ptr);
     }
-    if (AUTOLOG_LUXR > 0 && rear_lux_active > 0) {
+    if (AUTOLOG_LUX_R > 0 && rear_lux_active > 0) {
       ptr = &lux_managers[1].lux;
       Serial.println("adding rear lux autolog to datalog_manager");
-      datalog_manager.addAutolog("Rear Lux Log: ", 0, ptr);
-
+      datalog_manager.addAutolog("Rear Lux Log ", AUTOLOG_LUX_TIMER, ptr);
     }
+
+    if (AUTOLOG_LED_ON_OFF_F > 0) {
+      ptr = &neos[0].on_ratio;
+      Serial.println("adding front led on/off ratio autolog to datalog_manager");
+      datalog_manager.addAutolog("Front Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
+    } 
+    if (AUTOLOG_LED_ON_OFF_R > 0) {
+      ptr = &neos[1].on_ratio;
+      Serial.println("adding rear led on/off ratio autolog to datalog_manager");
+      datalog_manager.addAutolog("Rear Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
+    }
+    uint32_t * lptr;
+    if (AUTOLOG_FLASHES_F > 0) {
+      lptr = &neos[0].num_flashes;
+      Serial.println("adding front led flash number  autolog to datalog_manager");
+      datalog_manager.addAutolog("Front Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, lptr);
+    } 
+    if (AUTOLOG_FLASHES_R > 0) {
+      lptr = &neos[1].num_flashes;
+      Serial.println("adding rear led flash number autolog to datalog_manager");
+      datalog_manager.addAutolog("Rear Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, lptr);
+    }
+
     // printing needs to be at the end so that everything actually displays
     if (PRINT_EEPROM_CONTENTS  > 0) {
       delay(1000);

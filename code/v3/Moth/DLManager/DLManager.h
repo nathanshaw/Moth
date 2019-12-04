@@ -89,6 +89,7 @@ class DLManager {
         void logSetupConfigDouble(String str, double data);
 
         void addAutolog(String, uint8_t, double *);
+        void addAutolog(String, uint8_t, uint32_t *);
 
         bool configureAutolog();
         void configureTimer(uint8_t num, uint32_t start_delay, uint32_t log_time, uint32_t logs_requested);
@@ -214,7 +215,7 @@ void DLManager::logSetupConfigShort(String str, uint16_t data) {
         Serial.print(str);Serial.println(readShortFromEEPROM(one_off_write_idx));
         writeShortToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
-        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_BYTE, dlen, true};
+        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_SHORT, dlen, true};
         // incrment the one off timer write idx
         one_off_write_idx += dlen;
         // update the stored one off log active structs idx
@@ -239,7 +240,7 @@ void DLManager::logSetupConfigLong(String str, uint32_t data) {
         Serial.print(str);Serial.println(readLongFromEEPROM(one_off_write_idx));
         writeLongToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
-        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_BYTE, dlen, true};
+        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_LONG, dlen, true};
         // incrment the one off timer write idx
         one_off_write_idx += dlen;
         // update the stored one off log active structs idx
@@ -264,7 +265,7 @@ void DLManager::logSetupConfigDouble(String str, double data) {
         Serial.print(str);Serial.println(readDoubleFromEEPROM(one_off_write_idx));
         writeDoubleToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
-        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_BYTE, dlen, true};
+        one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_DOUBLE, dlen, true};
         // incrment the one off timer write idx
         one_off_write_idx += dlen;
         // update the stored one off log active structs idx
@@ -294,7 +295,8 @@ void DLManager::addLog(Datalog log, uint8_t timer_num) {
     }
     logs[add_log_idx] = log;
     log_timer_map[add_log_idx] = timer_num;
-    active_logs = max(add_log_idx, active_logs++);
+    active_logs++;
+    active_logs = max(add_log_idx, active_logs);
     add_log_idx++;
     Serial.print("Added log to the datamanager under timer ");
     Serial.print(timer_num);Serial.print(" active_logs now: ");Serial.println(active_logs);
@@ -317,6 +319,22 @@ void DLManager::addLog(Datalog *log, uint8_t timer_num) {
 
 /////////////////////////////// Auto Logging ////////////////////////////////
 void DLManager::addAutolog(String _id,  uint8_t _timer, double *_val) {
+    uint32_t log_size = remaining_logs[_timer] * 4;
+    if (log_size < remaining_autolog_space) {
+        addLog(Datalog(_id, autolog_write_idx, _val, remaining_logs[_timer], true), _timer);
+        autolog_write_idx += log_size;
+        remaining_autolog_space -= log_size;
+        printMinorDivide();
+        Serial.print("Adding a new AutoLog with size:\t");dprintln(PRINT_LOG_WRITE, log_size);
+        Serial.print("remaining autolog space       :\t");dprintln(PRINT_LOG_WRITE, remaining_autolog_space);
+        Serial.print("starting EEPROM idx           :\t");dprintln(PRINT_LOG_WRITE, autolog_write_idx - log_size);
+        printMinorDivide();
+    } else {
+        Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
+    }
+}
+
+void DLManager::addAutolog(String _id,  uint8_t _timer, uint32_t *_val) {
     uint32_t log_size = remaining_logs[_timer] * 4;
     if (log_size < remaining_autolog_space) {
         addLog(Datalog(_id, autolog_write_idx, _val, remaining_logs[_timer], true), _timer);
@@ -405,7 +423,6 @@ void DLManager::printOneOffLog(OneOffLog log) {
 }
 
 void DLManager::printOneOffLogs() {
-    Serial.println("Printing one-off logs");
     for (int i = 0; i < active_one_off_logs; i++) {
         printOneOffLog(one_off_logs[i]);
     }
@@ -413,7 +430,6 @@ void DLManager::printOneOffLogs() {
 }
 
 void DLManager::printAutologs() {
-    Serial.println(" Printing Autologs");
     for (int i = 0; i <= active_logs; i++) {
         Serial.print("printing log                    :\t");Serial.println(i);
         logs[i].printLog(8);
@@ -436,26 +452,26 @@ void DLManager::printTimerConfigs()  {
     printMinorDivide();
     Serial.println("Printing the Timer Configurations for the Datalog Manager");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
-        Serial.print("current: ");Serial.print(log_timers[i]);Serial.print("\tmax\t");
+        Serial.print(i);Serial.print(" current: ");Serial.print(log_timers[i]);Serial.print("\tmax\t");
         Serial.println(log_refresh_length[i]);
     }
 
-    Serial.println("start_delays :\t");
+    Serial.print("start_delays :\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
-        Serial.print(i);Serial.print("=");Serial.print(start_delays[i]);printTab();
+        Serial.print(start_delays[i]);printTab();
     }
     Serial.println();
 
-    Serial.println("remaining_logs:\t");
+    Serial.print("remaining_logs:\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
-        Serial.print(i);Serial.print("=");Serial.print(remaining_logs[i]);printTab();
+        Serial.print(remaining_logs[i]);printTab();
 
     }
     Serial.println();
 
-    Serial.println("log_refresh_length:\t");
+    Serial.print("log_refresh_length:\t");
     for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
-        Serial.print(i);Serial.print("=");Serial.print(log_refresh_length[i]);printTab();
+        Serial.print(log_refresh_length[i]);printTab();
 
     }
     Serial.println();
@@ -634,43 +650,16 @@ void writeSetupConfigsToEEPROM() {
 }
 
 void printEEPROMContents() {
-  // todo add printing for the serial_id
-  printMajorDivide((String)"Printing EEPROM CONTENTS ...");
-  Serial.print("hardware version    :\t");Serial.print(EEPROM.read(EEPROM_H_VERSION_MAJOR));
-  Serial.print(".");Serial.println(EEPROM.read(EEPROM_H_VERSION_MINOR));
+  // todo add printing for the serial_id:
   
-  Serial.print("firmware version    :\t");Serial.print(EEPROM.read(EEPROM_S_VERSION_MAJOR));
-  Serial.print(".");Serial.print(EEPROM.read(EEPROM_S_VERSION_MINOR));Serial.print(".");
-  Serial.println(EEPROM.read(EEPROM_S_SUBVERION));
-  
-  Serial.print("bot serial number   :\t");
-  Serial.println(EEPROM.read(EEPROM_SERIAL_ID));
   Serial.print("run time in ms      :\t");
   Serial.println(readLongFromEEPROM(EEPROM_RUN_TIME));
   Serial.print("run time in minutes :\t");
-  double rt = readLongFromEEPROM(EEPROM_RUN_TIME) / 1000 / 60;
   Serial.println(rt);
-  printMinorDivide();
-  Serial.print("onboard jumper settings\t\t");
-  Serial.print(EEPROM.read(EEPROM_JMP1));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP2));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP3));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP4));
-  Serial.print("\t");
-  Serial.print(EEPROM.read(EEPROM_JMP5));
-  Serial.print("\t");
-  Serial.println(EEPROM.read(EEPROM_JMP6));
-  printMinorDivide();
+
 
   Serial.println("\nDatalogging settings");
   printMinorDivide();
-  Serial.print("Datalog Active :\t"); Serial.println(EEPROM.read(EEPROM_LOG_ACTIVE));
-  Serial.print("Start time     :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_START_TIME) / 60000);
-  Serial.print("End time       :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_END_TIME) / 60000);
-  Serial.print("Logging Rate   :\t"); Serial.println((double)readLongFromEEPROM(EEPROM_LOG_POLLING_RATE) / 60000);
 
   Serial.println("\nAudio Settings");
   printMinorDivide();

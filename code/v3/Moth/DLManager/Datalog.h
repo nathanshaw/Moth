@@ -322,6 +322,9 @@ bool Datalog::update() {
     if (autolog_active == true) {
         // increment the addr counter
         addr += value_size;
+        // dprint(PRINT_LOG_WRITE, "\t");
+        // dprintln(PRINT_LOG_WRITE, addr);
+
         // if the current address plus the data_length is greater than the end index and 
         // if the datalogger is on autolog then stop the autologger
         if (addr + value_size > end_addr) {

@@ -13,12 +13,12 @@
   elapsedMillis last_click_flash[2]; // ensures that the LEDs are not turned on when they are in shutdown mode to allow for an accurate LUX reading
   elapsedMillis led_shdn_timer[2];
   bool leds_on[2] = {false, false};               // set to false if the LEDs are turned off and true if the leds are on...
-  elapsedMillis led_off_len[2];          // keeps track of how long the LEDs are turned off, it will reset when colorWipe is called with a color of 0
+  elapsedMillis led_off_len[2];          // keeps track of how uint32_t the LEDs are turned off, it will reset when colorWipe is called with a color of 0
 
   // to keep track of how often the leds are on/off
   elapsedMillis led_switch_timer[2];// each time color wipe is called this value is reset
-  long led_on_times[2] = {1, 1};
-  long led_off_times[2] = {1, 1};
+  uint32_t led_on_times[2] = {1, 1};
+  uint32_t led_off_times[2] = {1, 1};
   double led_on_ratio[2];
 */
 #include <WS2812Serial.h>
@@ -48,7 +48,7 @@ class NeoGroup {
     // class to control a sub group of neopixels easily
     // init should cover
   public:
-    NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String n, long f_min, long f_max);
+    NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String n, uint32_t f_min, uint32_t f_max);
 
     // setting and getting functions
     void setFlashOn(bool val) {
@@ -60,16 +60,17 @@ class NeoGroup {
     bool getLedsOn() {
       return leds_on;
     };
-    long getOnOffLen() {
+    uint32_t getOnOffLen() {
       return on_off_len;
     };
-    long getShdnTimer() {
+    uint32_t getShdnTimer() {
       return shdn_timer;
     };
 
-    long getNumFlashes() {return num_flashes;};
+    uint32_t getNumFlashes() {return num_flashes;};
+    uint32_t num_flashes = 0;
    
-    unsigned long getShdnLen();
+    uint32_t getShdnLen();
 
     bool isInShutdown() {
       if (shdn_timer < shdn_len) {
@@ -89,22 +90,23 @@ class NeoGroup {
     double getOnRatio() {
       return on_ratio;
     };
+    double on_ratio = 0.5;
 
     double getBrightnessScaler() {
       return brightness_scaler;
     };
     double getAvgBrightnessScaler();
     double getAvgBrightness(String type);
-    long getRemainingFlashDelay() {
+    uint32_t getRemainingFlashDelay() {
       return remaining_flash_delay;
     };
-    void addToRemainingFlashDelay(long i) {
+    void addToRemainingFlashDelay(uint32_t i) {
       remaining_flash_delay += i;
       if (remaining_flash_delay > flash_max_time) {
         remaining_flash_delay = flash_max_time;
       }
     };
-    void setRemainingFlashDelay(long d) {
+    void setRemainingFlashDelay(uint32_t d) {
       remaining_flash_delay = d;
     };
 
@@ -119,7 +121,7 @@ class NeoGroup {
 
     void printGroupConfigs();
 
-    bool shutdown(long len);
+    bool shutdown(uint32_t len);
     void powerOn();
     void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
 
@@ -133,12 +135,11 @@ class NeoGroup {
     uint8_t flash_red = 0;
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
-    long remaining_flash_delay = 0;// negative values expected, can not be a variable
+    uint32_t remaining_flash_delay = 0;// negative values expected, can not be a variable
     
     bool flash_on = false;
-    long flash_min_time;
-    long flash_max_time;
-    long num_flashes;
+    uint32_t flash_min_time;
+    uint32_t flash_max_time;
     elapsedMillis fpm_timer;
 
     // related to auto-calibration and datalogging
@@ -152,7 +153,7 @@ class NeoGroup {
     int num_pixels;
 
     elapsedMillis shdn_timer; // if this is below a certain threshold then shutdown everything
-    unsigned long shdn_len = 0;
+    uint32_t shdn_len = 0;
 
     bool leds_on = false;
 
@@ -160,9 +161,8 @@ class NeoGroup {
     elapsedMillis on_off_len; // this is reset every time the leds shutdown or turn on (length of time on or off)
     elapsedMillis last_flash_update;
 
-    long on_time = 1;
-    long off_time = 1;
-    double on_ratio = 0.5;
+    uint32_t on_time = 1;
+    uint32_t off_time = 1;
     double brightness_scaler = 1.0;
     double brightness_scaler_total;
     double brightness_scaler_changes;
@@ -182,7 +182,7 @@ double NeoGroup::getFlashPerMinuteAvg() {
   return (double)num_flashes / (double)fpm_timer;
 }
 
-NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, long f_min, long f_max) {
+NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, uint32_t f_min, uint32_t f_max) {
   // todo
   flash_min_time = f_min;
   flash_max_time = f_max;
@@ -193,7 +193,7 @@ NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, lo
   gname = id;
 }
 
-bool NeoGroup::shutdown(long len) {
+bool NeoGroup::shutdown(uint32_t len) {
   // return 0 if lux shutdown not a success, 1 if it is
   if (!isInShutdown()) {
     dprint(PRINT_LUX_DEBUG,millis());dprint(PRINT_LUX_DEBUG, "\tSHUTTING DOWN GROUP ");
@@ -212,7 +212,7 @@ void NeoGroup::powerOn() {
   shdn_timer += shdn_len;
 }
 
-unsigned long NeoGroup::getShdnLen() {
+uint32_t NeoGroup::getShdnLen() {
   if (shdn_timer <= shdn_len) {
     return shdn_timer;
   } else  {
@@ -302,7 +302,7 @@ void NeoGroup::flashOff() {
 }
 
 bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
-  // if it has been long enough since the last flash occured
+  // if it has been uint32_t enough since the last flash occured
   if (last_flash > FLASH_DEBOUNCE_TIME) {
     dprint(PRINT_CLICK_DEBUG, "FLASH ON");
     if (red + green + blue > 0 && shdn_timer > shdn_len) {

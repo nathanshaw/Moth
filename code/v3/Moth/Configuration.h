@@ -61,35 +61,47 @@ bool data_logging_active = true;
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS 0
 
+// how long will each of the four different auto-log options be?
+#define DATALOG_1_LENGTH      40
+#define DATALOG_2_LENGTH      40
+#define DATALOG_3_LENGTH      40
+#define DATALOG_4_LENGTH      40
+
 // record the run time // last value is number of minutes
 #define DATALOG_TIMER_1       (1000*60*1)
-#define DATALOG_TIMER_2       (1000*60*10)
-#define DATALOG_TIMER_3       (1000*60*30)
-#define DATALOG_TIMER_4       (1000*60*60)
+#define DATALOG_TIMER_2       (1000*60*1)
+#define DATALOG_TIMER_3       (1000*60*5)
+#define DATALOG_TIMER_4       (1000*60*5)
 
 #define DATALOG_START_DELAY_1 (1000*60*0)
 #define DATALOG_START_DELAY_2 (1000*60*1)
 #define DATALOG_START_DELAY_3 (1000*60*10)
 #define DATALOG_START_DELAY_4 (1000*60*60)
 
-#define DATALOG_TIME_FRAME_1  (1000*60*60*0.1)
-#define DATALOG_TIME_FRAME_2  (1000*60*60*0.25)
-#define DATALOG_TIME_FRAME_3  (1000*60*60*0.5)
+#define DATALOG_TIME_FRAME_1  (1000*60*60*0.25)
+#define DATALOG_TIME_FRAME_2  (1000*60*60*0.5)
+#define DATALOG_TIME_FRAME_3  (1000*60*60*2)
 #define DATALOG_TIME_FRAME_4  (1000*60*60*50)
 
 uint8_t datalog_timer_num = 4;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
 
 // will the lux readings be logged?
-#define AUTOLOG_LUXF        1
-#define AUTOLOG_LUXR        1
+#define AUTOLOG_LUX_F                   1
+#define AUTOLOG_LUX_R                   1
+#define AUTOLOG_LUX_TIMER               0
+// the ratio of on vs off time for the neopixels
+#define AUTOLOG_LED_ON_OFF_F            1
+#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF_TIMER        0
 // the number of values to store in the logging process
+#define AUTOLOG_FLASHES_F               1
+#define AUTOLOG_FLASHES_R               1
+#define AUTOLOG_FLASHES_TIMER           0
 
-#define AUTOLOG_FLASHESF    0
-#define AUTOLOG_FLASHESR    0
 ///////////////////////// Auto-Gain Settings /////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-// #define AUTO_GAIN 1
+#define AUTO_GAIN_ACTIVE                1
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
 // auto gain code. This value needs to be less than 1. 0.5 would mean that the gain can change
@@ -98,8 +110,6 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define USE_LED_ON_RATIO              (1)
 #define MIN_LED_ON_RATIO              (0.3)
 #define MAX_LED_ON_RATIO              (0.95)
-
-
 
 ///////////////////////// Debuggings ////////////////////////////////////
 //
@@ -147,7 +157,7 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 //////////////////////// Auto-gain Settings /////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 #define MAX_GAIN_ADJUSTMENT 0.10
-const uint32_t auto_gain_frequency = 1000 * 60 * 10; // how often to calculate auto-gain (in ms)
+const uint32_t autogain_frequency = 1000 * 60 * 10; // how often to calculate auto-gain (in ms)
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
