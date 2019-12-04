@@ -46,8 +46,8 @@ bool rear_lux_active = true;
 #define BRIGHTNESS_SCALER_MIN     0.5
 #define BRIGHTNESS_SCALER_MAX     1.5
 
-uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 6); // every 6 minutes
-uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
+uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 0.05); // every 6 minutes
+uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 0.01); // one minute
 
 ///////////////////////// NeoPixel Settings ///////////////////////////////
 #define MIN_BRIGHTNESS            10
@@ -56,6 +56,11 @@ uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+bool data_logging_active = true;
+
+// does the autolog get written over each time?
+#define CLEAR_EEPROM_CONTENTS 0
+
 // record the run time // last value is number of minutes
 #define DATALOG_TIMER_1       (1000*60*1)
 #define DATALOG_TIMER_2       (1000*60*10)
@@ -76,12 +81,12 @@ uint8_t datalog_timer_num = 4;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
 
 // will the lux readings be logged?
-#define AUTOLOG_LUX        1
+#define AUTOLOG_LUXF        1
+#define AUTOLOG_LUXR        1
 // the number of values to store in the logging process
-#define LUX_LOG_LENGTH     40
 
-#define AUTOLOG_FLASHES    0
-#define SLASHES_LOG_LENGTH 40
+#define AUTOLOG_FLASHESF    0
+#define AUTOLOG_FLASHESR    0
 ///////////////////////// Auto-Gain Settings /////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
 // #define AUTO_GAIN 1
@@ -94,11 +99,13 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define MIN_LED_ON_RATIO              (0.3)
 #define MAX_LED_ON_RATIO              (0.95)
 
+
+
 ///////////////////////// Debuggings ////////////////////////////////////
 //
 ///////////////////////// Cicada ////////////////////////////////////////
-#define PRINT_LUX_DEBUG               true
-#define PRINT_LUX_READINGS            true
+#define PRINT_LUX_DEBUG               false
+#define PRINT_LUX_READINGS            false
 #define PRINT_BRIGHTNESS_SCALER_DEBUG false
 // TODO
 #define PRINT_SONG_DATA               false

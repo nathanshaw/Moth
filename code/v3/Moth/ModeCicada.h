@@ -27,41 +27,9 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
 
 DLManager datalog_manager = DLManager((String)"Main");
 
-// record the run time // last value is number of minutes
-#define DATALOG_TIMER_1       (1000*60*1)
-#define DATALOG_TIMER_2       (1000*60*10)
-#define DATALOG_TIMER_3       (1000*60*30)
-#define DATALOG_TIMER_4       (1000*60*60)
-
-#define DATALOG_START_DELAY_1 (1000*60*0)
-#define DATALOG_START_DELAY_2 (1000*60*1)
-#define DATALOG_START_DELAY_3 (1000*60*10)
-#define DATALOG_START_DELAY_4 (1000*60*60)
-
-#define DATALOG_TIME_FRAME_1  (1000*60*60*0.1)
-#define DATALOG_TIME_FRAME_2  (1000*60*60*0.25)
-#define DATALOG_TIME_FRAME_3  (1000*60*60*0.5)
-#define DATALOG_TIME_FRAME_4  (1000*60*60*50)
-
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
 
-/////////////////////////////// Lux Sensors //////////////////////////////
-double combined_lux;
-double combined_min_lux_reading;
-double combined_max_lux_reading;
-
-////////////////////////////// Audio ////////////////////////////////////
-// audio usage loggings
-uint8_t audio_usage_max = 0;
-elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
-
-// for creating a second "ten second loop"
-elapsedMillis ten_second_timer;
-
-
-elapsedMillis last_auto_gain_adjustment; // the time in which the last auto_gain_was_calculated
-
-////////////////////////// EEPROM //////////////////////////////////////
+////////////////////////// Audio Objects //////////////////////////////////////////
 
 AudioInputI2S            i2s1;           //xy=76.66667938232422,1245.6664371490479
 AudioAnalyzeRMS          rms_input1;     //xy=260.00000762939453,1316.6666345596313
@@ -160,8 +128,9 @@ uint8_t song_peak_weighted[2] = {0, 0}; // 0 -255 depending on the peak of the s
 double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
-
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
+
+///////////////////////////////// Printing Functions /////////////////////////////////////////
 void printClickStats() {
   if (PRINT_CLICK_FEATURES) {
     // TODO update this to have a stereo option
@@ -182,7 +151,7 @@ void printClickStats() {
     Serial.println();
   }
 }
-
+///////////////////////////////// Audio Functions /////////////////////////////////////////////
 void updateClickAudioFeaturesRMS(uint8_t i) {
   click_rms_delta[i] = last_click_rms_val[i] - click_rms_val[i];
   if (click_rms_delta[i] > CLICK_RMS_DELTA_THRESH) {
@@ -260,34 +229,28 @@ void updateLuxSensors() {
   }
 */
 
-void readJumpers() {
-  Serial.println("reading jumpers");
+void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
+  printMajorDivide("reading jumpers");
   pinMode(JMP1_PIN, INPUT);
   pinMode(JMP2_PIN, INPUT);
   pinMode(JMP3_PIN, INPUT);
   pinMode(JMP4_PIN, INPUT);
   pinMode(JMP5_PIN, INPUT);
   pinMode(JMP6_PIN, INPUT);
-
   delay(100);
-
-  cicada_mode = digitalRead(JMP1_PIN);
-  Serial.print("cicada_mode set to : "); Serial.println(cicada_mode);
-  stereo_audio = digitalRead(JMP2_PIN);
-  num_channels = stereo_audio + 1; // the number of channels we will be using
-  Serial.print("stereo_audio set to : "); Serial.println(stereo_audio);
-  INDEPENDENT_CLICKS = digitalRead(JMP3_PIN);
-  // both_lux_sensors = digitalRead(JMP3_PIN);
-  // num_lux_sensors = both_lux_sensors + 1;
-  Serial.print("independent clicks set to : "); Serial.println(INDEPENDENT_CLICKS);
-  combine_lux_readings = digitalRead(JMP4_PIN);
-  Serial.print("combine_lux_readings set to : "); Serial.println(combine_lux_readings);
-  gain_adjust_active = digitalRead(JMP5_PIN);
-  Serial.print("gain_adjust_active set to : "); Serial.println(gain_adjust_active);
-
-  data_logging_active = digitalRead(JMP6_PIN);
-  Serial.print("data_logging_active set to : "); Serial.println(data_logging_active);
-  Serial.println("\n------------------------------------");
+  v1 = digitalRead(JMP1_PIN);
+  Serial.print(v1); printTab();
+  v2 = digitalRead(JMP2_PIN);
+  Serial.print(v2); printTab();
+  v3 = digitalRead(JMP3_PIN);
+  Serial.print(v3); printTab();
+  v4 = digitalRead(JMP4_PIN);
+  Serial.print(v4); printTab();
+  v5 = digitalRead(JMP5_PIN);
+  Serial.print(v5); printTab();
+  v6 = digitalRead(JMP6_PIN);
+  Serial.print(v6); printTab();
+  printDivide();
 }
 
 // this should be in the main audio loop
@@ -815,50 +778,74 @@ void autoGainAdjust() {
 }
 
 void setupDLManager() {
-/*
-#if AUTOLOG_LUX && front_lux_active
-  // todo double check the addr
-  Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
-  datalog_manager.addLog(&luxLog_f);
-#endif
-#if AUTOLOG_LUX && rear_lux_active
-  Datalog lux_log_r = Datalog(EEPROM_LUX_LOG_START, "Lux Rear", lux_managers->lux, true);
-  datalog_manager.addLog(&luxLog_r);
-#endif
-*/
-  datalog_manager.configureTimer((uint8_t)0, (uint32_t)DATALOG_START_DELAY_1, (uint32_t)DATALOG_TIME_FRAME_1, 40);
-  datalog_manager.configureTimer((uint8_t)1, (uint32_t)DATALOG_START_DELAY_2, (uint32_t)DATALOG_TIME_FRAME_2, 40);
-  datalog_manager.configureTimer((uint8_t)2, (uint32_t)DATALOG_START_DELAY_3, (uint32_t)DATALOG_TIME_FRAME_3, 40);
-  datalog_manager.configureTimer((uint8_t)3, (uint32_t)DATALOG_START_DELAY_4, (uint32_t)DATALOG_TIME_FRAME_4, 40);
+  // log data to EEPROM if datalogging is active
+  if (data_logging_active) {
+    Serial.println("configuring datalog_manager timers");
+    datalog_manager.configureTimer((uint8_t)0, (uint32_t)DATALOG_START_DELAY_1, (uint32_t)DATALOG_TIME_FRAME_1, 40);
+    datalog_manager.configureTimer((uint8_t)1, (uint32_t)DATALOG_START_DELAY_2, (uint32_t)DATALOG_TIME_FRAME_2, 40);
+    datalog_manager.configureTimer((uint8_t)2, (uint32_t)DATALOG_START_DELAY_3, (uint32_t)DATALOG_TIME_FRAME_3, 40);
+    datalog_manager.configureTimer((uint8_t)3, (uint32_t)DATALOG_START_DELAY_4, (uint32_t)DATALOG_TIME_FRAME_4, 40);
+    datalog_manager.printTimerConfigs();
+
+    datalog_manager.logSetupConfigByte("Hardware Version major: ", H_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Hardware Version minor: ", H_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version major: ", S_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Software Version major: ", S_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version major: ", S_SUBVERSION);
+    // todo double check the addr
+    // Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
+    // datalog_manager.startAutolog(0);
+    double * ptr;
+    if (AUTOLOG_LUXF > 0 && front_lux_active > 0) {
+      ptr = &lux_managers[0].lux;
+      Serial.println("adding front lux autolog to datalog_manager");
+      datalog_manager.addAutolog("Front Lux Log: ", 0, ptr);
+    }
+    if (AUTOLOG_LUXR > 0 && rear_lux_active > 0) {
+      ptr = &lux_managers[1].lux;
+      Serial.println("adding rear lux autolog to datalog_manager");
+      datalog_manager.addAutolog("Rear Lux Log: ", 0, ptr);
+
+    }
+    // printing needs to be at the end so that everything actually displays
+    if (PRINT_EEPROM_CONTENTS  > 0) {
+      delay(1000);
+      datalog_manager.printAllLogs();
+    } else {
+      Serial.println("Not printing the EEPROM Datalog Contents");
+    }
+
+
+  } else {
+    if (PRINT_EEPROM_CONTENTS > 0) {
+      datalog_manager.printAllLogs();
+  }
+  }
+  if (CLEAR_EEPROM_CONTENTS > 0) {
+    delay(100);
+    datalog_manager.clearLogs();
+    // datalog_manager.printLogs();
+  } else {
+    Serial.println("Not printing the EEPROM Datalog Contents");
+  }
 }
 
 void mothSetup() {
-  Serial.begin(57600);
-  delay(5000);
-  Serial.println("Setup Loop has started");
-  leds.begin();
-  Serial.println("LEDS have been initalised");
-  delay(250);
+  Serial.begin(57600); delay(5000);Serial.println("Setup Loop has started");
+  if (JUMPERS_POPULATED) {
+    // readJumpers();
+  } else {
+    printMajorDivide("Jumpers are not populated, not printing values");
+  }
+  leds.begin();Serial.println("LEDS have been initalised");delay(250);
   // create either front and back led group, or just one for both
   neos[0].colorWipe(120, 70, 0); // turn off the LEDs
   neos[1].colorWipe(120, 70, 0); // turn off the LEDs
   Serial.println("Leds turned yellow for setup loop\n");
   delay(2000);
+  
+  setupDLManager();
 
-  if (JUMPERS_POPULATED) {
-    printMinorDivide();
-    Serial.println("Checking Hardware Jumpers");
-    readJumpers();
-  } else {
-    printMajorDivide("Jumpers are not populated, not printing values");
-  }
-  if (PRINT_EEPROM_CONTENTS  > 0) {
-    delay(1000);
-    datalog_manager.printLogs();
-    datalog_manager.printTimerConfigs();
-  } else {
-    Serial.println("Not printing the EEPROM Datalog Contents");
-  }
   Serial.println("Running Use Specific Setup Loop...");
   cicadaSetup();
 
@@ -867,9 +854,6 @@ void mothSetup() {
   // todo make this adapt to when microphones are broken on one or more side...
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();
-  }
-  if (data_logging_active) {
-    setupDLManager();
   }
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
@@ -882,32 +866,17 @@ void mothSetup() {
   printMajorDivide("Setup Loop Finished");
 }
 
-void tenSecondUpdate() {
-  if (ten_second_timer > TEN_SECONDS) {
-    // todo add back
-    // checkAudioUsage();
-#if (AUTO_GAIN)
-    // todo add back
-    // autoGainAdjust(); // will call rear as well if in stereo mode
-#endif
-    // todo add back
-    // updateEEPROMLogs(neos, lux_managers);
-    // ten_second_timer = 0;
-  }
-}
-
-void updateSong() {
+void mothLoop() {
+  updateLuxSensors();
   // SONG /////////////////////////
   calculateSongAudioFeatures();
   songDisplay();
-}
-
-void mothLoop() {
-  tenSecondUpdate(); // this creates a slower ten second update loop (should likely be using a timer inturrupt thing)
-  updateLuxSensors();
-  updateSong();
   updateClicks();
   datalog_manager.update();
+    // todo add back
+  // checkAudioUsage();
+  // todo add back
+  // autoGainAdjust(); // will call rear as well if in stereo mode
 }
 /*
   void testMicrophones() {

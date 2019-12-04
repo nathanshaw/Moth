@@ -7,7 +7,7 @@
 class Datalog {
     private:
         // to reduce code on the overloaded init functions
-        void _setup(String, uint32_t, int, bool, uint8_t);
+        void _setup(String, uint32_t, int, bool);
         // for keeping track of index moving for autolog
         bool moving_index = false;
         // this is the user assigned name to the datalog
@@ -19,7 +19,7 @@ class Datalog {
         uint8_t value_size;
 
         // todo ...
-        bool autolog_active = false;
+        bool autolog_active = true;
 
         // references to the variables we want to track
         double   *dval;
@@ -28,7 +28,7 @@ class Datalog {
         uint32_t *lval;
 
         // for keeping track if the log is active
-        bool active = false;
+        bool active = true;
 
         // for keeping track of where to write
         uint32_t addr;
@@ -54,10 +54,12 @@ class Datalog {
     public:
         Datalog();
         ~Datalog();
-        Datalog(String _id, uint32_t address, double *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, uint32_t address, uint8_t *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, uint32_t address, uint16_t *val, int length, bool move, uint8_t _type);
-        Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move, uint8_t _type);
+        Datalog(String _id, uint32_t address, double *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint8_t *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint16_t *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint32_t *val, int length, bool _auto);
+
+        void setAutolog(bool v){ autolog_active = v;};
 
         bool update(); // could this be a while loop at some point?
 
@@ -71,7 +73,7 @@ class Datalog {
         bool writeCheck(uint16_t);
         bool writeCheck(uint32_t);
 
-        void clearLog();
+        void clear();
         void printLog(uint8_t lines);
 
 };
@@ -79,43 +81,42 @@ Datalog::Datalog(){};
 Datalog::~Datalog(){};
 
 //////////////////////// High Level Methods /////////////////////////////////
-Datalog::Datalog(String _id, uint32_t address, double *val, int length, bool move, uint8_t _type) {
-    _setup(_id, address, length, move, _type);
-    data_type = DATATYPE_DOUBLE;
+Datalog::Datalog(String _id, uint32_t address, double *val, int length, bool move) {
+    data_type = type = DATATYPE_DOUBLE;
     value_size = 4;
     dval = val;
+    _setup(_id, address, length, move);
 }
 
-Datalog::Datalog(String _id, uint32_t address, uint8_t *val, int length, bool move, uint8_t _type) {
-    _setup(_id, address, length, move, _type);
-    data_type = DATATYPE_BYTE;
+Datalog::Datalog(String _id, uint32_t address, uint8_t *val, int length, bool move) {
+    data_type = type = DATATYPE_BYTE;
     value_size = 1;
     bval = val;
+    _setup(_id, address, length, move);
 }
 
-Datalog::Datalog(String _id, uint32_t address, uint16_t *val, int length, bool move, uint8_t _type) {
-    _setup(_id, address, length, move, _type);
-    data_type = DATATYPE_SHORT;
+Datalog::Datalog(String _id, uint32_t address, uint16_t *val, int length, bool move) {
+    data_type = type = DATATYPE_SHORT;
     value_size = 2;
     sval = val;
+    _setup(_id, address, length, move);
 }
 
-Datalog::Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move, uint8_t _type) {
-    _setup(_id, address, length, move, _type);
-    data_type = DATATYPE_LONG;
+Datalog::Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move) {
+    data_type = type = DATATYPE_LONG;
     value_size = 4;
     lval = val;
+    _setup(_id, address, length, move);
 }
 
 // to save code repitition
-void Datalog::_setup(String _id, uint32_t address, int length, bool move, uint8_t _type) {
+void Datalog::_setup(String _id, uint32_t address, int length, bool move) {
     start_addr = address;
     addr = address;
     id = _id;
-    log_length = length;
-    end_addr = address + (value_size * log_length);
+    log_length = length * value_size;
+    end_addr = address + log_length;
     moving_index = move;
-    type = _type;
 }
 
 //////////////////////// Writing Methods /////////////////////////////////
@@ -178,8 +179,8 @@ double Datalog::readDouble(int a) {
   uint32_t data = EEPROM.read(a + 3);
   for (int i = 2; i > -1; i--) {
     uint8_t reading = EEPROM.read(a + i);
-    // Serial.print(reading);
-    // Serial.print("|");
+    // dprint(PRINT_LOG_WRITE, reading);
+    // dprint(PRINT_LOG_WRITE, "|");
     data = (data << 8) | reading;
   }
   return (double)data / DOUBLE_PRECISION;
@@ -189,8 +190,8 @@ double Datalog::readDouble() {
   uint32_t data = EEPROM.read(addr + 3);
   for (int i = 2; i > -1; i--) {
     uint8_t reading = EEPROM.read(addr + i);
-    // Serial.print(reading);
-    // Serial.print("|");
+    // dprint(PRINT_LOG_WRITE, reading);
+    // dprint(PRINT_LOG_WRITE, "|");
     data = (data << 8) | reading;
   }
   return (double)data / DOUBLE_PRECISION;
@@ -230,10 +231,10 @@ uint32_t Datalog::readLong() {
 bool Datalog::writeCheck(double data) {
   if (EEPROM_WRITE_CHECK) {
     double temp = readDouble(addr);
-    Serial.print("data check:\t");
-    Serial.print(data);
-    Serial.print("\t");
-    Serial.println(temp);
+    dprint(PRINT_LOG_WRITE, "data check:\t");
+    dprint(PRINT_LOG_WRITE, data);
+    dprint(PRINT_LOG_WRITE, "\t");
+    dprintln(PRINT_LOG_WRITE, temp);
     if (data != temp) {
         return false;
     }
@@ -245,10 +246,10 @@ bool Datalog::writeCheck(double data) {
 bool Datalog::writeCheck(uint8_t data) {
   if (EEPROM_WRITE_CHECK) {
     double temp = EEPROM.read(addr);
-    Serial.print("data check:\t");
-    Serial.print(data);
-    Serial.print("\t");
-    Serial.println(temp);
+    dprint(PRINT_LOG_WRITE, "data check:\t");
+    dprint(PRINT_LOG_WRITE, data);
+    dprint(PRINT_LOG_WRITE, "\t");
+    dprintln(PRINT_LOG_WRITE, temp);
     if (data != temp) {
         return false;
     }
@@ -260,10 +261,10 @@ bool Datalog::writeCheck(uint8_t data) {
 bool Datalog::writeCheck(uint16_t data) {
   if (EEPROM_WRITE_CHECK) {
     double temp = readShort(addr);
-    Serial.print("data check:\t");
-    Serial.print(data);
-    Serial.print("\t");
-    Serial.println(temp);
+    dprint(PRINT_LOG_WRITE, "data check:\t");
+    dprint(PRINT_LOG_WRITE, data);
+    dprint(PRINT_LOG_WRITE, "\t");
+    dprintln(PRINT_LOG_WRITE, temp);
     if (data != temp) {
         return false;
     }
@@ -275,10 +276,10 @@ bool Datalog::writeCheck(uint16_t data) {
 bool Datalog::writeCheck(uint32_t data) {
   if (EEPROM_WRITE_CHECK) {
     double temp = readLong(addr);
-    Serial.print("data check:\t");
-    Serial.print(data);
-    Serial.print("\t");
-    Serial.println(temp);
+    dprint(PRINT_LOG_WRITE, "data check:\t");
+    dprint(PRINT_LOG_WRITE, data);
+    dprint(PRINT_LOG_WRITE, "\t");
+    dprintln(PRINT_LOG_WRITE, temp);
     if (data != temp) {
         return false;
     }
@@ -295,23 +296,25 @@ bool Datalog::update() {
         return 0;
     }
     // if we got this far then everything is good for an update
-    dprint(PRINT_LOG_WRITE, "updated the ");dprint(PRINT_LOG_WRITE, " log : ");
+    dprint(PRINT_LOG_WRITE, "updated the ");
+    dprint(PRINT_LOG_WRITE, id);
+    dprint(PRINT_LOG_WRITE, " log : ");
     switch(data_type) {
         case DATATYPE_SHORT:
             writeShort();
-            // dprintln(PRINT_LOG_WRITE, sval);
+            dprintln(PRINT_LOG_WRITE, *sval);
             break;
         case DATATYPE_DOUBLE:
             writeDouble();
-            // dprintln(PRINT_LOG_WRITE, dval);
+            dprintln(PRINT_LOG_WRITE, *dval);
             break;
         case DATATYPE_BYTE:
             EEPROM.update(addr, *bval);
-            // dprintln(PRINT_LOG_WRITE, bval);
+            dprintln(PRINT_LOG_WRITE, *bval);
             break;
         case DATATYPE_LONG:
             writeLong();
-            // dprintln(PRINT_LOG_WRITE, lval);
+            dprintln(PRINT_LOG_WRITE, *lval);
             break;
     }
     // print some feedback if the appropiate flag is set
@@ -324,12 +327,13 @@ bool Datalog::update() {
         if (addr + value_size > end_addr) {
             autolog_active = false;
             active = false;
+            dprintln(PRINT_LOG_WRITE, "Autolog deactivated, allocated memory has been used up");
         }
     }
     return 1;
 }
 
-void Datalog::clearLog() {
+void Datalog::clear() {
     for (unsigned int i = start_addr; i < end_addr; i++) {
         EEPROM.update(i, 0);
     }
@@ -338,11 +342,14 @@ void Datalog::clearLog() {
 }
 
 void Datalog::printLog(uint8_t lines) {
-  printDivide();
-  Serial.print("Printing the ");
-  Serial.print(id);
-  Serial.print(" Datalog:");
-  uint8_t per_line = (end_addr - start_addr) / lines;
+  //printDivide(PRINT_LOG_WRITE);
+  dprint(PRINT_LOG_WRITE, "Printing the ");
+  dprint(PRINT_LOG_WRITE, id);
+  dprintln(PRINT_LOG_WRITE, " datalog:");
+  uint32_t per_line = (end_addr - start_addr) / value_size / lines;
+  dprint(PRINT_LOG_WRITE, "per line ");dprint(PRINT_LOG_WRITE, per_line);
+  dprint(PRINT_LOG_WRITE, " from start/end addr : ");dprint(PRINT_LOG_WRITE, start_addr);dprintTab(PRINT_LOG_WRITE);
+  dprintln(PRINT_LOG_WRITE, end_addr);
   uint8_t itters = 0;
   double d = 0.0;
   uint32_t l = 0;
@@ -354,26 +361,26 @@ void Datalog::printLog(uint8_t lines) {
         switch(data_type){
             case DATATYPE_LONG:
                 l = readLong(i);
-                Serial.print(l);
+                dprint(PRINT_LOG_WRITE, l);
                 break;
             case DATATYPE_BYTE:
                 b = EEPROM.read(i);
-                Serial.print(b);
+                dprint(PRINT_LOG_WRITE, b);
                 break;
             case DATATYPE_SHORT:
                 iv = readShort(i);
-                Serial.print(iv);
+                dprint(PRINT_LOG_WRITE, iv);
                 break;
             case DATATYPE_DOUBLE:
                 d = readDouble(i);
-                Serial.print(d);
+                dprint(PRINT_LOG_WRITE, d);
                 break;
         }
         // print tab or line depending on how many prints have occured so far
         if (itters % per_line == 0) {
-            Serial.println();
+            dprintln(PRINT_LOG_WRITE);
         } else {
-            Serial.print("\t");
+            dprint(PRINT_LOG_WRITE, "\t");
         }
   }
   printDivide();

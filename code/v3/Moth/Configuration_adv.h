@@ -8,6 +8,9 @@
 ////////////////////////// Lux Sensors /////////////////////////////////////////
 // how long the lux sensors need the LEDs to be turned off in order to get an accurate reading
 #define LUX_SHDN_LEN 40
+double combined_lux;
+double combined_min_lux_reading;
+double combined_max_lux_reading;
 
 ////////////////////////// TCA Bus Expanders ///////////////////////////////////
 // I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
@@ -22,6 +25,14 @@
 #define REAR_MICROPHONE_INSTALLED     true
 bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
 bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
+// audio usage loggings
+uint8_t audio_usage_max = 0;
+elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
+
+////////////////////////////// Auto Gain ////////////////////////////////////
+
+
+elapsedMillis last_auto_gain_adjustment; // the time in which the last auto_gain_was_calculated
 
 ////////////////////////// Neo Pixels ///////////////////////////////////////////
 #define UPDATE_ON_OFF_RATIOS true
@@ -70,7 +81,6 @@ bool gain_adjust_active = true;
 
 // data log not active (-) or active (+)
 #define JMP6_PIN 17
-bool data_logging_active = true;
 
 // #endif // __PINS_H__
 #define AUDIO_MEMORY 40

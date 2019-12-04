@@ -35,6 +35,8 @@ class LuxManager {
 
     String getName() {return id;};
 
+    double lux;
+
   private:
     Adafruit_VEML7700 sensor = Adafruit_VEML7700();
 
@@ -48,7 +50,6 @@ class LuxManager {
     void updateMinMax();
 
     double past_readings[10];
-    double lux;
     void readLux();
 
     unsigned long min_reading_time;
