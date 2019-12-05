@@ -161,8 +161,8 @@ void LuxManager::readLux() {
     lux_total += lux;
     lux_readings++;
   }
-  dprint(PRINT_LUX_READINGS, id); dprintTab(PRINT_LUX_READINGS);
-  dprint(PRINT_LUX_READINGS, lux); dprintTab(PRINT_LUX_READINGS);
+  dprint(PRINT_LUX_READINGS, id); dprint(PRINT_LUX_READINGS,":");
+  dprint(PRINT_LUX_READINGS, lux); dprintln(PRINT_LUX_READINGS,"");
   // dprint(PRINT_LUX_READINGS, "lux_readings "); dprint(PRINT_LUX_READINGS, id);
   // dprint(PRINT_LUX_READINGS, " increased to : "); dprintln(PRINT_LUX_READINGS, lux_readings);
   // update the brightness scales TODO , this logic does not work if the number of lux sensors is less than the number of groups
@@ -232,12 +232,11 @@ void LuxManager::calibrate(long len, bool first_time = true) {
   Serial.println("Starting Lux Calibration");
   double lux_tot = 0.0;
   for (int i = 0; i < 10; i++) {
-    Serial.print(i);
-    Serial.print("  ");
     delay(len / 10);
     forceLuxReading(); // todo change this to not be hard coded
     if (first_time) {
       Serial.print(lux);
+      Serial.print("  ");
     }
     lux_tot += lux;
     // when we have the first 10 readings

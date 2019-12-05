@@ -48,7 +48,7 @@ class NeoGroup {
     // class to control a sub group of neopixels easily
     // init should cover
   public:
-    NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String n, uint32_t f_min, uint32_t f_max);
+    NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String _id, uint32_t f_min, uint32_t f_max);
 
     // setting and getting functions
     void setFlashOn(bool val) {
@@ -118,7 +118,7 @@ class NeoGroup {
     bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
     bool flashOn();
     void flashOff();
-    void updateFlash();
+    void update();
 
     void printGroupConfigs();
 
@@ -129,7 +129,7 @@ class NeoGroup {
     double getFlashPerMinuteAvg();
     void resetFlashPerMinuteAvg();
 
-    String getName() { return gname;};
+    String getName() { return id;};
 
   private:
     // related to the flash command
@@ -145,7 +145,7 @@ class NeoGroup {
 
     // related to auto-calibration and datalogging
     bool update_on_off_ratios = UPDATE_ON_OFF_RATIOS;
-    String gname;
+    String id;
 
     // controling leds
     WS2812Serial *leds;
@@ -184,7 +184,7 @@ double NeoGroup::getFlashPerMinuteAvg() {
   return (double)num_flashes / (double)fpm_timer;
 }
 
-NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, uint32_t f_min, uint32_t f_max) {
+NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String _id, uint32_t f_min, uint32_t f_max) {
   // todo
   flash_min_time = f_min;
   flash_max_time = f_max;
@@ -192,14 +192,14 @@ NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String id, ui
   idx_start = start_idx;
   idx_end = end_idx;
   leds = neos;
-  gname = id;
+  id = _id;
 }
 
 bool NeoGroup::shutdown(uint32_t len) {
   // return 0 if lux shutdown not a success, 1 if it is
   if (!isInShutdown()) {
     dprint(PRINT_LUX_DEBUG,millis());dprint(PRINT_LUX_DEBUG, "\tSHUTTING DOWN GROUP ");
-    dprintln(PRINT_LUX_DEBUG, gname);
+    dprintln(PRINT_LUX_DEBUG, id);
     shdn_len = len;
     colorWipe(0, 0, 0);
     shdn_timer = 0;
@@ -292,7 +292,7 @@ void NeoGroup::colorWipe(int colors) {
 void NeoGroup::flashOff() {
   // if the flash is allowed to be turned off
   if (remaining_flash_delay <= 0) {
-    dprint(PRINT_CLICK_DEBUG, gname);
+    dprint(PRINT_CLICK_DEBUG, id);
     dprint(PRINT_CLICK_DEBUG, " FlashOff : ");
     dprintln(PRINT_CLICK_DEBUG, last_flash);
     flash_on = false;
@@ -335,10 +335,10 @@ bool NeoGroup::flashOn() {
   return flashOn(flash_red, flash_green, flash_blue);
 }
 
-void NeoGroup::updateFlash() {
+void NeoGroup::update() {
   // if there is time remaining in the flash it either needs to be turned on or the timer needs to increment
   if (remaining_flash_delay > 0) {
-    dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, gname); dprint(PRINT_CLICK_DEBUG, " : ");
+    dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, " : ");
     dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
     dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
     if (flash_on < 1) { //and the light is not currently on
@@ -347,14 +347,15 @@ void NeoGroup::updateFlash() {
     }
     else {
       // if the light is already on subtract the number of ms which have gone by since the last check
-      // Serial.print("last_click_flash :"); Serial.println(last_click_flash[i]);
-      // Serial.print("remaining_flash_delay["); Serial.print(i); Serial.print("] :\t");
-      // Serial.print(remaining_flash_delay[i]); Serial.print("\t");
+      dprint(PRINT_CLICK_DEBUG, "last_flash :\t"); dprintln(PRINT_CLICK_DEBUG, last_flash);
+      dprint(PRINT_CLICK_DEBUG, "remaining_flash_delay "); 
+      dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, ":\t");
+      dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprint(PRINT_CLICK_DEBUG, "\t");
       remaining_flash_delay = remaining_flash_delay - last_flash_update;
       remaining_flash_delay = max(remaining_flash_delay, 0);
       dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
       if (remaining_flash_delay == 0) {
-        dprint(PRINT_CLICK_DEBUG, "Click time over, turning off flash "); dprintln(PRINT_CLICK_DEBUG, gname);
+        dprint(PRINT_CLICK_DEBUG, "Click time over, turning off flash "); dprintln(PRINT_CLICK_DEBUG, id);
         flashOff(); // turn off the NeoPixels
       }
     }

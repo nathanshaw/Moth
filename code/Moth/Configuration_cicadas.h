@@ -18,7 +18,7 @@
 #define MIN_SONG_PEAK_AVG 0.005
 #define MAX_SONG_PEAK_AVG 0.20
 
-#define STARTING_SONG_GAIN 8.0
+#define STARTING_SONG_GAIN 4.0
 
 #define SONG_BQ1_THRESH 13500
 #define SONG_BQ1_Q 0.85
@@ -34,14 +34,14 @@
 // "all" will use all available features with their corresponding thresholds
 
 #define CLICK_FEATURE RMS_DELTA
-#define CLICK_RMS_DELTA_THRESH 0.03
-#define CLICK_PEAK_DELTA_THRESH 0.03
+#define CLICK_RMS_DELTA_THRESH 0.3
+#define CLICK_PEAK_DELTA_THRESH 0.3
 
 // One click per ten minutes
 #define MIN_CLICKS_PER_MINUTE 0.1
 #define MAX_CLICKS_PER_MINUTE 40.0
 
-#define STARTING_CLICK_GAIN 6.0
+#define STARTING_CLICK_GAIN 4.0
 
 #define MIN_CLICK_GAIN 0.5
 #define MAX_CLICK_GAIN 24.0
@@ -65,11 +65,11 @@ long num_cpm_clicks[2];
 //////////////////////// Cicada Mode       /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how high the click flash timer will go up to
-#define MAX_FLASH_TIME 200
+#define MAX_FLASH_TIME 300
 // where the click flash timer will start
-#define MIN_FLASH_TIME 40
+#define MIN_FLASH_TIME 100
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME 200
+#define FLASH_DEBOUNCE_TIME 400
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side

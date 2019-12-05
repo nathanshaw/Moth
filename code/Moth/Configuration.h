@@ -51,9 +51,9 @@
 #define PRINT_LUX_DEBUG                 false
 #define PRINT_LUX_READINGS              false
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   false
-#define PRINT_SONG_DATA                 true
-#define PRINT_CLICK_FEATURES            true
-#define PRINT_CLICK_DEBUG               true
+#define PRINT_SONG_DATA                 false
+#define PRINT_CLICK_FEATURES            false
+#define PRINT_CLICK_DEBUG               false
 #define PRINT_LED_VALUES                false
 #define PRINT_AUTO_GAIN                 false
 #define PRINT_LED_DEBUG                 false
@@ -109,6 +109,7 @@ DMAMEM byte displayMemory[NUM_LED * 12]; // 12 bytes per LED
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+elapsedMillis runtime;
 bool data_logging_active = true;
 
 // does the autolog get written over each time?
@@ -138,8 +139,8 @@ bool data_logging_active = true;
 #define DATALOG_TIME_FRAME_4            (1000*60*60*5)
 
 // refresh rates for the static logs
-#define STATICLOG_RATE_FAST             (1000*60*1)
-#define STATICLOG_RATE_SLOW             (1000*60*10)
+#define STATICLOG_RATE_FAST             (1000*60*3)
+#define STATICLOG_RATE_SLOW             (1000*60*12)
 
 /////////////////// for the auto logging ////////////////////////////////////
 // will the lux readings be logged?
@@ -164,11 +165,20 @@ bool data_logging_active = true;
 #define STATICLOG_SONG_GAIN             1
 #define STATICLOG_LUX_VALUES            1
 #define STATICLOG_FLASHES               1
+#define STATICLOG_RUNTIME               1
 
 #define STATICLOG_LUX_MIN_MAX_TIMER     3
 #define STATICLOG_CLICK_GAIN_TIMER      3
 #define STATICLOG_SONG_GAIN_TIMER       3
 #define STATICLOG_FLASHES_TIMER         3
+#define STATICLOG_RUNTIME_TIMER         3
+
+////////////////////////////////////////////////////////////////////////////
+///////////////////////// Jumper Settings //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
+#define JUMPERS_POPULATED 0
+
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -186,6 +196,7 @@ bool data_logging_active = true;
 #define DATALOG_MANAGER_TIMER_NUM       4
 uint8_t datalog_timer_num = 4;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
+
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,7 @@
 class FeatureCollector {
   public:
     FeatureCollector(String _id);
+    double getPosDelta(double, double);
     bool testMicrophone();
     void printFeatures();
     String getName() {
@@ -43,7 +44,7 @@ class FeatureCollector {
       peak_active = true;
     };
     double getPeak();
-    double getPeakPosDelta();
+    double getPeakPosDelta() {return peak_pos_delta;};
     double getPeakAvg();
     void   resetPeakAvgLog();
     void   printPeakVals();
@@ -234,12 +235,11 @@ void FeatureCollector::calculateFreq() {
 
 void FeatureCollector::calculatePeak() {
   if (peak_active && peak_ana->available()) {
+    double last = peak_val;
     peak_val =  peak_ana->read() * PEAK_SCALER;
+    peak_pos_delta = getPosDelta(last, peak_val);
     peak_totals += peak_val;
     peak_readings++;
-    // Serial.print(id);Serial.print(" pr : ");Serial.print(peak_readings);
-    // Serial.print("\tpt: ");Serial.println(peak_totals);
-    printPeakVals();
   }
 }
 
@@ -251,32 +251,21 @@ void FeatureCollector::resetPeakAvgLog() {
   }
 }
 
-void FeatureCollector::calculateRMS() {
-  if (rms_active  && rms_ana->available()) {
-    double temp = rms_ana->read();
-    if (temp > rms_val) {
-        rms_pos_delta = temp - rms_val;
-    } else {
-        rms_pos_delta = 0;
-    }
-    rms_val = temp;
-  }
+double FeatureCollector::getPosDelta(double last, double current) {
+    double delta = 0;
+    if (current > last) {
+        delta = current - last;
+    } 
+    return delta;
 }
 
-
-
-/*
-  int getIndexWithHighestVal(double &vals) {
-  double m = 0.0;
-  int index = 0;  for (int i = 0; i < sizeof(vals)/sizeof(vals[0]); i++) {
-    if (vals[i] > m) {
-      m = vals[i];
-      index = i;
-    }
+void FeatureCollector::calculateRMS() {
+  if (rms_active  && (rms_ana->available())) {
+    double temp = rms_val;
+    rms_val = rms_ana->read();
+    rms_pos_delta = getPosDelta(temp, rms_val);
   }
-  return index;
-  }
-*/
+}
 
 ///////////////////// Getter functions ///////////////////////////////
 double FeatureCollector::getFFTRange(uint8_t s, uint8_t e) {
@@ -292,7 +281,6 @@ double FeatureCollector::getRMS() {
   }
   Serial.println("ERROR  - RMS IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
   return -1.0;
-
 }
 
 double FeatureCollector::getPeak() {
@@ -330,7 +318,6 @@ double FeatureCollector::getToneLevel() {
 }
 
 //////////////////////////////// Print Functions /////////////////////////////////////////
-
 void FeatureCollector::printFeatures() {
   // printMajorDivide((String)(id + " Features "));
   if (rms_active && PRINT_RMS_VALS) {
@@ -404,7 +391,6 @@ void FeatureCollector::printPeakVals() {
 }
 
 /////////////////////////////////// UPDATE / INIT //////////////////////////////////////
-
 void FeatureCollector::update() {
     if (microphone_active == true) {
       if (USE_SCALED_FFT) {
@@ -423,6 +409,4 @@ void FeatureCollector::update() {
       //Serial.print(id);Serial.println(" Sorry the microphone does not work, not updating the feature collector");
     }
 }
-
-
 #endif

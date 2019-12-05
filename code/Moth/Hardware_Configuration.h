@@ -7,9 +7,10 @@
 #define H_VERSION_MINOR           1
 
 #define S_VERSION_MAJOR           3
-#define S_VERSION_MINOR           1
-#define S_SUBVERSION              2
+#define S_VERSION_MINOR           2
+#define S_SUBVERSION              0
 
+#if H_VERSION_MAJOR > 1
 #define NUM_LUX_SENSORS           2
 
 // todo add logic to change these if needed...
@@ -17,16 +18,8 @@
 #define LED_PIN 5
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// Jumper Settings //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED 0
-
-#if H_VERSION_MAJOR > 1
-////////////////////////////////////////////////////////////////////////////
 //////////////////////////// Jumper Pins ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-
 #define JMP1_PIN 12
 #define JMP2_PIN 11
 #define JMP3_PIN 14

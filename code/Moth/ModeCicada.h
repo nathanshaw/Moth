@@ -131,12 +131,10 @@ void linkFeatureCollectors() {
   }
 }
 
-// song rms
+// For mapping the lux brightness to the sonic input
 uint8_t song_rms_weighted[2] = {0, 0};  // 0 -255 depending on the RMS of the song band...
-
-// song peak
 uint8_t song_peak_weighted[2] = {0, 0}; // 0 -255 depending on the peak of the song band...
-
+// for tracking the peak something or another?
 double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
@@ -165,13 +163,6 @@ void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
   Serial.print(v6); printTab();
   printDivide();
 }
-
-// this should be in the main audio loop
-void updateClicks() {
-  for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
-    neos[i].updateFlash();
-  }
-};
 
 void audioSetup() {
   ////////////// Audio ////////////
@@ -250,14 +241,14 @@ void audioSetup() {
 ///////////////////////////////////////////////////////////////////////
 void printSongStats() {
   for (int i = 0; i < num_channels; i++) {
-    dprint(PRINT_SONG_DATA, "Song -- "); dprint(PRINT_SONG_DATA, i); dprint(PRINT_SONG_DATA, " | rms_weighted: ");
+    dprint(PRINT_SONG_DATA, "Song "); dprint(PRINT_SONG_DATA, i); dprint(PRINT_SONG_DATA, " | rms_weighted: ");
     dprint(PRINT_SONG_DATA, song_rms_weighted[i]);
-    dprint(PRINT_SONG_DATA, "\t peak: ");
+    dprint(PRINT_SONG_DATA, ":\t peak: ");
     dprint(PRINT_SONG_DATA, song_peak_weighted[i]);
-    dprintln(PRINT_SONG_DATA);
+    dprint(PRINT_SONG_DATA, "\t");
   }
+  dprintln(PRINT_SONG_DATA, "");
 }
-
 
 void songDisplay() {
   for (int i = 0; i < num_channels; i++) {
@@ -274,7 +265,6 @@ void songDisplay() {
         }
       } else {
         neos[i].colorWipe(song_peak_weighted[i], 0, 0);
-        // colorWipeRear(song_peak_weighted_r, 0, 0);
       }
     } else if (SONG_FEATURE == RMS_DELTA) {
       if (stereo_audio == false) {
@@ -332,7 +322,7 @@ bool adjustSongGainLedOnRatio() {
   return 0;
 }
 
-void checkSongAutoGain() {
+bool checkSongAutoGain() {
   adjustSongGainLedOnRatio();
   bool success = false;
   for (int i = 0; i < num_channels; i++) {
@@ -390,10 +380,10 @@ void checkSongAutoGain() {
     num_song_peaks[i] = 0;
   }
   if (success) {
-    // todo add back in
-    // updateSongGain(song_gain);
-    // updateSongGainMinMax();
-  };
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 void updateClickGain(double click_gain[], double click_gain_min[], double click_gain_max[]) {
@@ -401,27 +391,46 @@ void updateClickGain(double click_gain[], double click_gain_min[], double click_
   Serial.println("WARNING UPDATECLICKGAIN IS NOT IMPLEMENTED YET");
 }
 
+uint8_t calculateRMSWeighted(FeatureCollector *f) {
+  double rms = 0;
+  rms = f->getRMS() * (double)RMS_SCALER;
+  if (rms > 1.0) {
+    rms = 1.0;
+  }
+  uint8_t scaler = (uint8_t)(rms * (double)MAX_BRIGHTNESS);
+  return scaler;
+}
+
+uint8_t calculatePeakWeighted(FeatureCollector *f) {
+  double peak = 0;
+  peak = f->getPeak() * (double)PEAK_SCALER;
+  if (peak > 1.0) {
+    peak = 1.0;
+  }
+  uint8_t scaler = peak * MAX_BRIGHTNESS;
+  return scaler;
+}
+
 void updateSong() {
   // TODO, rework the whole calculate weighted song brigtness to something that makes more sense
   // TODO rework to only calculate the features which are the features used
-  if (front_mic_active) {    
-      song_rms_weighted[0] = map(constrain((fc[0].getRMS() * 20), 0, 1.0), 0, 1.0, 0, MAX_BRIGHTNESS);
-      song_peak_weighted[0] = map(constrain((fc[0].getPeak() * 20), 0, 1.0), 0, 1.0, 0, MAX_BRIGHTNESS);
-      num_song_peaks[0]++;
-      total_song_peaks[0] += fc[0].getPeak() * 20;
+  if (front_mic_active) {
+    song_rms_weighted[0] = calculateRMSWeighted(&fc[0]);
+    song_peak_weighted[0] = calculatePeakWeighted(&fc[0]);
+    num_song_peaks[0]++;
+    total_song_peaks[0] += fc[0].getPeak() * PEAK_SCALER;
   }
   if (rear_mic_active) {
-      song_rms_weighted[1] = map(constrain((fc[1].getRMS() * 20), 0, 1.0), 0, 1.0, 0, MAX_BRIGHTNESS);
-      song_peak_weighted[1] = map(constrain((fc[1].getPeak() * 20), 0, 1.0), 0, 1.0, 0, MAX_BRIGHTNESS);
-      num_song_peaks[1]++;
-      total_song_peaks[1] += fc[1].getPeak() * 20;
+    song_rms_weighted[1] = calculateRMSWeighted(&fc[1]);
+    song_peak_weighted[1] = calculatePeakWeighted(&fc[1]);;
+    num_song_peaks[1]++;
+    total_song_peaks[1] += fc[1].getPeak() * PEAK_SCALER;
   }
   // TODO, perhaps add another feature or two, perhaps an option for combining the two readings?
   // will only print if flag is set
   songDisplay();
-  printSongStats();
+  // printSongStats();
 }
-
 
 void checkClickAutoGain() {
   bool update_gain = false;                                                   // will we update the gain at the end of the function?
@@ -482,21 +491,15 @@ void autoGainAdjust() {
       hour to adjust the gain levels.
 
   */
-
   // dont run this logic unless the firmware has been running for one minute, any less time will result in erroneous values
   // if it has not been long enough since the last check then exit now
   if (last_auto_gain_adjustment < autogain_frequency || millis() < 60000) {
     return;
   };
   dprintln(PRINT_AUTO_GAIN, "-------------------- Auto Gain Start ---------------------------");
-
-  // todo add back
-  // resetOnOffRatioCounters();
   adjustSongGainLedOnRatio();
-
   checkClickAutoGain();
   checkSongAutoGain();
-
   last_auto_gain_adjustment = 0;
   dprintMinorDivide(PRINT_AUTO_GAIN);
 }
@@ -550,6 +553,11 @@ void setupDLManager() {
     datalog_manager.logSetupConfigLong("Timer 3 End Time             : ", datalog_manager.getTimerEnd(3));
     datalog_manager.logSetupConfigLong("Timer 3 Logging Rate         : ", datalog_manager.getTimerRate(3));
 
+    // runtime log
+    if (STATICLOG_RUNTIME) {
+      datalog_manager.addStaticLog("Program Run : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].min_reading);
+    }
     // the constantly updating logs
     if (STATICLOG_LUX_VALUES) {
       datalog_manager.addStaticLog("Lowest Front Lux Recorded : ",
@@ -641,8 +649,6 @@ void setupDLManager() {
     } else {
       Serial.println("Not printing the EEPROM Datalog Contents");
     }
-
-
   } else {
     if (PRINT_EEPROM_CONTENTS > 0) {
       datalog_manager.printAllLogs();
@@ -669,7 +675,6 @@ void mothSetup() {
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
-
   // create either front and back led group, or just one for both
   neos[0].colorWipe(120, 70, 0); // turn off the LEDs
   neos[1].colorWipe(120, 70, 0); // turn off the LEDs
@@ -684,7 +689,11 @@ void mothSetup() {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
     lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
+
     lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+    neos[0].colorWipe(0, 0, 0); // turn off the LEDs
+    neos[1].colorWipe(0, 0, 0); // turn off the LED
+    delay(200);
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
@@ -702,15 +711,33 @@ void updateLuxSensors() {
   }
 }
 
-void mothLoop() {
-  updateLuxSensors();
+void updateFeatureCollectors() {
   fc[0].update();
   fc[1].update();
   fc[2].update();
   fc[3].update();
+}
+
+void updateClick() {
+  if (fc[2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
+    neos[0].flashOn();
+    Serial.println("_____________________ FLASH ON _________________________");
+  }
+  if (fc[3].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
+    neos[1].flashOn();
+    Serial.println("_____________________ FLASH ON _________________________");
+  }
+  for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
+    neos[i].update();
+  }
+}
+
+void mothLoop() {
+  updateLuxSensors();
+  updateFeatureCollectors();
   updateSong();
-  updateClicks();
+  updateClick();
+  autoGainAdjust(); // will call rear as well if in stereo mode
   datalog_manager.update();
-  // autoGainAdjust(); // will call rear as well if in stereo mode
 }
 #endif // __MODE_CICADA_H__
