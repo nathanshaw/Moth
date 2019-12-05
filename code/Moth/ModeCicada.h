@@ -658,8 +658,8 @@ void setupDLManager() {
 
 void mothSetup() {
   Serial.begin(57600);
-  delay(2000);
   leds.begin();
+  delay(2000);
   Serial.println("LEDS have been initalised");
   neos[0].colorWipe(250, 90, 0); // turn off the LEDs
   neos[1].colorWipe(250, 90, 0); // turn off the LED

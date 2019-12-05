@@ -38,6 +38,12 @@
 #define ORANGE 0x100400
 #define WHITE  0xf0f0f0
 
+////////////////////// datatypes /////////////////
+#define DATATYPE_DOUBLE        0
+#define DATATYPE_SHORT         1
+#define DATATYPE_LONG          2
+#define DATATYPE_BYTE          3
+
 #define FORCE_INLINE __attribute__((always_inline)) inline
 #define _UNUSED      __attribute__((unused))
 #define _O0          __attribute__((optimize("O0")))

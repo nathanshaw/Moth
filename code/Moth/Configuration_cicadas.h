@@ -1,7 +1,7 @@
 #ifndef __CONFIGURATION_CICADAS_H__
 #define __CONFIGURATION_CICADAS_H__
 
-#include "configuration.h"
+#include "Configuration.h"
 
 // include RMS and/or PEAK in the feature collector?
 #define PEAK_ACTIVE                 1
@@ -60,5 +60,21 @@
 long total_clicks_detected[2] = {0, 0}; // number of clicks which has occurred since boot
 long num_past_clicks[2];            // number of clicks since last auto-gain adjustment
 long num_cpm_clicks[2];
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////// Cicada Mode       /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// how high the click flash timer will go up to
+#define MAX_FLASH_TIME 200
+// where the click flash timer will start
+#define MIN_FLASH_TIME 40
+// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
+#define FLASH_DEBOUNCE_TIME 200
+
+// if false, a click detected on either side results in a LED flash on both sides
+// if true, a click detected on one side will only result in a flash on that side
+bool INDEPENDENT_CLICKS = true;
+bool combine_lux_readings = false;
+bool gain_adjust_active = true;
 
 #endif // MODE_CICADA CODE
