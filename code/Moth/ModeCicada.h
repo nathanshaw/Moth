@@ -721,11 +721,11 @@ void updateFeatureCollectors() {
 void updateClick() {
   if (fc[2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
     neos[0].flashOn();
-    Serial.println("_____________________ FLASH ON _________________________");
+    // Serial.println("_____________________ FLASH ON _________________________");
   }
   if (fc[3].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
     neos[1].flashOn();
-    Serial.println("_____________________ FLASH ON _________________________");
+    // Serial.println("_____________________ FLASH ON _________________________");
   }
   for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
     neos[i].update();

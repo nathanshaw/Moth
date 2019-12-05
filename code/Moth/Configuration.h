@@ -128,14 +128,14 @@ bool data_logging_active = true;
 #define DATALOG_TIMER_3                 (1000*60*1)
 #define DATALOG_TIMER_4                 (1000*60*1)
 
-#define DATALOG_START_DELAY_1           (1000*60*0.05)
-#define DATALOG_START_DELAY_2           (1000*60*0.05)
-#define DATALOG_START_DELAY_3           (1000*60*0.05)
-#define DATALOG_START_DELAY_4           (1000*60*0.05)
+#define DATALOG_START_DELAY_1           (1000*60*0.5)
+#define DATALOG_START_DELAY_2           (1000*60*0.5)
+#define DATALOG_START_DELAY_3           (1000*60*0.5)
+#define DATALOG_START_DELAY_4           (1000*60*0.5)
 
-#define DATALOG_TIME_FRAME_1            (1000*60*60*0.25)
+#define DATALOG_TIME_FRAME_1            (1000*60*60*5)
 #define DATALOG_TIME_FRAME_2            (1000*60*60*5)
-#define DATALOG_TIME_FRAME_3            (1000*60*60*0.25)
+#define DATALOG_TIME_FRAME_3            (1000*60*60*5)
 #define DATALOG_TIME_FRAME_4            (1000*60*60*5)
 
 // refresh rates for the static logs
