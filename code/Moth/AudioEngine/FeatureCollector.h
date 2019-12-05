@@ -15,6 +15,19 @@ class FeatureCollector {
     double max_gain = 1.0;
     void updateGain(double g);
 
+    void linkAmplifier(AudioAmplifier * amp) { 
+        if (audio_amp_add_idx < 4) {
+            Serial.print("Linked an audio amplifier ");Serial.print(audio_amp_add_idx);printTab();
+            amp_ana[audio_amp_add_idx] = amp;
+            gain_tracking_active = true;
+            audio_amp_add_idx = audio_amp_add_idx + 1;
+            Serial.println(audio_amp_add_idx);
+        }
+        else {
+                Serial.println("ERROR, can't link audio amplifier, there are not enough available slots");
+        }
+    }
+
     //////////////// RMS /////////////////////////
     void linkRMS(AudioAnalyzeRMS *r) {
       rms_ana = r;
@@ -29,7 +42,7 @@ class FeatureCollector {
       peak_ana = r;
       peak_active = true;
     };
-    double getPeakVal();
+    double getPeak();
     double getPeakPosDelta();
     double getPeakAvg();
     void   resetPeakAvgLog();
@@ -72,8 +85,9 @@ class FeatureCollector {
     bool microphone_active = true;
 
     //////////////// Gain Tracking ///////////////
-    bool gain_active = false;
-    uint8_t gain_add_idx = 0;
+    AudioAmplifier *amp_ana[4];
+    uint8_t audio_amp_add_idx = 0;
+    bool gain_tracking_active = false;
     // TODO, make it so linking of gains and tracking is all dones through fc
     // AudioAmplifier *gain_ana[4];
 
@@ -116,13 +130,20 @@ class FeatureCollector {
     int highest_energy_idx;
 };
 
+FeatureCollector::FeatureCollector(String _id) {
+  id = _id;
+}
+
 void FeatureCollector::updateGain(double g) {
-    gain = g;
-    if (gain > max_gain) {
-        max_gain = gain;
-    }
-    if (gain < min_gain) {
-        min_gain = gain;
+        gain = g;
+        if (gain > max_gain) {
+            max_gain = gain;
+        }
+        if (gain < min_gain) {
+            min_gain = gain;
+        }
+        for (int i =  0; i < audio_amp_add_idx; i++) {
+            amp_ana[i]->gain(g);
     }
 }
 
@@ -274,7 +295,7 @@ double FeatureCollector::getRMS() {
 
 }
 
-double FeatureCollector::getPeakVal() {
+double FeatureCollector::getPeak() {
   if (peak_active) {
     return peak_val;
   }
@@ -403,8 +424,5 @@ void FeatureCollector::update() {
     }
 }
 
-FeatureCollector::FeatureCollector(String _id) {
-  id = _id;
-}
 
 #endif

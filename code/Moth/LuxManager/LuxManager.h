@@ -19,7 +19,7 @@ class LuxManager {
     void startSensor(byte g, byte r);
     double forceLuxReading();
     void calibrate(long len, bool first_time);
-    void update();
+    bool update();
 
     void resetMinMax();
 
@@ -228,12 +228,12 @@ void LuxManager::resetMinMax() {
 // todo move me to the correct place
 void LuxManager::calibrate(long len, bool first_time = true) {
   // todo change this function so it takes the average of these readings
-  Serial.println("------------------------");
+  printMinorDivide();
   Serial.println("Starting Lux Calibration");
   double lux_tot = 0.0;
   for (int i = 0; i < 10; i++) {
     Serial.print(i);
-    printTab();
+    Serial.print("  ");
     delay(len / 10);
     forceLuxReading(); // todo change this to not be hard coded
     if (first_time) {
@@ -259,16 +259,18 @@ double LuxManager::forceLuxReading() {
   return lux;
 }
 
-void LuxManager::update() {
+bool LuxManager::update() {
   if ((neo->getLedsOn() == false && neo->getOnOffLen() >= LUX_SHDN_LEN) || (neo->getShdnLen() > LUX_SHDN_LEN)) {
     readLux();
     if (neo->getShdnLen() > LUX_SHDN_LEN) {
       neo->powerOn();
     }
+    return true;
   } else if (last_reading > max_reading_time && neo->getLedsOn() == true) {
     // shdn len has to be longer to ensure the lux sensors get a good reading
     neo->shutdown(LUX_SHDN_LEN*1.25);
   }
+  return false;
 }
 
 #endif // __LUX_H__

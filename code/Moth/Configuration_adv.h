@@ -31,7 +31,6 @@ elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 
 ////////////////////////////// Auto Gain ////////////////////////////////////
 
-
 elapsedMillis last_auto_gain_adjustment; // the time in which the last auto_gain_was_calculated
 
 ////////////////////////// Neo Pixels ///////////////////////////////////////////
@@ -108,8 +107,9 @@ bool gain_adjust_active = true;
 // Note that the timing of the updates are determined by the datalogmanager class
 #define DATALOG_TYPE_AUTO       2
 
-#define UPDATING_LOG 0
-#define ONE_TIME_LOG 1
-#define DATALOG_MANAGER_MAX_LOGS  10
+#define UPDATING_LOG              0
+#define ONE_TIME_LOG              1
+
+#define DATALOG_MANAGER_MAX_LOGS  25
 #define DATALOG_MANAGER_TIMER_NUM 4
 #endif // CONFIGURATION_ADV_H

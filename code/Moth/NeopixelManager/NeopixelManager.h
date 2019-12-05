@@ -316,7 +316,7 @@ bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
         leds_on = true;
         last_flash = 0; // reset the elapsed millis variable as the light was just turned on
         dprint(PRINT_CLICK_DEBUG, " Flashed "); dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
-        num_flashes++;
+        num_flashes = num_flashes  + 1;
       } else { // if a flash is on then increment the remaining_flash_Delay
         addToRemainingFlashDelay(1);
         if (remaining_flash_delay > flash_max_time) {

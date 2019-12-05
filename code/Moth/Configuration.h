@@ -11,7 +11,7 @@
 // for things which can be either on or off, the name is simply defined?
 
 ///////////////////////// General Settings /////////////////////////////////
-#define SERIAL_ID 3
+#define SERIAL_ID 5
 
 ///////////////////////// Operating Modes //////////////////////////////////
 // the current modes, or software driven functionality in which the firmware should use.
@@ -137,19 +137,13 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define PRINT_LUX_DEBUG               false
 #define PRINT_LUX_READINGS            false
 #define PRINT_BRIGHTNESS_SCALER_DEBUG false
-// TODO
-#define PRINT_SONG_DATA               false
-// TODO
-#define PRINT_CLICK_FEATURES          false
-#define PRINT_CLICK_DEBUG             false
-// TODO
+#define PRINT_SONG_DATA               true
+#define PRINT_CLICK_FEATURES          true
+#define PRINT_CLICK_DEBUG             true
 #define PRINT_LED_VALUES              false
 #define PRINT_AUTO_GAIN               false
-
 #define PRINT_LED_DEBUG               false
-
-#define PRINT_LOG_WRITE               false
-
+#define PRINT_LOG_WRITE               true
 #define EEPROM_WRITE_CHECK            false
 
 ///////////////////////// Feature Collector ///////////////////////////////

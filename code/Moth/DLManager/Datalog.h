@@ -11,7 +11,7 @@ class Datalog {
         // for keeping track of index moving for autolog
         bool moving_index = false;
         // this is the user assigned name to the datalog
-        String id;
+        String id = "NO ID ASSIGNED YET";
         // for keeping track of what type of a log it is, there is UPDATING_LOG and ONE_TIME_LOG
         // the updating one will use a timer to update dependent on the amount of time which has passed since the last update
         bool type;
@@ -322,9 +322,6 @@ bool Datalog::update() {
     if (autolog_active == true && moving_index == true) {
         // increment the addr counter
         addr += value_size;
-        // dprint(PRINT_LOG_WRITE, "\t");
-        // dprintln(PRINT_LOG_WRITE, addr);
-
         // if the current address plus the data_length is greater than the end index and 
         // if the datalogger is on autolog then stop the autologger
         if (addr + value_size > end_addr) {
@@ -348,14 +345,13 @@ void Datalog::printLog(uint8_t lines) {
   //printDivide(PRINT_LOG_WRITE);
   dprint(PRINT_LOG_WRITE, "Printing the ");
   dprint(PRINT_LOG_WRITE, id);
-  dprint(PRINT_LOG_WRITE, " :\t");
+  dprint(PRINT_LOG_WRITE, "\t");
   uint32_t per_line;
   if (end_addr > start_addr) {
     per_line = (end_addr - start_addr) / value_size / lines;
   } else {
       per_line =  1;
   }
-  dprint(PRINT_LOG_WRITE, "per line ");dprint(PRINT_LOG_WRITE, per_line);
   dprint(PRINT_LOG_WRITE, " from start/end addr : ");dprint(PRINT_LOG_WRITE, start_addr);dprintTab(PRINT_LOG_WRITE);
   dprintln(PRINT_LOG_WRITE, end_addr);
   uint8_t itters = 0;
