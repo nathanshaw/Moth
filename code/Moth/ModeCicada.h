@@ -10,6 +10,12 @@
 #include "AudioEngine/AudioEngine.h"
 #include <Audio.h>
 
+// for some reason the datalog manager had trouble tracking this data?
+elapsedMillis fpm_timer;
+uint32_t num_flashes[2];
+double total_flashes[2];
+double fpm[2];
+
 //////////////////////////////// Global Objects /////////////////////////
 
 WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
@@ -25,7 +31,7 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
-DLManager datalog_manager = DLManager((String)"Main");
+DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
 FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
 
@@ -232,7 +238,6 @@ void audioSetup() {
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();
   }
-
   printDivide();
 }
 
@@ -253,7 +258,6 @@ void printSongStats() {
 void songDisplay() {
   for (int i = 0; i < num_channels; i++) {
     // if (flash_on[i] == false) {
-    // TODO make a user control which allows for selection between RMs and peak
     if (SONG_FEATURE == PEAK_DELTA) {
       if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
         if (front_mic_active == true && i == 0) {
@@ -277,7 +281,6 @@ void songDisplay() {
         }
       } else  {
         neos[i].colorWipe(song_rms_weighted[i], 0, 0);
-        // colorWipeRear(song_rms_weighted_r, 0, 0);
       }
     } else {
       Serial.print("ERROR: the SONG_FEATURE ");
@@ -295,7 +298,7 @@ bool adjustSongGainLedOnRatio() {
       double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
       fc[i].gain -= change;
       // ensure that what we have is not less than the min
-      fc[i].gain = max(fc[i].gain, MIN_SONG_GAIN);
+      fc[i].updateGain(max(fc[i].gain, MIN_SONG_GAIN));
       dprint(PRINT_AUTO_GAIN, "led_on_ratio is too high ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
       dprint(PRINT_AUTO_GAIN, ") lowering the song gain "); dprintln(PRINT_AUTO_GAIN, i);
       dprint(PRINT_AUTO_GAIN, change);
@@ -305,7 +308,7 @@ bool adjustSongGainLedOnRatio() {
       double change = fc[i].gain * MAX_GAIN_ADJUSTMENT * cost;
       fc[i].gain += change;
       // ensure that what we have is not less than the min
-      fc[i].gain = min(fc[i].gain, MAX_SONG_GAIN);
+      fc[i].updateGain(min(fc[i].gain, MAX_SONG_GAIN));
       dprint(PRINT_AUTO_GAIN, "led_on_ratio is too low ("); dprint(PRINT_AUTO_GAIN, neos[i].getOnRatio());
       dprint(PRINT_AUTO_GAIN, ") raising the song gain "); dprintln(PRINT_AUTO_GAIN, i);
       dprint(PRINT_AUTO_GAIN, change);
@@ -314,9 +317,6 @@ bool adjustSongGainLedOnRatio() {
     }
   }
   if (success) {
-    // todo add back
-    // updateSongGain(song_gain);
-    // updateSongGainMinMax();
     return 1;
   }
   return 0;
@@ -406,7 +406,7 @@ uint8_t calculatePeakWeighted(FeatureCollector *f) {
   peak = f->getPeak() * (double)PEAK_SCALER;
   if (peak > 1.0) {
     peak = 1.0;
-  }
+  } 
   uint8_t scaler = peak * MAX_BRIGHTNESS;
   return scaler;
 }
@@ -555,8 +555,8 @@ void setupDLManager() {
 
     // runtime log
     if (STATICLOG_RUNTIME) {
-      datalog_manager.addStaticLog("Program Run : ",
-                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].min_reading);
+      datalog_manager.addStaticLog("Program Runtime (minutes) : ",
+                                   STATICLOG_RUNTIME_TIMER, &runtime);
     }
     // the constantly updating logs
     if (STATICLOG_LUX_VALUES) {
@@ -595,9 +595,9 @@ void setupDLManager() {
 
     if (STATICLOG_FLASHES) {
       datalog_manager.addStaticLog("Front Total Flashes Detected  : ",
-                                   STATICLOG_FLASHES_TIMER, &neos[0].total_flashes);
+                                   STATICLOG_FLASHES_TIMER, &total_flashes[0]);
       datalog_manager.addStaticLog("Rear Total Flashes Detected   : ",
-                                   STATICLOG_FLASHES_TIMER, &neos[1].total_flashes);
+                                   STATICLOG_FLASHES_TIMER, &total_flashes[1]);
     }
 
     // todo double check the addr
@@ -629,17 +629,22 @@ void setupDLManager() {
       lux_managers[1].resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Rear Brightness Scaler Averages  ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);
     }
+    if (AUTOLOG_FPM_F > 0) {
+      ptr = &neos[0].fpm;
+      lux_managers[1].resetBrightnessScalerAvg();
+      datalog_manager.addAutolog("Front Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
+    }
+    if (AUTOLOG_FPM_R > 0) {
+      ptr = &neos[1].fpm;
+      lux_managers[1].resetBrightnessScalerAvg();
+      datalog_manager.addAutolog("Rear Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
+    }
 
-    uint32_t * lptr;
     if (AUTOLOG_FLASHES_F > 0) {
-      lptr = &neos[0].num_flashes;
-      Serial.println("adding front led flash number autolog to datalog_manager");
-      datalog_manager.addAutolog("Front Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, lptr);
+      datalog_manager.addAutolog("Front Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, &total_flashes[0]);
     }
     if (AUTOLOG_FLASHES_R > 0) {
-      lptr = &neos[1].num_flashes;
-      Serial.println("adding rear led flash number autolog to datalog_manager");
-      datalog_manager.addAutolog("Rear Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, lptr);
+      datalog_manager.addAutolog("Rear Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, &total_flashes[1]);
     }
 
     // printing needs to be at the end so that everything actually displays
@@ -720,12 +725,20 @@ void updateFeatureCollectors() {
 
 void updateClick() {
   if (fc[2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
-    neos[0].flashOn();
-    // Serial.println("_____________________ FLASH ON _________________________");
-  }
+    if(neos[0].flashOn()) { 
+      num_flashes[0]++;
+      total_flashes[0]++;
+      fpm[0] = num_flashes[0] / fpm_timer;
+      Serial.print("num_flashes 0: ");Serial.println(num_flashes[0]);
+    }
+   }
   if (fc[3].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
-    neos[1].flashOn();
-    // Serial.println("_____________________ FLASH ON _________________________");
+        if(neos[1].flashOn()) {
+      num_flashes[1]++;
+      total_flashes[1]++;
+      fpm[0] = num_flashes[1] / fpm_timer;
+      Serial.print("num_flashes 1: ");Serial.println(num_flashes[1]);
+    }
   }
   for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
     neos[i].update();
@@ -739,5 +752,6 @@ void mothLoop() {
   updateClick();
   autoGainAdjust(); // will call rear as well if in stereo mode
   datalog_manager.update();
+  runtime = (double)millis() / 60000;
 }
 #endif // __MODE_CICADA_H__

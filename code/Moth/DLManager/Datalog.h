@@ -63,6 +63,8 @@ class Datalog {
 
         bool update(); // could this be a while loop at some point?
 
+        String getName() {return id;};
+
         bool write(double data);
         bool write(uint8_t data);
         bool write(uint16_t data);
@@ -103,10 +105,12 @@ Datalog::Datalog(String _id, uint32_t address, uint16_t *val, int length, bool m
 }
 
 Datalog::Datalog(String _id, uint32_t address, uint32_t *val, int length, bool move) {
-    data_type = type = DATATYPE_LONG;
+    data_type = DATATYPE_LONG;
+    type = DATATYPE_LONG;
     value_size = 4;
     lval = val;
     _setup(_id, address, length, move);
+    Serial.print("Created a new long datalog with a starting value of : ");Serial.println(*val);
 }
 
 // to save code repitition
@@ -148,6 +152,7 @@ void Datalog::writeShort(uint16_t data) {
     uint8_t msb = data >> 8;
     EEPROM.update(addr, lsb);
     EEPROM.update(addr + 1, msb);
+    writeCheck(*sval);
 }
 
 void Datalog::writeShort() {
@@ -156,6 +161,7 @@ void Datalog::writeShort() {
     uint8_t msb = *sval >> 8;
     EEPROM.update(addr, lsb);
     EEPROM.update(addr + 1, msb);
+    writeCheck(*sval);
 }
 
 void Datalog::writeLong(uint32_t data) {
@@ -164,14 +170,17 @@ void Datalog::writeLong(uint32_t data) {
       b[i] = data >> 8 * i;
       EEPROM.update(addr + i, b[i]);
     }
+    writeCheck(data);
 }
 
 void Datalog::writeLong() {
     uint8_t b[4];
+    uint32_t v = *lval;
     for (int i = 0; i < 4; i++) {
-      b[i] = *lval >> 8 * i;
+      b[i] = v >> 8 * i;
       EEPROM.update(addr + i, b[i]);
     }
+    writeCheck(v);
 }
 
 //////////////////////// Reading Methods /////////////////////////////////
@@ -245,7 +254,7 @@ bool Datalog::writeCheck(double data) {
 
 bool Datalog::writeCheck(uint8_t data) {
   if (EEPROM_WRITE_CHECK) {
-    double temp = EEPROM.read(addr);
+    uint8_t temp = EEPROM.read(addr);
     dprint(PRINT_LOG_WRITE, "data check:\t");
     dprint(PRINT_LOG_WRITE, data);
     dprint(PRINT_LOG_WRITE, "\t");
@@ -260,7 +269,7 @@ bool Datalog::writeCheck(uint8_t data) {
 
 bool Datalog::writeCheck(uint16_t data) {
   if (EEPROM_WRITE_CHECK) {
-    double temp = readShort(addr);
+    uint16_t temp = readShort(addr);
     dprint(PRINT_LOG_WRITE, "data check:\t");
     dprint(PRINT_LOG_WRITE, data);
     dprint(PRINT_LOG_WRITE, "\t");
@@ -275,7 +284,7 @@ bool Datalog::writeCheck(uint16_t data) {
 
 bool Datalog::writeCheck(uint32_t data) {
   if (EEPROM_WRITE_CHECK) {
-    double temp = readLong(addr);
+    uint32_t temp = readLong(addr);
     dprint(PRINT_LOG_WRITE, "data check:\t");
     dprint(PRINT_LOG_WRITE, data);
     dprint(PRINT_LOG_WRITE, "\t");
@@ -292,13 +301,15 @@ bool Datalog::writeCheck(uint32_t data) {
 
 bool Datalog::update() {
     // if the log is currently active
-    if (!active) {
+    dprint(PRINT_LOG_WRITE, id);
+    if (active == false) {
+        // dprint(PRINT_LOG_WRITE, id);
+        dprint(PRINT_LOG_WRITE, " not active, not updating");
         return 0;
     }
     // if we got this far then everything is good for an update
-    dprint(PRINT_LOG_WRITE, "updated the ");
-    dprint(PRINT_LOG_WRITE, id);
-    dprint(PRINT_LOG_WRITE, " log : ");
+    dprint(PRINT_LOG_WRITE, " updated ");
+    // dprint(PRINT_LOG_WRITE, id);
     switch(data_type) {
         case DATATYPE_SHORT:
             writeShort();
@@ -345,15 +356,20 @@ void Datalog::printLog(uint8_t lines) {
   //printDivide(PRINT_LOG_WRITE);
   dprint(PRINT_LOG_WRITE, "Printing the ");
   dprint(PRINT_LOG_WRITE, id);
-  dprint(PRINT_LOG_WRITE, "\t");
   uint32_t per_line;
   if (end_addr > start_addr) {
     per_line = (end_addr - start_addr) / value_size / lines;
   } else {
       per_line =  1;
   }
-  dprint(PRINT_LOG_WRITE, " from start/end addr : ");dprint(PRINT_LOG_WRITE, start_addr);dprintTab(PRINT_LOG_WRITE);
-  dprintln(PRINT_LOG_WRITE, end_addr);
+  dprint(PRINT_LOG_WRITE, " from start/end addr : ");
+  dprint(PRINT_LOG_WRITE, start_addr);dprint(PRINT_LOG_WRITE,"-");
+  dprint(PRINT_LOG_WRITE, end_addr);
+  if (end_addr - start_addr > 4)  {
+    dprintln(PRINT_LOG_WRITE, "");
+  } else  {
+    dprint(PRINT_LOG_WRITE, "\t");
+  }
   uint8_t itters = 0;
   double d = 0.0;
   uint32_t l = 0;
@@ -387,7 +403,8 @@ void Datalog::printLog(uint8_t lines) {
             dprint(PRINT_LOG_WRITE, "\t");
         }
   }
-  printDivide();
+  dprintln(PRINT_LOG_WRITE);
+  
 }
 
 #endif // __DATALOG_CONF_H__

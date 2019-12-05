@@ -121,7 +121,7 @@ class DLManager {
         void addLog(Datalog *, uint8_t);
         void addLog(Datalog, uint8_t);
         ///////////////////// Static Logs //////////////////
-        void _addStaticLog(uint32_t log_size);
+        void _addStaticLog(uint32_t log_size, String _id);
 
         ///////////////////// One-off Logs /////////////////
         // These are logs which are only intended to be written to once
@@ -149,7 +149,7 @@ class DLManager {
         uint32_t autolog_start_idx = one_off_log_size;
         uint32_t autolog_write_idx = autolog_start_idx;
         uint32_t remaining_autolog_space = total_log_size - one_off_log_size;
-        void _addAutoLog(uint32_t log_size);
+        void _addAutoLog(uint32_t log_size, String _id);
 
         // Start and stop indexes for each log
         Datalog logs[DATALOG_MANAGER_MAX_LOGS];
@@ -203,6 +203,7 @@ void DLManager::logSetupConfigByte(String str, uint8_t data) {
     uint8_t dlen = 1;
     if (one_off_write_idx + dlen < one_off_start_idx + one_off_log_size) {
         // write the data to eeprom according to type
+        uint8_t _data = EEPROM.read(one_off_write_idx);
         EEPROM.update(one_off_write_idx, data);
         // update a new struct with the log data
         one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_BYTE, dlen, true};
@@ -211,10 +212,13 @@ void DLManager::logSetupConfigByte(String str, uint8_t data) {
         // update the stored one off log active structs idx
         active_one_off_logs++;
         // dprint
+        Serial.print("idx:");
         Serial.print(one_off_write_idx);
-        Serial.print("\t");
-        Serial.print(" Logging new byte to EEPROM : ");
+        Serial.print(" ");
+        Serial.print("old/new ");
         Serial.print(str);
+        Serial.print("\t");
+        Serial.print(_data);
         Serial.print("\t");
         Serial.println(data);
     } else {
@@ -227,6 +231,7 @@ void DLManager::logSetupConfigShort(String str, uint16_t data) {
     uint8_t dlen = 2;
     if (one_off_write_idx + dlen < one_off_start_idx + one_off_log_size) {
         // write the data to eeprom according to type
+        uint16_t _data = readShortFromEEPROM(one_off_write_idx);
         writeShortToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
         one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_SHORT, dlen, true};
@@ -237,8 +242,10 @@ void DLManager::logSetupConfigShort(String str, uint16_t data) {
         // dprint
         Serial.print(one_off_write_idx);
         Serial.print("\t");
-        Serial.print(" Logging new short to EEPROM : ");
+        Serial.print("old/new ");
         Serial.print(str);
+        Serial.print("\t");
+        Serial.print(_data);
         Serial.print("\t");
         Serial.println(data);
     } else {
@@ -251,6 +258,7 @@ void DLManager::logSetupConfigLong(String str, uint32_t data) {
     uint8_t dlen = 4;
     if (one_off_write_idx + dlen < one_off_start_idx + one_off_log_size) {
         // write the data to eeprom according to type.
+        uint32_t _data = readLongFromEEPROM(one_off_write_idx);
         writeLongToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
         one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_LONG, dlen, true};
@@ -261,8 +269,10 @@ void DLManager::logSetupConfigLong(String str, uint32_t data) {
         // dprint
         Serial.print(one_off_write_idx);
         Serial.print("\t");
-        Serial.print(" Logging new long to EEPROM : ");
+        Serial.print("old/new ");
         Serial.print(str);
+        Serial.print("\t");
+        Serial.print(_data);
         Serial.print("\t");
         Serial.println(data);
     } else {
@@ -275,6 +285,7 @@ void DLManager::logSetupConfigDouble(String str, double data) {
     uint8_t dlen = 4;
     if (one_off_write_idx + dlen < one_off_start_idx + one_off_log_size) {
         // write the data to eeprom according to type
+        double _data = readDoubleFromEEPROM(one_off_write_idx);
         writeDoubleToEEPROM(one_off_write_idx, data);
         // update a new struct with the log data
         one_off_logs[active_one_off_logs] = {str, one_off_write_idx, DATATYPE_DOUBLE, dlen, true};
@@ -285,8 +296,10 @@ void DLManager::logSetupConfigDouble(String str, double data) {
         // dprint
         Serial.print(one_off_write_idx);
         Serial.print("\t");
-        Serial.print(" Logging new double to EEPROM : ");
+        Serial.print("old/new ");
         Serial.print(str);
+        Serial.print("\t");
+        Serial.print(_data);
         Serial.print("\t");
         Serial.println(data);
     } else {
@@ -295,10 +308,11 @@ void DLManager::logSetupConfigDouble(String str, double data) {
 }
 
  /////////////////////////////// Static Logs ////////////////////////////////////////////
-void DLManager::_addStaticLog(uint32_t log_size){
+void DLManager::_addStaticLog(uint32_t log_size, String _id){
         autolog_write_idx += log_size;
         remaining_autolog_space -= log_size;
         dprintMinorDivide(PRINT_LOG_WRITE);
+        Serial.println(_id);
         Serial.print("Adding a new static log with size       :\t");Serial.println(log_size);
         Serial.print("remaining static log (autolog) space    :\t");Serial.println(remaining_autolog_space);
         Serial.print("starting EEPROM idx                     :\t");Serial.println(autolog_write_idx - log_size);
@@ -308,8 +322,8 @@ void DLManager::_addStaticLog(uint32_t log_size){
 void DLManager::addStaticLog(String _id,  uint8_t _timer, double*_val) {
     uint32_t log_size = 4;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
-        _addStaticLog(log_size);
+        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
@@ -318,8 +332,8 @@ void DLManager::addStaticLog(String _id,  uint8_t _timer, double*_val) {
 void DLManager::addStaticLog(String _id,  uint8_t _timer, uint8_t*_val) {
     uint32_t log_size = 1;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
-        _addStaticLog(log_size);
+        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
@@ -328,18 +342,18 @@ void DLManager::addStaticLog(String _id,  uint8_t _timer, uint8_t*_val) {
 void DLManager::addStaticLog(String _id,  uint8_t _timer, uint16_t*_val) {
     uint32_t log_size = 2;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
-        _addStaticLog(log_size);
+        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
 }
 
-void DLManager::addStaticLog(String _id,  uint8_t _timer, uint32_t *_val) {
+void DLManager::addStaticLog(String _id,  uint8_t _timer, uint32_t*_val) {
     uint32_t log_size = 4;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, -1, true), _timer);
-        _addStaticLog(log_size);
+        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
@@ -361,7 +375,7 @@ void DLManager::addLog(Datalog log, uint8_t timer_num) {
     add_log_idx++;
     add_log_idx = min(add_log_idx, DATALOG_MANAGER_MAX_LOGS);
     dprint(PRINT_LOG_WRITE, "Added log to the datamanager under timer ");
-    dprint(PRINT_LOG_WRITE, timer_num);dprint(PRINT_LOG_WRITE, " active_logs now: ");dprint(PRINT_LOG_WRITE, active_logs);
+    dprint(PRINT_LOG_WRITE, timer_num);dprint(PRINT_LOG_WRITE, " active_logs now: ");dprintln(PRINT_LOG_WRITE, active_logs);
 }
 
 void DLManager::addLog(Datalog *log, uint8_t timer_num) {
@@ -381,10 +395,11 @@ void DLManager::addLog(Datalog *log, uint8_t timer_num) {
 }
 
 /////////////////////////////// Auto Logging ////////////////////////////////
-void DLManager::_addAutoLog(uint32_t log_size) {
+void DLManager::_addAutoLog(uint32_t log_size, String _id) {
         autolog_write_idx += log_size;
         remaining_autolog_space -= log_size;
-        Serial.print("Adding a new AutoLog with size:\t");Serial.println(log_size);
+        Serial.print("Adding a new AutoLog ");Serial.print(_id);Serial.print(" with size:\t");
+        Serial.println(log_size);
         Serial.print("remaining autolog space       :\t");Serial.println(remaining_autolog_space);
         Serial.print("starting EEPROM idx           :\t");Serial.println(autolog_write_idx - log_size);
         printMinorDivide();
@@ -394,7 +409,7 @@ void DLManager::addAutolog(String _id,  uint8_t _timer, double *_val) {
     uint32_t log_size = remaining_logs[_timer] * 4;
     if (log_size < remaining_autolog_space) {
         addLog(Datalog(_id, autolog_write_idx, _val, remaining_logs[_timer], true), _timer);
-        _addAutoLog(log_size);
+        _addAutoLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
@@ -404,7 +419,7 @@ void DLManager::addAutolog(String _id,  uint8_t _timer, uint32_t *_val) {
     uint32_t log_size = remaining_logs[_timer] * 4;
     if (log_size < remaining_autolog_space) {
         addLog(Datalog(_id, autolog_write_idx, _val, remaining_logs[_timer], true), _timer);
-        _addAutoLog(log_size);
+        _addAutoLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
     }
@@ -412,30 +427,33 @@ void DLManager::addAutolog(String _id,  uint8_t _timer, uint32_t *_val) {
 
 /////////////////////////////// Update Functions ////////////////////////////////
 void DLManager::update() {
-    for (int i = 0; i < DATALOG_MANAGER_TIMER_NUM; i++) {
-        // if it is the first reading then only update if it has been longer than the start delay
+    // update each timer one at a time
+    for (int timer_num = 0; timer_num < DATALOG_MANAGER_TIMER_NUM; timer_num++) {
         // take the elapsedd millis value at start of loop to ensure that
         // all related logs either update or dont update at the same time
-        unsigned long u_time = log_timers[i];
-        if ((first_reading[i] == true && u_time > start_delays[i]) || (first_reading[i] == false )) {
-            first_reading[i] = false;
+        unsigned long u_time = log_timers[timer_num];
+        // if it is the first reading then only update if it has been longer than the start delay
+        if ((first_reading[timer_num] == true && u_time > start_delays[timer_num]) || (first_reading[timer_num] == false )) {
+            first_reading[timer_num] = false;
             // if it is time to update these logs then do so
             uint8_t updates = 0;
-            for (int l = 0; l <= active_logs; l++) {
-                 if (log_timer_map[l] == i && u_time > log_refresh_length[i]) {
-                    logs[l].update();
+            for (int log = 0; log < active_logs; log++) {
+                 if (log_timer_map[log] == timer_num && u_time > log_refresh_length[timer_num]) {
+                    // Serial.print("Updating : ");Serial.println(logs[log].getName());
+                    logs[log].update();
                     updates++;
                  }
             }
-            for (int l = 0; l <= active_logs_p; l++) {
-                 if (log_timer_map_p[l] == i && u_time > log_refresh_length[i]) {
-                    logs_p[l]->update();
+            for (int log = 0; log < active_logs_p; log++) {
+                 if (log_timer_map_p[log] == timer_num && u_time > log_refresh_length[timer_num]) {
+                    // Serial.print("Updating : ");Serial.println(logs[log].getName());
+                    logs_p[log]->update();
                     updates++;
                  }
             }
             if (updates > 0) {
-                log_timers[i] = 0;
-                remaining_logs[i]--;
+                log_timers[timer_num] = 0;
+                remaining_logs[timer_num]--;
             }
         }
     }
@@ -490,11 +508,11 @@ void DLManager::printOneOffLogs() {
 
 void DLManager::printAutologs() {
     // note this also prints static logs
-    for (int i = 0; i <= active_logs; i++) {
+    for (int i = 0; i < active_logs; i++) {
         Serial.print(i);printTab();
-        logs[i].printLog(8);
+        logs[i].printLog(4);
     }
-    for (int i = 0; i <= active_logs_p; i++) {
+    for (int i = 0; i < active_logs_p; i++) {
         Serial.print(i);Serial.print("p\t");
         logs_p[i]->printLog(8);
     }

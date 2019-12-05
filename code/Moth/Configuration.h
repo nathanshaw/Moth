@@ -58,7 +58,8 @@
 #define PRINT_AUTO_GAIN                 false
 #define PRINT_LED_DEBUG                 false
 #define PRINT_LOG_WRITE                 true
-#define EEPROM_WRITE_CHECK              false
+// perform a write check on everything that is written to EEPROM
+#define EEPROM_WRITE_CHECK              true
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
@@ -109,7 +110,7 @@ DMAMEM byte displayMemory[NUM_LED * 12]; // 12 bytes per LED
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-elapsedMillis runtime;
+double runtime;
 bool data_logging_active = true;
 
 // does the autolog get written over each time?
@@ -117,47 +118,57 @@ bool data_logging_active = true;
 
 // how long will each of the four different auto-log options be? 
 // // a -1 means that the log will keep updating forever
-#define DATALOG_1_LENGTH                40
-#define DATALOG_2_LENGTH                40
-#define DATALOG_3_LENGTH                -1
-#define DATALOG_4_LENGTH                -1
+#define DATALOG_1_LENGTH                20
+#define DATALOG_2_LENGTH                20
+#define DATALOG_3_LENGTH                100000
+#define DATALOG_4_LENGTH                100000
 
 // record the run time // last value is number of minutes
-#define DATALOG_TIMER_1                 (1000*60*1)
-#define DATALOG_TIMER_2                 (1000*60*1)
-#define DATALOG_TIMER_3                 (1000*60*1)
-#define DATALOG_TIMER_4                 (1000*60*1)
+#define DATALOG_TIMER_1                 (1000*60*0.5)
+#define DATALOG_TIMER_2                 (1000*60*5)
+#define DATALOG_TIMER_3                 (1000*60*0.5)
+#define DATALOG_TIMER_4                 (1000*60*5)
 
-#define DATALOG_START_DELAY_1           (1000*60*0.5)
-#define DATALOG_START_DELAY_2           (1000*60*0.5)
-#define DATALOG_START_DELAY_3           (1000*60*0.5)
-#define DATALOG_START_DELAY_4           (1000*60*0.5)
+// how long the program runs for before the datalog starts logging
+#define DATALOG_START_DELAY_1           (1000*60*0.005)
+#define DATALOG_START_DELAY_2           (1000*60*0.005)
+#define DATALOG_START_DELAY_3           (1000*60*0.005)
+#define DATALOG_START_DELAY_4           (1000*60*0.005)
 
-#define DATALOG_TIME_FRAME_1            (1000*60*60*5)
-#define DATALOG_TIME_FRAME_2            (1000*60*60*5)
-#define DATALOG_TIME_FRAME_3            (1000*60*60*5)
-#define DATALOG_TIME_FRAME_4            (1000*60*60*5)
+// how long the data logging  will last for
+#define DATALOG_TIME_FRAME_1            (1000*60*60*0.1)
+#define DATALOG_TIME_FRAME_2            (1000*60*60*1)
+#define DATALOG_TIME_FRAME_3            (1000*60*60*0.1)
+#define DATALOG_TIME_FRAME_4            (1000*60*60*1)
 
 // refresh rates for the static logs
-#define STATICLOG_RATE_FAST             (1000*60*3)
+#define STATICLOG_RATE_FAST             (1000*60*0.1)
 #define STATICLOG_RATE_SLOW             (1000*60*12)
 
 /////////////////// for the auto logging ////////////////////////////////////
 // will the lux readings be logged?
-#define AUTOLOG_LUX_F                   1
-#define AUTOLOG_LUX_R                   1
+#define AUTOLOG_LUX_F                   0
+#define AUTOLOG_LUX_R                   0
 #define AUTOLOG_LUX_TIMER               0
+
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            1
-#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF_F            0
+#define AUTOLOG_LED_ON_OFF_R            0
 #define AUTOLOG_LED_ON_OFF_TIMER        0
+
 // the number of values to store in the logging process
 #define AUTOLOG_FLASHES_F               1
 #define AUTOLOG_FLASHES_R               1
 #define AUTOLOG_FLASHES_TIMER           0
+
+// the number of values to store in the logging process
+#define AUTOLOG_FPM_F                   1
+#define AUTOLOG_FPM_R                   1
+#define AUTOLOG_FPM_TIMER               0
+
 // the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     1
-#define AUTOLOG_BRIGHTNESS_SCALER_R     1
+#define AUTOLOG_BRIGHTNESS_SCALER_F     0
+#define AUTOLOG_BRIGHTNESS_SCALER_R     0
 #define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
 
 /////////////////// for the static logging /////////////////////////////////
@@ -167,11 +178,11 @@ bool data_logging_active = true;
 #define STATICLOG_FLASHES               1
 #define STATICLOG_RUNTIME               1
 
-#define STATICLOG_LUX_MIN_MAX_TIMER     3
-#define STATICLOG_CLICK_GAIN_TIMER      3
-#define STATICLOG_SONG_GAIN_TIMER       3
-#define STATICLOG_FLASHES_TIMER         3
-#define STATICLOG_RUNTIME_TIMER         3
+#define STATICLOG_LUX_MIN_MAX_TIMER     2
+#define STATICLOG_CLICK_GAIN_TIMER      2
+#define STATICLOG_SONG_GAIN_TIMER       2
+#define STATICLOG_FLASHES_TIMER         2
+#define STATICLOG_RUNTIME_TIMER         2
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
@@ -182,19 +193,9 @@ bool data_logging_active = true;
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-// will be written once at the setup loop then will never write again
-#define DATALOG_TYPE_INIT               0
-// will write to the same addr over and over again when commanded to do so
-#define DATALOG_TYPE_UPDATE             1
-// log consists of several memory locations for its values and will increment its index
-// with each read until the space runs out then it will stop logging
-// Note that the timing of the updates are determined by the datalogmanager class
-#define DATALOG_TYPE_AUTO               2
-#define UPDATING_LOG                    0
-#define ONE_TIME_LOG                    1
 #define DATALOG_MANAGER_MAX_LOGS        25
 #define DATALOG_MANAGER_TIMER_NUM       4
-uint8_t datalog_timer_num = 4;
+uint8_t datalog_timer_num = DATALOG_MANAGER_TIMER_NUM;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
 
 ////////////////////////////////////////////////////////////////////////////

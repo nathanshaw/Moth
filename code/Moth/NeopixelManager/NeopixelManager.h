@@ -40,6 +40,9 @@ uint32_t packColors(uint8_t red, uint8_t green, uint8_t blue, double scaler) {
   red = min(red, MAX_BRIGHTNESS);
   green = min(green, MAX_BRIGHTNESS);
   blue = min(blue, MAX_BRIGHTNESS);
+  if (red < MIN_BRIGHTNESS) {red = 0;};
+  if (green < MIN_BRIGHTNESS) {green = 0;};
+  if (blue < MIN_BRIGHTNESS) {blue = 0;};
   color = (red << 16) + (green << 8) + (blue);
   return color;
 }
@@ -70,7 +73,10 @@ class NeoGroup {
     uint32_t getNumFlashes() {return num_flashes;};
     uint32_t num_flashes = 0;
     uint32_t total_flashes = 0;
-   
+    double fpm;
+    double getFPM();
+    void resetFPM();
+
     uint32_t getShdnLen();
 
     bool isInShutdown() {
@@ -110,11 +116,12 @@ class NeoGroup {
     void setRemainingFlashDelay(long d) {
       remaining_flash_delay = d;
     };
-
+    // Controlling the LEDs
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs);
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
     // void wipeAll(uint8_t red, uint8_t green, uint8_t blue);
+
     bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
     bool flashOn();
     void flashOff();
@@ -125,9 +132,6 @@ class NeoGroup {
     bool shutdown(uint32_t len);
     void powerOn();
     void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
-
-    double getFlashPerMinuteAvg();
-    void resetFlashPerMinuteAvg();
 
     String getName() { return id;};
 
@@ -174,14 +178,14 @@ class NeoGroup {
     void resetOnOffRatioCounters();
 };
 
-void NeoGroup::resetFlashPerMinuteAvg() {
-  total_flashes += num_flashes;
+void NeoGroup::resetFPM() {
   num_flashes = 0;
   fpm_timer = 0;
 }
 
-double NeoGroup::getFlashPerMinuteAvg() {
-  return (double)num_flashes / (double)fpm_timer;
+double NeoGroup::getFPM() {
+  fpm = (double)num_flashes / (double)fpm_timer * 1000 * 60;
+  return fpm;
 }
 
 NeoGroup::NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String _id, uint32_t f_min, uint32_t f_max) {
@@ -306,7 +310,6 @@ void NeoGroup::flashOff() {
 bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
   // if it has been uint32_t enough since the last flash occured
   if (last_flash > FLASH_DEBOUNCE_TIME) {
-    dprint(PRINT_CLICK_DEBUG, "FLASH ON");
     if (red + green + blue > 0 && shdn_timer > shdn_len) {
       // if a flash is not currently on
       if ( (flash_on == false) || (leds_on == false) ) {
@@ -315,8 +318,14 @@ bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
         flash_on = true; // turn the light on along with the flag
         leds_on = true;
         last_flash = 0; // reset the elapsed millis variable as the light was just turned on
-        dprint(PRINT_CLICK_DEBUG, " Flashed "); dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
         num_flashes = num_flashes  + 1;
+        total_flashes++;
+        getFPM();
+        dprint(PRINT_CLICK_DEBUG, id);
+        dprint(PRINT_CLICK_DEBUG, " FLASH ON #");
+        dprint(PRINT_CLICK_DEBUG, num_flashes);
+        dprint(PRINT_CLICK_DEBUG, " Flashed "); dprint(PRINT_CLICK_DEBUG, remaining_flash_delay);
+        dprint(PRINT_CLICK_DEBUG, " FPM "); dprintln(PRINT_CLICK_DEBUG, fpm);
       } else { // if a flash is on then increment the remaining_flash_Delay
         addToRemainingFlashDelay(1);
         if (remaining_flash_delay > flash_max_time) {
@@ -335,25 +344,27 @@ bool NeoGroup::flashOn() {
   return flashOn(flash_red, flash_green, flash_blue);
 }
 
+////////////// Update Methods/////////////////////////
+//
 void NeoGroup::update() {
   // if there is time remaining in the flash it either needs to be turned on or the timer needs to increment
   if (remaining_flash_delay > 0) {
-    dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, " : ");
-    dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
-    dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
+    // dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, " : ");
+    // dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
+    // dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
     if (flash_on < 1) { //and the light is not currently on
       dprintln(PRINT_CLICK_DEBUG, "-- Turning the Flash ON --");
       flashOn(flash_red, flash_green, flash_blue);// flash on
     }
     else {
       // if the light is already on subtract the number of ms which have gone by since the last check
-      dprint(PRINT_CLICK_DEBUG, "last_flash :\t"); dprintln(PRINT_CLICK_DEBUG, last_flash);
-      dprint(PRINT_CLICK_DEBUG, "remaining_flash_delay "); 
-      dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, ":\t");
-      dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprint(PRINT_CLICK_DEBUG, "\t");
+      // dprint(PRINT_CLICK_DEBUG, "last_flash :\t"); dprintln(PRINT_CLICK_DEBUG, last_flash);
+      // dprint(PRINT_CLICK_DEBUG, "remaining_flash_delay "); 
+      // dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, ":\t");
+      // dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprint(PRINT_CLICK_DEBUG, "\t");
       remaining_flash_delay = remaining_flash_delay - last_flash_update;
       remaining_flash_delay = max(remaining_flash_delay, 0);
-      dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
+      // dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
       if (remaining_flash_delay == 0) {
         dprint(PRINT_CLICK_DEBUG, "Click time over, turning off flash "); dprintln(PRINT_CLICK_DEBUG, id);
         flashOff(); // turn off the NeoPixels
