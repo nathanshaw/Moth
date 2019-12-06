@@ -38,8 +38,16 @@
 #define CLICK_PEAK_DELTA_THRESH 0.3
 
 // One click per ten minutes
-#define MIN_CLICKS_PER_MINUTE 0.1
-#define MAX_CLICKS_PER_MINUTE 40.0
+#define MIN_FPM_THRESH              0.1
+#define LOW_FPM_THRESH              1.0
+#define HIGH_FPM_THRESH             40
+#define MAX_FPM_THRESH              60.0
+
+// One click per ten minutes
+#define MIN_ON_RATIO_THRESH              0.05
+#define LOW_ON_RATIO_THRESH              0.30
+#define HIGH_ON_RATIO_THRESH             0.90
+#define MAX_ON_RATIO_THRESH              0.98
 
 #define STARTING_CLICK_GAIN 4.0
 

@@ -15,8 +15,11 @@ class FeatureCollector {
     double min_gain = 1.0;
     double max_gain = 1.0;
     void updateGain(double g);
+    bool ampActive() {return amp_active;};
 
-    void linkAmplifier(AudioAmplifier * amp) { 
+    void linkAmplifier(AudioAmplifier * amp, double low, double high) { 
+        gain_lower_limit = low;
+        gain_upper_limit = high;
         if (audio_amp_add_idx < 4) {
             Serial.print("Linked an audio amplifier ");Serial.print(audio_amp_add_idx);printTab();
             amp_ana[audio_amp_add_idx] = amp;
@@ -87,8 +90,11 @@ class FeatureCollector {
 
     //////////////// Gain Tracking ///////////////
     AudioAmplifier *amp_ana[4];
+    bool amp_active = false;
     uint8_t audio_amp_add_idx = 0;
     bool gain_tracking_active = false;
+    double gain_lower_limit;
+    double gain_upper_limit;
     // TODO, make it so linking of gains and tracking is all dones through fc
     // AudioAmplifier *gain_ana[4];
 
@@ -136,15 +142,21 @@ FeatureCollector::FeatureCollector(String _id) {
 }
 
 void FeatureCollector::updateGain(double g) {
-        gain = g;
-        if (gain > max_gain) {
-            max_gain = gain;
-        }
-        if (gain < min_gain) {
-            min_gain = gain;
-        }
-        for (int i =  0; i < audio_amp_add_idx; i++) {
-            amp_ana[i]->gain(g);
+    gain = g;
+    if (gain > max_gain) {
+        max_gain = gain;
+    }
+    if (gain < min_gain) {
+        min_gain = gain;
+    }
+    if (gain > gain_upper_limit) {
+        gain = gain_upper_limit;
+    }
+    else if (gain < gain_lower_limit) {
+        gain = gain_lower_limit;
+    }
+    for (int i =  0; i < audio_amp_add_idx; i++) {
+        amp_ana[i]->gain(g);
     }
 }
 

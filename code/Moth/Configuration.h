@@ -55,11 +55,11 @@
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 #define PRINT_LED_VALUES                false
-#define PRINT_AUTO_GAIN                 false
+#define PRINT_AUTO_GAIN                 true
 #define PRINT_LED_DEBUG                 false
 #define PRINT_LOG_WRITE                 true
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK              true
+#define EEPROM_WRITE_CHECK              false
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
@@ -142,7 +142,7 @@ bool data_logging_active = true;
 #define DATALOG_TIME_FRAME_4            (1000*60*60*1)
 
 // refresh rates for the static logs
-#define STATICLOG_RATE_FAST             (1000*60*0.1)
+#define STATICLOG_RATE_FAST             (1000*60*3)
 #define STATICLOG_RATE_SLOW             (1000*60*12)
 
 /////////////////// for the auto logging ////////////////////////////////////
@@ -152,13 +152,13 @@ bool data_logging_active = true;
 #define AUTOLOG_LUX_TIMER               0
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            0
-#define AUTOLOG_LED_ON_OFF_R            0
+#define AUTOLOG_LED_ON_OFF_F            1
+#define AUTOLOG_LED_ON_OFF_R            1
 #define AUTOLOG_LED_ON_OFF_TIMER        0
 
 // the number of values to store in the logging process
-#define AUTOLOG_FLASHES_F               1
-#define AUTOLOG_FLASHES_R               1
+#define AUTOLOG_FLASHES_F               0
+#define AUTOLOG_FLASHES_R               0
 #define AUTOLOG_FLASHES_TIMER           0
 
 // the number of values to store in the logging process
@@ -202,7 +202,7 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-#define AUTO_GAIN_ACTIVE                1
+#define AUTOGAIN_ACTIVE                 1
 #define MAX_GAIN_ADJUSTMENT             0.10
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
@@ -213,9 +213,9 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define MIN_LED_ON_RATIO                (0.3)
 #define MAX_LED_ON_RATIO                (0.95)
 
-// the time in which the last auto_gain_was_calculated
-elapsedMillis last_auto_gain_adjustment; 
-const uint32_t autogain_frequency = 1000 * 60 * 10; // how often to calculate auto-gain (in ms)
+#define AUTOGAIN_START_DELAY            30000
+// how often to calculate auto-gain (in ms)
+#define AUTOGAIN_FREQUENCY              (1000 * 60 * 0.5) 
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Firmware Controls //////////////////////////////

@@ -8,7 +8,7 @@
 
 #define S_VERSION_MAJOR           3
 #define S_VERSION_MINOR           2
-#define S_SUBVERSION              0
+#define S_SUBVERSION              1
 
 #if H_VERSION_MAJOR > 1
 #define NUM_LUX_SENSORS           2
