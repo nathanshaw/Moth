@@ -2,17 +2,15 @@
 #define __MODEPITCH_H__
 
 #include <Audio.h>
-#include <Arduino.h>
 #include <PrintUtils.h>
 #include "AudioEngine/AudioEngine.h"
 #include "NeopixelManager/NeopixelManager.h"
 #include <WS2812Serial.h>
 #include "Configuration.h"
-#include "ColorConverter.h"
+#include "LuxManager/LuxManager.h"
 #include "DLManager/DLManager.h"
 
-uint8_t rgb[2][3];
-double hsb[2][3] = {{1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}};
+#define COLOR_PRINT_RATE 1000
 
 double brightness_scalers[2];
 double global_brightness_scaler = 0.6;
@@ -25,15 +23,20 @@ elapsedMillis print_color_timer;
 
 /////////////////////////////// NeoP ////////////////////////////////////
 
-WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
+WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
+
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 10, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+};
+
+// lux managers to keep track of the VEML readings
+LuxManager lux_managers[NUM_LUX_SENSORS] = {
+  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
+  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
-
-RGBConverter converter;
 
 AudioInputI2S            i2s;           //xy=70,94.00000095367432
 AudioAmplifier           input_amp_f;           //xy=224,88.00000095367432
@@ -73,43 +76,43 @@ AudioConnection          patchCord13(biquad_r, 0, usb, 1);
 void linkFeatureCollector() {
   //front
   Serial.println("Linking Feature Collector for Front and Rear");
-  if (RMS_ACTIVE) {
+  if (RMS_FEATURE_ACTIVE) {
     fc[0].linkRMS(&rms_f);
     fc[1].linkRMS(&rms_r);
   };
-  if (PEAK_ACTIVE) {
+  if (PEAK_FEATURE_ACTIVE) {
     fc[0].linkPeak(&peak_f);
     fc[1].linkPeak(&peak_r);
   };
-  if (FFT_ACTIVE) {
+  if (FFT_FEATURE_ACTIVE) {
     fc[0].linkFFT(&fft256_f);
     fc[1].linkFFT(&fft256_r);
   };
-  if (TONE_ACTIVE) {
+  if (TONE_FEATURE_ACTIVE) {
     fc[0].linkTone(&tone_detect_f);
     fc[1].linkTone(&tone_detect_r);
   };
-  if (FREQ_ACTIVE) {
+  if (FREQ_FEATURE_ACTIVE) {
     fc[0].linkFreq(&freq_f);
     fc[1].linkFreq(&freq_r);
   };
 }
 
-
-
-void mothSetup() {
+void mainSetup() {
   AudioMemory(AUDIO_MEMORY);
   Serial.begin(57600);
   delay(5000);
   Serial.println("Setup Loop has started");
+  
   leds.begin();
+  // leds.clear();
   Serial.println("LEDS have been initalised");
-  delay(250);
-  // create either front and back led group, or just one for both
-  neos[0].colorWipe(120, 70, 0); // turn off the LEDs
-  neos[1].colorWipe(120, 70, 0); // turn off the LEDs
+  delay(500);
+  
+  neos[0].colorWipe(120, 70, 0);
+  neos[1].colorWipe(120, 70, 0);
   Serial.println("Leds turned yellow for setup loop\n");
-  delay(2000);
+  delay(1000);
   /*
     if (JUMPERS_POPULATED) {
     printMinorDivide();
@@ -120,7 +123,7 @@ void mothSetup() {
     }
   */
   if (PRINT_EEPROM_CONTENTS  > 0) {
-    delay(1000);
+    delay(100);
     // TODO, add the datalogger and print the log contents
     // printEEPROMContents();
   } else {
@@ -144,7 +147,7 @@ void mothSetup() {
   biquad_r.setLowShelf(3, BQR_THRESH, -24);
 
   // audio features
-  if (FREQ_ACTIVE) {
+  if (FREQ_FEATURE_ACTIVE) {
     freq_f.begin(FREQ_UNCERTANITY_ALLOWED);
     freq_r.begin(FREQ_UNCERTANITY_ALLOWED);
   }
@@ -161,19 +164,17 @@ void mothSetup() {
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();;
   }
-  /*
-    if (data_logging_active) {
-    writeSetupConfigsToEEPROM();
-    }
-    if (LUX_SENSORS_ACTIVE) {
+  if (data_logging_active) {
+    Serial.println("WARNING - DATALOGGING IS NOT CURRENTLY IMPLEMENTED FOR THIS MODE");
+  }
+  if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
     lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
     lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
-    }
-  */
+  }
   printMajorDivide("Setup Loop Finished");
 }
 /*
@@ -208,149 +209,164 @@ bool getColorFromFFTSingleRange(FeatureCollector *f, uint8_t s, uint8_t e) {
   return 1;
 }
 
-bool getColorFromTone(FeatureCollector *f, uint8_t chan) {
+bool getHueFromTone(FeatureCollector *f) {
   Serial.print("WARNING - getColorFromTone is not currently implemented\t");
   Serial.println(f->getToneLevel());
   return true;
 }
 
-bool getColorFromFFTAllBins(FeatureCollector *f, uint8_t chan) {
-  if (COLOR_MAP_MODE == MODE_RGB) {
-    double red_d, green_d, blue_d, tot;
-    red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
-    green_d = f->getFFTRange(7, 20);
-    blue_d  = f->getFFTRange(20, 128);
-    tot   = (red_d + green_d + blue_d);
-    red_d   = red_d / tot;
-    green_d = green_d / tot;
-    blue_d  = blue_d / tot;
-    rgb[chan][0] = red_d * MAX_BRIGHTNESS;
-    rgb[chan][1] = green_d * MAX_BRIGHTNESS;
-    rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
+/*if (COLOR_MAP_MODE == NEO_MAPPING_RGB) {
+  double red_d, green_d, blue_d, tot;
+  red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
+  green_d = f->getFFTRange(7, 20);
+  blue_d  = f->getFFTRange(20, 128);
+  tot   = (red_d + green_d + blue_d);
+  red_d   = red_d / tot;
+  green_d = green_d / tot;
+  blue_d  = blue_d / tot;
+  rgb[chan][0] = red_d * MAX_BRIGHTNESS;
+  rgb[chan][1] = green_d * MAX_BRIGHTNESS;
+  rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
   }
-  else if (COLOR_MAP_MODE == MODE_HSB) {
-    double h = (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
+  else*/
+
+double getHueFromFFTAllBins(FeatureCollector *f) {
+  if (COLOR_MAP_MODE == NEO_MAPPING_HSB) {
+    return (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
     // dprint(PRINT_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(PRINT_FFT_VALS, h);
-    hsb[chan][0] = h;
-    return 1;
   } else {
     Serial.println("ERROR - the COLOR_MAP_MODE is not currently implemented");
-    return 0;
-  }
-  return 1;
-}
-
-
-void printColors() {
-  for (int i = 0; i < 2; i++)  {
-    //Serial.print(f->getName());Serial.print("\t");
-    Serial.print(i);
-    Serial.print("  red  "); Serial.print(rgb[i][0]);
-    Serial.print("\tgreen  "); Serial.print(rgb[i][1]);
-    Serial.print("\tblue  ");
-    Serial.print(rgb[i][2]);
-    Serial.print("  =  "); Serial.print(rgb[i][0] + rgb[i][1] + rgb[i][0]);
-    Serial.print("\thue "); Serial.print(hsb[i][0]);
-    Serial.print("\tsat "); Serial.print(hsb[i][1]);
-    Serial.print("\tbgt "); Serial.println(hsb[i][2]);
+    return 0.0;
   }
 }
 
-void calculateBrightness() {
+double calculateBrightness(FeatureCollector *f) {
+  double b;
   if (BRIGHTNESS_FEATURE == FEATURE_PEAK) {
-    for (int i  = 0;  i < 2; i++) {
-      hsb[i][2] = fc[i].getPeakAvg();
-      if (hsb[i][2] > 1.0) {
-        hsb[i][2] =  1.0;
-      }
-      fc[i].resetPeakAvgLog();
+    b = f->getPeakAvg();
+    if (b > 1.0) {
+      b =  1.0;
     }
+    f->resetPeakAvgLog();
+  } else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY){
+    b = f->getFFTTotalEnergy();
   } else {
     Serial.print("ERROR - calculateBrightness does not accept that  BRIGHTNESS_FEATURE");
   }
+  return b;
 }
 
-void calculateSaturation() {
+double calculateSaturation(FeatureCollector *f) {
+  double sat = 0.0;
   if (SATURATION_FEATURE == FEATURE_PEAK) {
-    for (int i = 0;  i < 2; i++) {
-      hsb[i][1] = fc[i].getPeakAvg();
-      if (hsb[i][1] > 1.0) {
-        hsb[i][1] =  1.0;
-      }
-      // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
-      fc[i].resetPeakAvgLog();
+    sat = f->getPeakAvg();
+    if (sat > 1.0) {
+      sat =  1.0;
     }
-  } else {
+    // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
+    f->resetPeakAvgLog();
+  } else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
+    // get how much energy is stored in the max bin, get the amount of energy stored in all bins
+    // 
+    sat = f->getRelativeEnergy(f->getHighestEnergyBin());
+  }
+  else {
     Serial.print("ERROR - calculateBrightness does not accept that  BRIGHTNESS_FEATURE");
   }
+  return sat;
 }
 
-void calculateHue() {
-  for (int i = 0; i <  2; i++) {
-    if (HUE_FEATURE == FEATURE_FFT) {
-      if (FFT_MODE == MODE_SINGLE_RANGE) {
-        getColorFromFFTSingleRange(&fc[i], 3, 20);
-      } else if (FFT_MODE == MODE_ALL_BINS) {
-        getColorFromFFTAllBins(&fc[i], i);
-      }
-    }
-    else if (HUE_FEATURE == FEATURE_TONE)
-      getColorFromTone(&fc[i], i);
+double calculateHue(FeatureCollector *f) {
+  double hue = 0.0;
+  switch (HUE_FEATURE) {
+  case FEATURE_FFT_BIN_RANGE:
+      hue = getColorFromFFTSingleRange(f, 3, 20);
+      break;
+  case FEATURE_FFT:
+      hue = getHueFromFFTAllBins(f);
+      break;
+  case FEATURE_FFT_MAX_BIN:
+      // calculate the bin with the most energy,
+      // Serial.print("Highest energy bin is: ");Serial.println(f->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_HIGHEST_BIN));
+      // map the bin  index to a hue value
+      hue = (double) (f->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_HIGHEST_BIN) - FFT_LOWEST_BIN) / FFT_HIGHEST_BIN;
+      // Serial.print("max bin hue is : ");Serial.println(hue); 
+      break;
+  case FEATURE_TONE:
+    hue = getHueFromTone(f);
+    break;
   }
+  return hue;
 }
 
 void updateNeos() {
-  if (COLOR_MAP_MODE == MODE_HSB) {
-    calculateSaturation();
-    calculateBrightness();
-    calculateHue();
+  if (COLOR_MAP_MODE == NEO_MAPPING_HSB) {
     uint8_t inactive = 0;
     for (int chan = 0; chan < num_channels; chan++) {
+      // calculate HSB
+      // the brightness should be the loudness (overall amp of bins)
+      // the saturation should be the relatitive loudness of the primary bin
+      // the hue should be the bin number (With higher frequencies corresponding to reds and yellows)
+      double s = calculateSaturation(&fc[chan]);
+      double b = calculateBrightness(&fc[chan]);
+      double h = calculateHue(&fc[chan]);
+      
       if (fc[chan].isActive() == true) {
-        uint8_t r, g, b;
-        r = rgb[chan][0];
-        g = rgb[chan][1];
-        b = rgb[chan][2];
-        converter.HsvToRgb(hsb[chan][0], hsb[chan][1], hsb[chan][2], r, g, b);
+        // now colorWipe the LEDs with the HSB value
+        neos[chan].colorWipeHSB(h, s, b);
       } else {
         inactive++;
-      };
+      }
     }
     if (inactive > num_channels) {
       Serial.println("ERROR - not able to updateNeos() as there is no active audio channels");
       return;
     } else if (inactive > 0) {
+      // if the first feature collector is inactive use the values from the second for the front neos
       if (fc[0].isActive() == false) {
-        converter.HsvToRgb(hsb[1][0], hsb[1][1], hsb[1][2], rgb[0][0], rgb[0][1], rgb[0][2]);
+        neos[0].colorWipe(neos[1].getHue(), neos[1].getSat(), neos[1].getBright());
       } else if (fc[1].isActive() == false) {
-        converter.HsvToRgb(hsb[0][0], hsb[0][1], hsb[0][2], rgb[1][0], rgb[1][1], rgb[1][2]);
+        neos[1].colorWipe(neos[0].getHue(), neos[0].getSat(), neos[0].getBright());
       }
     }
   }
   else {
     Serial.println("ERROR = that color mode is not implemented in update neos");
   }
+}
 
-  // now actually update the Neopixels
-  for (int i = 0; i < 2; i++) {
-    neos[i].colorWipe(rgb[i][0], rgb[i][1], rgb[i][2]);
+void updateFeatureCollectors() {
+  // update the feature collectors
+  for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
+    fc[i].update();
   }
 }
 
-void mothLoop() {
-  // update the feature collectors
-  for (int i = 0; i < 2; i++) {
-    fc[i].update();
-    updateNeos();
-  }
-  if (print_color_timer > 2000) {
+void printColors() {
+  if (print_color_timer > COLOR_PRINT_RATE) {
     print_color_timer = 0;
-    printColors();
+    for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
+      neos[i].printColors();
+    }
   }
+}
+
+void updateLuxManagers() {
+  // update the feature collectors
+  for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
+    lux_managers[i].update();
+  }
+}
+
+void mainLoop() {
+  updateLuxManagers();
+  updateFeatureCollectors();
+  updateNeos();
+  printColors();
+  // datalog_manager.update();
 }
 
 void updateJumpers() {
   Serial.println("WARNING -- UPDATE JUMPERS IS UNIMPLEMTED FOR THIS MODE");
 }
-
 #endif // mode_pitch_h
