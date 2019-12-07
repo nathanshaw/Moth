@@ -23,6 +23,7 @@
 */
 #include <WS2812Serial.h>
 #include "../Configuration.h"
+#include "../Macros.h"
 
 #include <PrintUtils.h>
 // #include <elapsedMillis.h>
@@ -53,26 +54,20 @@ class NeoGroup {
   public:
     NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String _id, uint32_t f_min, uint32_t f_max);
 
-    // setting and getting functions
-    void setFlashOn(bool val) {
-      flash_on = val;
-    };
-    bool getFlashOn() {
-      return flash_on;
-    };
-    bool getLedsOn() {
-      return leds_on;
-    };
-    uint32_t getOnOffLen() {
-      return on_off_len;
-    };
-    uint32_t getShdnTimer() {
-      return shdn_timer;
-    };
+    // for externally getting and setting the flash_on status
+    void setFlashOn(bool val) {flash_on = val;};
+    bool getFlashOn() {return flash_on;};
 
+    // for externally determining if the LEDs are currently on
+    bool getLedsOn() {return leds_on;};
+
+    uint32_t getOnOffLen() {return on_off_len;};
+    uint32_t getShdnTimer() {return shdn_timer;};
     uint32_t getNumFlashes() {return num_flashes;};
-    uint32_t num_flashes = 0;
+
+    uint32_t num_flashes = 0;// these are public so they can be tracked by the datalog manager
     uint32_t total_flashes = 0;
+
     double fpm;
     double getFPM();
     void resetFPM();
@@ -117,9 +112,15 @@ class NeoGroup {
       remaining_flash_delay = d;
     };
     // Controlling the LEDs
+    void updateHSB(double h, double s, double b);
+    double getHue(){return hsb[0];};
+    double getSat(){return hsb[1];};
+    double getBright(){return hsb[2];};
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs);
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
+    void colorWipeHSB(double h, double s, double b);
+
     // void wipeAll(uint8_t red, uint8_t green, uint8_t blue);
 
     bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
@@ -127,7 +128,9 @@ class NeoGroup {
     void flashOff();
     void update();
 
+    // printing functions
     void printGroupConfigs();
+    void printColors();
 
     bool shutdown(uint32_t len);
     void powerOn();
@@ -136,15 +139,20 @@ class NeoGroup {
     String getName() { return id;};
 
   private:
+    double hsb[3]; // limited from 0 - 255
+    uint8_t rgb[3]; // limited from 0.0 - 1.0
+    double hue2rgb(double p, double q, double t);
+    void RgbToHsb(uint8_t red, uint8_t green, uint8_t blue);
+    void HsbToRgb(double hue, double saturation, double lightness);
+
     // related to the flash command
     uint8_t flash_red = 0;
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
     long remaining_flash_delay = 0;// negative values expected, can not be a variable
-    
     bool flash_on = false;
-    long flash_min_time;
-    long flash_max_time;
+    long flash_min_time;  // how long is the shortest flash?
+    long flash_max_time;  // how about the longest?
     elapsedMillis fpm_timer;
 
     // related to auto-calibration and datalogging
@@ -213,6 +221,18 @@ bool NeoGroup::shutdown(uint32_t len) {
   return 1;
 }
 
+void NeoGroup::printColors() {
+    Serial.print(id);
+    Serial.print("  red  "); Serial.print(rgb[0]);
+    Serial.print("\tgreen  "); Serial.print(rgb[1]);
+    Serial.print("\tblue  ");
+    Serial.print(rgb[2]);
+    Serial.print("  =  "); Serial.print(rgb[0] + rgb[1] + rgb[0]);
+    Serial.print("\thue "); Serial.print(hsb[0]);
+    Serial.print("\tsat "); Serial.print(hsb[1]);
+    Serial.print("\tbgt "); Serial.println(hsb[2]);
+}
+
 void NeoGroup::powerOn() {
   dprintln(PRINT_LUX_DEBUG, "POWER ON MESSAGE RECEIVED");
   shdn_timer += shdn_len;
@@ -232,40 +252,135 @@ void NeoGroup::updateFlashColors(uint8_t red, uint8_t green, uint8_t blue) {
   flash_blue = blue;
 }
 
+void NeoGroup::updateHSB(double h, double s, double b) {
+    hsb[0] = h;
+    hsb[1] = s;
+    hsb[2] = b;
+}
+
+double NeoGroup::hue2rgb(double p, double q, double t)
+{
+	if (t < 0) t += 1;
+	if (t > 1) t -= 1;
+	if (t < 1 / 6.0) return p + (q - p) * 6 * t;
+	if (t < 1 / 2.0) return q;
+	if (t < 2 / 3.0) return p + (q - p) * (2 / 3.0 - t) * 6;
+	return p;
+}
+
+void NeoGroup::HsbToRgb(double hue, double saturation, double lightness)
+{
+	double r, g, b = 0.0;
+
+	if (saturation == 0)
+	{
+		r = g = b = lightness; // achromatic
+	}
+	else
+	{
+		auto q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+		auto p = 2 * lightness - q;
+		r = hue2rgb(p, q, hue + 1 / 3.0);
+		g = hue2rgb(p, q, hue);
+		b = hue2rgb(p, q, hue - 1 / 3.0);
+	}
+
+	rgb[0] = static_cast<uint8_t>(r * 255);
+	rgb[1] = static_cast<uint8_t>(g * 255);
+	rgb[2] = static_cast<uint8_t>(b * 255);
+}
+
+void NeoGroup::RgbToHsb(uint8_t red, uint8_t green, uint8_t blue)
+{
+/***************************************************
+Copyright (c) 2017 Luis Llamas
+(www.luisllamas.es)
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License
+ ****************************************************/
+	auto rd = static_cast<double>(red) / 255;
+	auto gd = static_cast<double>(green) / 255;
+	auto bd = static_cast<double>(blue) / 255;
+	auto ma = max(rd, max(gd, bd));
+    auto mi = min(rd, min(gd, bd));
+	hsb[2]= ma;
+
+	auto d = ma - mi;
+	hsb[1] = ma == 0 ? 0 : d / ma;
+
+	hsb[0] = 0;
+	if (ma != mi)
+	{
+		if (ma == rd)
+		{
+			hsb[0] = (gd - bd) / d + (gd < bd ? 6 : 0);
+		}
+		else if (ma == gd)
+		{
+			hsb[0] = (bd - rd) / d + 2;
+		}
+		else if (ma == bd)
+		{
+			hsb[0] = (rd - gd) / d + 4;
+		}
+		hsb[0] /= 6;
+	}
+}
+
+void NeoGroup::colorWipeHSB(double h, double s, double b) {
+  updateHSB(h, s, b);
+  HsbToRgb(h, s, b);
+  colorWipe(rgb[0], rgb[1], rgb[2]);
+}
+
 void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue) {
   colorWipe(red, green, blue, brightness_scaler);
 }
 
 void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   // TODO this logic is broken...
-  // Serial.println("Starting colorWipe in NeoGroup");
+  dprint(PRINT_COLOR_WIPE_DEBUG, id);
+  dprint(PRINT_COLOR_WIPE_DEBUG, " Starting colorWipe in NeoGroup - ");
+  rgb[0] = red;
+  rgb[1] = green;
+  rgb[2] = blue;
+
   int colors = packColors(red, green, blue, bs);
   if (update_on_off_ratios) {
     updateOnRatio(colors);
   }
   if (shdn_timer < shdn_len) {
     // if the LEDs are in shutdown mode than simply exit without changing the LEDs
-    dprint(PRINT_LED_DEBUG, "colorWipe returning due to shdn_timer : "); dprintln(PRINT_LED_DEBUG, shdn_timer);
+    dprint(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due to shdn_timer : "); dprintln(PRINT_COLOR_WIPE_DEBUG, shdn_timer);
     return;
   }
   if (flash_on == true) {
-    dprintln(PRINT_LED_DEBUG, "Flash blocked colorWipe");
-    return;
+      dprintln(PRINT_COLOR_WIPE_DEBUG, " Flash blocked colorWipe");
+      return;
   }
-  // Serial.print("num_pixels :\t");Serial.println(num_pixels);
+  dprint(PRINT_COLOR_WIPE_DEBUG, " num_pixels: ");
+  dprint(PRINT_COLOR_WIPE_DEBUG, num_pixels); 
+  dprint(PRINT_COLOR_WIPE_DEBUG, " - ");
   for (int i = 0; i < num_pixels; i++) {
-    leds->setPixel(idx_start + i, colors);
-    // Serial.print(i);printTab();Serial.print(idx_start + i);printTab();
+      leds->setPixel(idx_start + i, colors);
+      dprint(PRINT_COLOR_WIPE_DEBUG, idx_start+i);
+      dprint(PRINT_COLOR_WIPE_DEBUG, ": ");
+      dprint(PRINT_COLOR_WIPE_DEBUG, colors); 
+      dprint(PRINT_COLOR_WIPE_DEBUG, "\t");
   }
   leds->show();
-  // Serial.println(" displaying");
-  // TODO how toa dapt this to new array variables?
+  dprint(PRINT_COLOR_WIPE_DEBUG, " finished updating the neopixels");
+
   // if the LEDs are on set "led_on" to true, otherwise turn "led_on" to false
   // also reset led_off_len if the leds  were just turned off
   if (colors == 0) {
     leds_on = false;
+    dprint(PRINT_COLOR_WIPE_DEBUG, " setting leds_on to false");
   } else {
     leds_on = true;
+    dprint(PRINT_COLOR_WIPE_DEBUG, " setting leds_on to true");
   }
 }
 
@@ -279,7 +394,7 @@ void NeoGroup::colorWipe(int colors) {
   }
   for (int i = 0; i < num_pixels; i++) {
     leds->setPixel(idx_start + i, colors);
-    dprint(PRINT_LED_DEBUG, idx_start + i); dprintTab(PRINT_LED_DEBUG);
+    dprint(PRINT_COLOR_WIPE_DEBUG, idx_start + i); dprintTab(PRINT_COLOR_WIPE_DEBUG);
   }
   leds->show();
   // TODO how toa dapt this to new array variables?

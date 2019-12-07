@@ -4,8 +4,8 @@
 #include "Configuration.h"
 
 // include RMS and/or PEAK in the feature collector?
-#define PEAK_ACTIVE                 1
-#define RMS_ACTIVE                  1
+#define PEAK_FEATURE_ACTIVE                 1
+#define RMS_FEATURE_ACTIVE                  1
 
 ///////////////////////////////////////////////////////////// CICADA MODE /////////////////////////////////////////////////////////////////
 // TODO - add bin magnitude as a feature
@@ -72,12 +72,6 @@ long num_cpm_clicks[2];
 ////////////////////////////////////////////////////////////////////////////
 //////////////////////// Cicada Mode       /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-// how high the click flash timer will go up to
-#define MAX_FLASH_TIME 300
-// where the click flash timer will start
-#define MIN_FLASH_TIME 100
-// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME 400
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side

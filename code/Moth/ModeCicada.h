@@ -1,6 +1,5 @@
 #ifndef __MODE_CICADA_H__
 #define __MODE_CICADA_H__
-#include <Audio.h>
 #include <WS2812Serial.h>
 #include "DLManager/DLManager.h"
 #include "Configuration.h"
@@ -20,7 +19,7 @@ double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
 //////////////////////////////// Global Objects /////////////////////////
-WS2812Serial leds(NUM_LED, displayMemory, drawingMemory, LED_PIN, WS2812_GRB);
+WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
@@ -140,7 +139,7 @@ void linkFeatureCollectors() {
   fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
   fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
   fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  if (RMS_ACTIVE) {
+  if (RMS_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
     fc[0].linkRMS(&song_rms1);
     fc[1].linkRMS(&song_rms2);
@@ -148,7 +147,7 @@ void linkFeatureCollectors() {
     fc[2].linkRMS(&click_rms1);
     fc[3].linkRMS(&click_rms2);
   }
-  if (PEAK_ACTIVE) {
+  if (PEAK_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
     fc[0].linkPeak(&song_peak1);
     fc[1].linkPeak(&song_peak2);
@@ -156,32 +155,6 @@ void linkFeatureCollectors() {
     fc[2].linkPeak(&click_peak1);
     fc[3].linkPeak(&click_peak2);
   }
-}
-
-///////////////////////////////// General Purpose Functions //////////////////////////////////
-
-void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
-  printMajorDivide("reading jumpers");
-  pinMode(JMP1_PIN, INPUT);
-  pinMode(JMP2_PIN, INPUT);
-  pinMode(JMP3_PIN, INPUT);
-  pinMode(JMP4_PIN, INPUT);
-  pinMode(JMP5_PIN, INPUT);
-  pinMode(JMP6_PIN, INPUT);
-  delay(100);
-  v1 = digitalRead(JMP1_PIN);
-  Serial.print(v1); printTab();
-  v2 = digitalRead(JMP2_PIN);
-  Serial.print(v2); printTab();
-  v3 = digitalRead(JMP3_PIN);
-  Serial.print(v3); printTab();
-  v4 = digitalRead(JMP4_PIN);
-  Serial.print(v4); printTab();
-  v5 = digitalRead(JMP5_PIN);
-  Serial.print(v5); printTab();
-  v6 = digitalRead(JMP6_PIN);
-  Serial.print(v6); printTab();
-  printDivide();
 }
 
 void audioSetup() {
@@ -439,8 +412,8 @@ void setupDLManager() {
   }
 }
 
-void mothSetup() {
-  Serial.begin(57600);
+void mainSetup() {
+  Serial.begin(SERIAL_BAUD_RATE);
   leds.begin();
   delay(2000);
   Serial.println("LEDS have been initalised");
@@ -448,7 +421,7 @@ void mothSetup() {
   neos[1].colorWipe(250, 90, 0); // turn off the LED
   delay(3000); Serial.println("Setup Loop has started");
   if (JUMPERS_POPULATED) {
-    // readJumpers();
+    readJumpers();
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
@@ -478,22 +451,13 @@ void mothSetup() {
   neos[1].colorWipe(0, 0, 0); // turn off the LEDs
   printMajorDivide("Setup Loop Finished");
 }
-
-void updateLuxSensors() {
-  combined_lux = 0;
-  for (unsigned int i = 0; i < sizeof(lux_managers) / sizeof(lux_managers[0]); i++) {
-    if (lux_managers[i].update()) {
-      combined_lux += lux_managers[i].getLux();
-    }
-  }
-}
-
+/*
 void updateFeatureCollectors() {
   fc[0].update();
   fc[1].update();
   fc[2].update();
   fc[3].update();
-}
+}*/
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
@@ -554,9 +518,9 @@ void updateClick() {
   }
 }
 
-void mothLoop() {
-  updateLuxSensors();
-  updateFeatureCollectors();
+void mainLoop() {
+  updateLuxManagers(&lux_managers);
+  updateFeatureCollectors(&fc);
   updateSong();
   updateClick();
   if (AUTOGAIN_ACTIVE) {

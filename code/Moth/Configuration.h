@@ -4,19 +4,10 @@
  * Using this file, along with the other configuration files you
  * Can cistomise how the firmware performs.
  */
-#include "Datalog_Configuration.h"
-#include "Hardware_Configuration.h"
+#include "Configuration_adv.h"
 #include <Audio.h>
 #include "Macros.h"
 #include <PrintUtils.h>
-
-#if FIRMWARE_MODE == CICADA_MODE
-  #include "Configuration_cicadas.h"
-#endif
-
-#if FIRMWARE_MODE == PITCH_MODE
-  #include "Configuration_pitch.h"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
@@ -32,12 +23,18 @@
 #define PITCH_MODE                      1
 // FIRMWARE MODE should be set to one  of of the modes defined above...
 // options are CICADA_MODE and PITCH_MODE
-#define FIRMWARE_MODE                   (CICADA_MODE)
+#define FIRMWARE_MODE                   1
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
+  #define NUM_FEATURE_COLLECTORS    2
+  #define NUM_NEO_GROUPS            2
+  #define NUM_LUX_MANAGERS          2
   #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
+  #define NUM_FEATURE_COLLECTORS    4
+  #define NUM_NEO_GROUPS            2
+  #define NUM_LUX_MANAGERS          2
   #include "Configuration_cicadas.h"
 #endif
 
@@ -48,26 +45,31 @@
 #define PRINT_EEPROM_CONTENTS           true
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 false
-#define PRINT_LUX_READINGS              false
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
+#define PRINT_LUX_DEBUG                 true
+#define PRINT_LUX_READINGS              true
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+
 #define PRINT_SONG_DATA                 false
+
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
-#define PRINT_LED_VALUES                false
-#define PRINT_AUTO_GAIN                 true
-#define PRINT_LED_DEBUG                 false
-#define PRINT_LOG_WRITE                 true
+
+#define PRINT_LED_VALUES                true
+#define PRINT_LED_DEBUG                 true
+#define PRINT_COLOR_WIPE_DEBUG          true
+
+#define PRINT_AUTO_GAIN                 false
+#define PRINT_LOG_WRITE                 false
 // perform a write check on everything that is written to EEPROM
 #define EEPROM_WRITE_CHECK              false
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
-#define PRINT_RMS_VALS                  false
-#define PRINT_PEAK_VALS                 false
+#define PRINT_RMS_VALS                  true
+#define PRINT_PEAK_VALS                 true
 #define PRINT_TONE_VALS                 false
 #define PRINT_FREQ_VALS                 false
-#define PRINT_FFT_VALS                  false
+#define PRINT_FFT_VALS                  true
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
@@ -75,9 +77,6 @@
 // how long the lux sensors need the LEDs to be 
 // turned off in order to get an accurate reading
 #define LUX_SHDN_LEN 40
-double combined_lux;
-double combined_min_lux_reading;
-double combined_max_lux_reading;
 bool front_lux_active = true;
 bool rear_lux_active = true;
 
@@ -104,8 +103,8 @@ uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 0.01); // one minute
 #define MIN_BRIGHTNESS                  10
 #define MAX_BRIGHTNESS                  255
 #define UPDATE_ON_OFF_RATIOS true
-byte drawingMemory[NUM_LED * 3];       //  3 bytes per LED
-DMAMEM byte displayMemory[NUM_LED * 12]; // 12 bytes per LED
+byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
+DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
@@ -197,6 +196,7 @@ bool data_logging_active = true;
 #define DATALOG_MANAGER_TIMER_NUM       4
 uint8_t datalog_timer_num = DATALOG_MANAGER_TIMER_NUM;
 uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
+#define DOUBLE_PRECISION ((double)100000.0)
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
@@ -226,6 +226,9 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
+// how often does the feature collector update
+//33 is 30 times a second
+#define FC_UPDATE_RATE                33
 #define AUDIO_MEMORY                  40
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
@@ -248,5 +251,12 @@ elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////      Leds     /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
+
+// calculate the actual start and end times based on this
+//
+#define EEPROM_LOG_SIZE                 2000
+// How much space will be allocated for the write once logs
+#define EEPROM_WRITE_ONCE_LOG_SIZE      400
+#define AUTO_LOG_SPACE                  (EEPROM_LOG_SIZE - WRITE_ONCE_LOG_SPACE)
 
 #endif // CONFIGURATION_H
