@@ -23,7 +23,7 @@ WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS28
 
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 10, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -118,12 +118,8 @@ void initAutoGain() {
                                      HIGH_FPM_THRESH, MAX_FPM_THRESH);
   auto_gain[0].setUpdateRate(AUTOGAIN_FREQUENCY);
   auto_gain[1].setUpdateRate(AUTOGAIN_FREQUENCY);
-  //auto_gain[2].setUpdateRate(AUTOGAIN_FREQUENCY);
-  //auto_gain[3].setUpdateRate(AUTOGAIN_FREQUENCY);
   auto_gain[0].setStartDelay(AUTOGAIN_START_DELAY);
   auto_gain[1].setStartDelay(AUTOGAIN_START_DELAY);
-  //auto_gain[2].setStartDelay(AUTOGAIN_START_DELAY);
-  //auto_gain[3].setStartDelay(AUTOGAIN_START_DELAY);
 }
 
 void linkFeatureCollectors() {
@@ -414,14 +410,16 @@ void setupDLManager() {
 
 void mainSetup() {
   Serial.begin(SERIAL_BAUD_RATE);
+  delay(1000);
+  Serial.println("Serial begun");
+  delay(1000);
   leds.begin();
-  delay(2000);
   Serial.println("LEDS have been initalised");
   neos[0].colorWipe(250, 90, 0); // turn off the LEDs
   neos[1].colorWipe(250, 90, 0); // turn off the LED
   delay(3000); Serial.println("Setup Loop has started");
   if (JUMPERS_POPULATED) {
-    readJumpers();
+    // readJumpers();
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
@@ -518,9 +516,33 @@ void updateClick() {
   }
 }
 
+void updateFeatureCollectors() {
+  // update the feature collectors
+  for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
+    fc[i].update();
+  }
+}
+
+/*
+void printColors() {
+  if (print_color_timer > COLOR_PRINT_RATE) {
+    print_color_timer = 0;
+    for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
+      neos[i].printColors();
+    }
+  }
+}
+*/
+void updateLuxManagers() {
+  // update the feature collectors
+  for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
+    lux_managers[i].update();
+  }
+}
+
 void mainLoop() {
-  updateLuxManagers(&lux_managers);
-  updateFeatureCollectors(&fc);
+  updateLuxManagers();
+  updateFeatureCollectors();
   updateSong();
   updateClick();
   if (AUTOGAIN_ACTIVE) {

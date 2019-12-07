@@ -24,13 +24,13 @@
 
 ///////////////////// Audio Features //////////////////////
 // Some macros to make it easier to set some software settings
-#define RMS_DELTA  0
-#define PEAK_DELTA 1
-#define ALL_FEATURES 10
+#define RMS_DELTA             0
+#define PEAK_DELTA            1
+#define ALL_FEATURES          10
 
 /////////////////////// colors ////////////////////////////
-#define RED    0xff0000
-#define GREEN  0x00ff00
+#define RED                   0xff0000
+#define GREEN                 0x00ff00
 #define BLUE   0x0000ff
 #define YELLOW 0x101400
 #define PINK   0x120009

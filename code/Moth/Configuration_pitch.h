@@ -60,8 +60,6 @@
 #define FREQ_UNCERTANITY_ALLOWED    0.15
 
 //////////////////////////// Printing and Datalogging ///////////////////////////////////////
-// minimum amount of time between peak-log resets  which is allowed.
-#define PEAK_LOG_RESET_MIN    2000
-#define USE_SCALED_FFT 1
+
 
 #endif // __CONFIGURATION_PITCH_H__

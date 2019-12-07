@@ -5,7 +5,7 @@
  * It contains all of the expected files and functionality
  */
 
-
+/*
 ///////////////// Globals /////////////////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 NeoGroup neos[NUM_NEO_GROUPS] = {
@@ -30,7 +30,6 @@ AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], MIN_SONG_GAIN, MAX_SON
                          AutoGain("Click", &fc[2], &fc[3], MIN_CLICK_GAIN, MAX_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
                         };
 
-/*
  * Audio code should appear here (created from the Teensy Audio Design Tool)
  */
 /*

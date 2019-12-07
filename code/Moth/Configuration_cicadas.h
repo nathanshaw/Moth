@@ -12,7 +12,7 @@
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-#define SONG_FEATURE PEAK_DELTA
+#define SONG_FEATURE                        (PEAK_DELTA)
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG 0.005

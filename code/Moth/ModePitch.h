@@ -2,7 +2,6 @@
 #define __MODEPITCH_H__
 
 #include <Audio.h>
-#include <Arduino.h>
 #include <PrintUtils.h>
 #include "AudioEngine/AudioEngine.h"
 #include "NeopixelManager/NeopixelManager.h"
@@ -28,7 +27,7 @@ WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS28
 
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 10, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -101,11 +100,12 @@ void linkFeatureCollector() {
 
 void mainSetup() {
   AudioMemory(AUDIO_MEMORY);
-  Serial.begin(SERIAL_BAUD_RATE);
-  delay(3000);
+  Serial.begin(57600);
+  delay(5000);
   Serial.println("Setup Loop has started");
   
   leds.begin();
+  // leds.clear();
   Serial.println("LEDS have been initalised");
   delay(500);
   

@@ -27,14 +27,14 @@
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
-  #define NUM_FEATURE_COLLECTORS    2
-  #define NUM_NEO_GROUPS            2
-  #define NUM_LUX_MANAGERS          2
+  #define NUM_FEATURE_COLLECTORS        2
+  #define NUM_NEO_GROUPS                2
+  #define NUM_LUX_MANAGERS              2
   #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
-  #define NUM_FEATURE_COLLECTORS    4
-  #define NUM_NEO_GROUPS            2
-  #define NUM_LUX_MANAGERS          2
+  #define NUM_FEATURE_COLLECTORS        4
+  #define NUM_NEO_GROUPS                2
+  #define NUM_LUX_MANAGERS              2
   #include "Configuration_cicadas.h"
 #endif
 
@@ -221,27 +221,27 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 //////////////////////// Firmware Controls //////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 // will there be a USB audio output object created?
-#define USB_OUTPUT                    1
+#define USB_OUTPUT                      1
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                33
-#define AUDIO_MEMORY                  40
+#define FC_UPDATE_RATE                  33
+#define AUDIO_MEMORY                    40
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
-#define PEAK_SCALER                   10.0
-#define RMS_SCALER                    10.0
+#define PEAK_SCALER                     10.0
+#define RMS_SCALER                      10.0
 
 bool stereo_audio = true;
 uint8_t num_channels = stereo_audio + 1;
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false
-#define FRONT_MICROPHONE_INSTALLED    true
-#define REAR_MICROPHONE_INSTALLED     true
+#define FRONT_MICROPHONE_INSTALLED      true
+#define REAR_MICROPHONE_INSTALLED       true
 bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
 bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
 // audio usage loggings
@@ -253,10 +253,17 @@ elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 /////////////////////////////////////////////////////////////////////////
 
 // calculate the actual start and end times based on this
-//
 #define EEPROM_LOG_SIZE                 2000
 // How much space will be allocated for the write once logs
 #define EEPROM_WRITE_ONCE_LOG_SIZE      400
 #define AUTO_LOG_SPACE                  (EEPROM_LOG_SIZE - WRITE_ONCE_LOG_SPACE)
 
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////      Feature Collector     ////////////////////
+/////////////////////////////////////////////////////////////////////////
+// minimum amount of time between peak-log resets  which is allowed.
+#define PEAK_LOG_RESET_MIN              2000
+#define USE_SCALED_FFT                  1
+// used the scaled FFT readings or the normal FFT readings...
+#define USE_SCALED_FFT                  1
 #endif // CONFIGURATION_H
