@@ -6,6 +6,7 @@
 
 // how long does the microphone test routine last for in the feature collector testMicrophone() function
 #define MICROPHONE_TEST_DURATION  2000
+#define LUX_TEST_DURATION         2000
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Hardware Configurations /////////////////////////////
@@ -37,20 +38,20 @@
 ////////////// TCA Bus Expanders     /////
 // I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
 // I2C MULTI should be 1 if a TCA I2C bus expander is present
-#define I2C_MULTI 1
+#define I2C_MULTI                 1
 // the number of active channels on the TCA (can in theory support 8 sensors, etc.)
-#define TCA_CHANNELS 2
+#define TCA_CHANNELS              2
 
 //////////// MICROCONTROLLER PIN OUTS ////
-#define LED_PIN 3
+#define LED_PIN                   5
 
 //////////// Jumper Pins /////////////////
-#define JMP1_PIN 12
-#define JMP2_PIN 11
-#define JMP3_PIN 14
-#define JMP4_PIN 15
-#define JMP5_PIN 16
-#define JMP6_PIN 17
+#define JMP1_PIN                  12
+#define JMP2_PIN                  11
+#define JMP3_PIN                  14
+#define JMP4_PIN                  15
+#define JMP5_PIN                  16
+#define JMP6_PIN                  17
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Software Configurations /////////////////////////////
@@ -63,14 +64,14 @@
 ////////////////////// Neopixel Managers  //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how high the click flash timer will go up to
-#define MAX_FLASH_TIME        300
+#define MAX_FLASH_TIME            300
 // where the click flash timer will start
-#define MIN_FLASH_TIME        100
+#define MIN_FLASH_TIME            100
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME 400
+#define FLASH_DEBOUNCE_TIME       400
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
-#define SERIAL_BAUD_RATE          57600
+#define SERIAL_BAUD_RATE          115200
 
 void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
   printMajorDivide("reading jumpers");

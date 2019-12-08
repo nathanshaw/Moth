@@ -45,6 +45,9 @@ class FeatureCollector {
         };
         double getRMS();
         double getRMSPosDelta();
+        double getRMSAvg();
+        void resetRMSAvgLog();
+        void   resetRmsAvgLog();
         void   printRMSVals();
 
         //////////////// Peak /////////////////////////
@@ -76,9 +79,11 @@ class FeatureCollector {
         void printFreqVals();
 
         //////////////// FFT /////////////////////////
-        void linkFFT(AudioAnalyzeFFT256 *r) {
+        void linkFFT(AudioAnalyzeFFT256 *r, uint16_t l, uint16_t h) {
             fft_ana = r;
             fft_active = true;
+            max_bin = h;
+            min_bin = l;
         };
         void printFFTVals();
         double getFFTRange(uint16_t s, uint16_t e);
@@ -113,7 +118,10 @@ class FeatureCollector {
         bool rms_active = false;
         void calculateRMS();
         double rms_val;
+        double rms_totals;
+        unsigned long rms_readings;
         double rms_pos_delta;
+        elapsedMillis last_rms_reset;
 
         //////////////// Peak /////////////////////////
         AudioAnalyzePeak *peak_ana;
@@ -145,6 +153,8 @@ class FeatureCollector {
         void calculateScaledFFT();
         double fft_tot_energy;
         int highest_energy_idx;
+        uint16_t max_bin;// what is the highest index bin that we care about?
+        uint16_t min_bin;// what is the lowest index bin that we care about?
 };
 
 FeatureCollector::FeatureCollector(String _id) {
@@ -256,11 +266,13 @@ void FeatureCollector::calculateFFT() {
         Serial.println("FFT Available");
         fft_tot_energy = 0;
         int highest = -1;
-        for (int i = 0; i < 128; i++) {
-            fft_vals[i] = fft_ana->read(i);
+        for (int i = min_bin; i < max_bin; i++) {
+            fft_vals[i] = fft_ana->read(i) * FFT_SCALER;
             fft_tot_energy += fft_vals[i];
         }
-        highest_energy_idx = highest;
+        if (highest != -1) {
+            highest_energy_idx = highest;
+        }
         printFFTVals();
     }
 }
@@ -271,18 +283,22 @@ void FeatureCollector::calculateScaledFFT() {
         fft_tot_energy = 0;
         int highest = -1;
         double highest_val = -1.0;
-        for (int i = 0; i < 128; i++) {
-            fft_vals[i] = fft_ana->read(i);
+        for (int i = min_bin; i < max_bin; i++) {
+            fft_vals[i] = fft_ana->read(i) * FFT_SCALER;
             fft_tot_energy += fft_vals[i];
-            if (fft_vals[i] > highest_val) {
+            if (fft_vals[i] >= highest_val) {
                 highest_val = fft_vals[i];
                 highest = i;
             }
         }
-        for (int i = 0; i < 128; i++) {
-            fft_vals[i] = fft_vals[i] / fft_tot_energy;
+        for (int i = min_bin; i < max_bin; i++) {
+            if (fft_tot_energy > 0) {
+                fft_vals[i] = fft_vals[i] / fft_tot_energy;
+            }
         }
-        highest_energy_idx = highest;
+        if (highest != -1) {
+            highest_energy_idx = highest;
+        }
         printFFTVals();
     }
 }
@@ -303,10 +319,17 @@ void FeatureCollector::calculateFreq() {
 }
 
 void FeatureCollector::calculatePeak() {
-    if (peak_active && peak_ana->available()) {
+    bool avail = peak_ana->available();
+    if (peak_active && avail) {
         double last = peak_val;
-        peak_val =  peak_ana->read() * PEAK_SCALER;
+        peak_val =  peak_ana->read();
+        Serial.print(peak_val);
+        peak_val *= (double)PEAK_SCALER;
+        Serial.print("\t");
+        Serial.print(peak_val);
         peak_pos_delta = getPosDelta(last, peak_val);
+        Serial.print("\t");
+        Serial.println(peak_pos_delta);
         peak_totals += peak_val;
         peak_readings++;
     }
@@ -320,20 +343,32 @@ void FeatureCollector::resetPeakAvgLog() {
     }
 }
 
+void FeatureCollector::calculateRMS() {
+    if (rms_active  && (rms_ana->available())) {
+        double temp = rms_val;
+        rms_val = rms_ana->read();
+        rms_val *= RMS_SCALER;
+        rms_pos_delta = getPosDelta(temp, rms_val);
+        rms_totals += rms_val;
+        rms_readings++;
+    }
+}
+
+
+void FeatureCollector::resetRMSAvgLog() {
+    if (last_rms_reset > RMS_LOG_RESET_MIN) {
+        rms_totals = 0.0;
+        rms_readings = 0;
+        last_rms_reset = 0;
+    }
+}
+
 double FeatureCollector::getPosDelta(double last, double current) {
     double delta = 0;
     if (current > last) {
         delta = current - last;
     } 
     return delta;
-}
-
-void FeatureCollector::calculateRMS() {
-    if (rms_active  && (rms_ana->available())) {
-        double temp = rms_val;
-        rms_val = rms_ana->read();
-        rms_pos_delta = getPosDelta(temp, rms_val);
-    }
 }
 
 ///////////////////// Getter functions ///////////////////////////////
@@ -368,6 +403,13 @@ double FeatureCollector::getPeakAvg() {
     return peak_val;
 }
 
+double FeatureCollector::getRMSAvg() {
+    if (rms_readings > 0 && rms_totals > 0) {
+        return ((double)rms_totals / (double)rms_readings);
+    }
+    return rms_val;
+}
+
 double FeatureCollector::getFreq() {
     if (freq_active) {
         return freq_val;
@@ -396,7 +438,6 @@ double FeatureCollector::getFFTTotalEnergy() {
 
 //////////////////////////////// Print Functions /////////////////////////////////////////
 void FeatureCollector::printFeatures() {
-    // printMajorDivide((String)(id + " Features "));
     if (rms_active && PRINT_RMS_VALS) {
         printRMSVals();
     };
@@ -412,7 +453,6 @@ void FeatureCollector::printFeatures() {
     if (fft_active && PRINT_FFT_VALS) {
         printFFTVals();
     };
-    // printDivide();
 }
 
 void FeatureCollector::printToneVals() {
@@ -424,17 +464,23 @@ void FeatureCollector::printToneVals() {
 }
 
 double FeatureCollector::getRelativeEnergy(uint16_t idx) {
-    return fft_vals[idx] / fft_tot_energy;
+    if (fft_tot_energy > 0) {
+        return fft_vals[idx] / fft_tot_energy;
+    }
+    return 0.0;
 }
 
 void FeatureCollector::printFFTVals() {
     if (fft_active) {
-        Serial.print(id); Serial.println(" FFT vals");
+        if (USE_SCALED_FFT) {
+            Serial.print("Scaled ");
+        }
+        Serial.print(id); Serial.print(" FFT vals");
         uint8_t w = 8;
         for (int l  = 0; l < w; l++) {
             Serial.println();
-            Serial.print(l); Serial.print("\t");
-            for (int i = l; i < 128; i = i + w) {
+            Serial.print(l+min_bin); Serial.print("\t");
+            for (int i = l + min_bin; i < max_bin; i = i + w) {
                 if (i != l) {
                     Serial.print(", ");
                 };
@@ -458,7 +504,8 @@ void FeatureCollector::printRMSVals() {
     if (rms_active > 0) {
         Serial.print(id); Serial.print(" RMS vals\t");
         Serial.print(rms_val);printTab();
-        Serial.print("delta\t");Serial.println(rms_pos_delta);
+        Serial.print("delta\t");Serial.print(rms_pos_delta);
+        Serial.print(" average\t");Serial.println(getRMSAvg());
     }
 }
 
@@ -466,7 +513,8 @@ void FeatureCollector::printPeakVals() {
     if (peak_active > 0) {
         Serial.print(id); Serial.print(" Peak vals\t");
         Serial.print(peak_val);printTab();
-        Serial.print("delta\t");Serial.println(peak_pos_delta);
+        Serial.print("delta\t");Serial.print(peak_pos_delta);
+        Serial.print(" average\t");Serial.println(getPeakAvg());
     }
 }
 
@@ -485,7 +533,7 @@ void FeatureCollector::update() {
             calculatePeak();
             calculateRMS();
             calculateFreq();
-            // printFeatures();
+            printFeatures();
         }
     }
     else { 

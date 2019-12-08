@@ -36,83 +36,62 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
-FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
+FeatureCollector fc = FeatureCollector("All");
 
-AudioInputI2S            i2s;           //xy=70,94.00000095367432
-AudioAmplifier           input_amp_f;           //xy=224,88.00000095367432
-AudioFilterBiquad        biquad_f;        //xy=386.00000381469727,88.00000095367432
-AudioAnalyzeRMS          rms_f;           //xy=570.0000267028809,169.0000057220459
-AudioAnalyzeToneDetect   tone_detect_f;          //xy=574.0000305175781,73.00000286102295
-AudioAnalyzePeak         peak_f;          //xy=574.0000305175781,105.00000286102295
-AudioAnalyzeFFT256       fft256_f;      //xy=580.0000305175781,137.00000381469727
-AudioAnalyzeNoteFrequency freq_f;      //xy=584.0000305175781,201.00000476837158
-AudioAmplifier           input_amp_r;           //xy=224,88.00000095367432
-AudioFilterBiquad        biquad_r;        //xy=386.00000381469727,88.00000095367432
-AudioAnalyzeRMS          rms_r;           //xy=570.0000267028809,169.0000057220459
-AudioAnalyzeToneDetect   tone_detect_r;          //xy=574.0000305175781,73.00000286102295
-AudioAnalyzePeak         peak_r;          //xy=574.0000305175781,105.00000286102295
-AudioAnalyzeFFT256       fft256_r;      //xy=580.0000305175781,137.00000381469727
-AudioAnalyzeNoteFrequency freq_r;      //xy=584.0000305175781,201.00000476837158
-AudioOutputUSB           usb;           //xy=1307.33353805542,1409.3331747055054
-
-AudioConnection          patchCord1(i2s, 0, input_amp_f, 0);
-AudioConnection          patchCord2(input_amp_f, 0, biquad_f, 0);
-AudioConnection          patchCord5(biquad_f, 0, tone_detect_f, 0);
-AudioConnection          patchCord6(biquad_f, 0, peak_f, 0);
-AudioConnection          patchCord7(biquad_f, 0, fft256_f, 0);
-AudioConnection          patchCord8(biquad_f, 0, rms_f, 0);
-AudioConnection          patchCord9(biquad_f, 0, freq_f, 0);
-AudioConnection          patchCord10(biquad_f, 0, usb, 0);
-
-AudioConnection          patchCord11(i2s, 1, input_amp_r, 0);
-AudioConnection          patchCord12(input_amp_r, 0, biquad_r, 0);
-AudioConnection          patchCord15(biquad_r, 0, tone_detect_r, 0);
-AudioConnection          patchCord16(biquad_r, 0, peak_r, 0);
-AudioConnection          patchCord17(biquad_r, 0, fft256_r, 0);
-AudioConnection          patchCord18(biquad_r, 0, rms_r, 0);
-AudioConnection          patchCord19(biquad_r, 0, freq_r, 0);
-AudioConnection          patchCord13(biquad_r, 0, usb, 1);
+AudioInputI2S            i2s;            //xy=71,111
+AudioMixer4              mixer;          //xy=191,123
+AudioAmplifier           input_amp;      //xy=323,123
+AudioFilterBiquad        biquad;         //xy=458,124
+AudioAnalyzeFFT256       fft256;         //xy=585.0000076293945,171.00000286102295
+AudioAnalyzePeak         peak;           //xy=587,105
+AudioAnalyzeRMS          rms;            //xy=587,139
+AudioOutputUSB           usb;            //xy=760,127
+AudioConnection          patchCord1(i2s, 0, mixer, 0);
+AudioConnection          patchCord2(i2s, 1, mixer, 1);
+AudioConnection          patchCord3(mixer, input_amp);
+AudioConnection          patchCord4(mixer, 0, usb, 1);
+AudioConnection          patchCord5(input_amp, biquad);
+AudioConnection          patchCord6(biquad, peak);
+AudioConnection          patchCord7(biquad, rms);
+AudioConnection          patchCord8(biquad, 0, usb, 0);
+AudioConnection          patchCord9(biquad, fft256);
 
 void linkFeatureCollector() {
   //front
   Serial.println("Linking Feature Collector for Front and Rear");
   if (RMS_FEATURE_ACTIVE) {
-    fc[0].linkRMS(&rms_f);
-    fc[1].linkRMS(&rms_r);
+    fc.linkRMS(&rms);
   };
   if (PEAK_FEATURE_ACTIVE) {
-    fc[0].linkPeak(&peak_f);
-    fc[1].linkPeak(&peak_r);
+    fc.linkPeak(&peak);
   };
   if (FFT_FEATURE_ACTIVE) {
-    fc[0].linkFFT(&fft256_f);
-    fc[1].linkFFT(&fft256_r);
+    fc.linkFFT(&fft256, FFT_LOWEST_BIN, FFT_HIGHEST_BIN);
   };
+  /*
   if (TONE_FEATURE_ACTIVE) {
-    fc[0].linkTone(&tone_detect_f);
-    fc[1].linkTone(&tone_detect_r);
+    fc.linkTone(&tone_detect);
   };
   if (FREQ_FEATURE_ACTIVE) {
-    fc[0].linkFreq(&freq_f);
-    fc[1].linkFreq(&freq_r);
+    fc.linkFreq(&freq);
   };
+  */
 }
 
 void mainSetup() {
   AudioMemory(AUDIO_MEMORY);
-  Serial.begin(57600);
-  delay(5000);
-  Serial.println("Setup Loop has started");
-  
+  Serial.begin(SERIAL_BAUD_RATE);
+  delay(100);
+  Serial.println("LEDS have been initalised");  
   leds.begin();
-  // leds.clear();
-  Serial.println("LEDS have been initalised");
-  delay(500);
-  
-  neos[0].colorWipe(120, 70, 0);
-  neos[1].colorWipe(120, 70, 0);
+  delay(100);
+  Serial.println("Setup Loop has started");
   Serial.println("Leds turned yellow for setup loop\n");
-  delay(1000);
+  neos[0].colorWipe(200, 90, 0);
+  neos[1].colorWipe(200, 90, 0);
+  delay(3000);
+  // leds.clear();
+
   /*
     if (JUMPERS_POPULATED) {
     printMinorDivide();
@@ -129,29 +108,28 @@ void mainSetup() {
   } else {
     Serial.println("Not printing the EEPROM Datalog Contents");
   }
+  neos[0].colorWipe(90, 40, 0);
+  neos[1].colorWipe(90, 40, 0);
   Serial.println("Running Use Specific Setup Loop...");
   Serial.println("starting moth setup loop");
   printMinorDivide();
 
   // left
-  input_amp_f.gain(INPUT_START_GAIN);
-  biquad_f.setHighpass(0, BQL_THRESH, BQL_Q);
-  biquad_f.setHighpass(1, BQL_THRESH, BQL_Q);
-  biquad_f.setHighpass(2, BQL_THRESH, BQL_Q);
-  biquad_f.setLowShelf(3, BQL_THRESH , -24);
-  // right
-  input_amp_r.gain(INPUT_START_GAIN);
-  biquad_r.setHighpass(0, BQR_THRESH, BQR_Q);
-  biquad_r.setHighpass(1, BQR_THRESH, BQR_Q);
-  biquad_r.setHighpass(2, BQR_THRESH, BQR_Q);
-  biquad_r.setLowShelf(3, BQR_THRESH, -24);
+  mixer.gain(0, INPUT_START_GAIN);
+  mixer.gain(1, INPUT_START_GAIN);
+  input_amp.gain(INPUT_START_GAIN);
+  biquad.setHighpass(0, BQ_THRESH, BQ_Q);
+  biquad.setHighpass(1, BQ_THRESH, BQ_Q);
+  biquad.setHighpass(2, BQ_THRESH + 50, BQ_Q);
+  biquad.setHighpass(3, BQ_THRESH - 50, BQ_Q);
+  // biquad.setLowShelf(3, BQ_THRESH, BQ_SHELF);
 
   // audio features
+  /*
   if (FREQ_FEATURE_ACTIVE) {
-    freq_f.begin(FREQ_UNCERTANITY_ALLOWED);
-    freq_r.begin(FREQ_UNCERTANITY_ALLOWED);
+    freq.begin(FREQ_UNCERTANITY_ALLOWED);
   }
-
+  */
   // setup the feature collector
   Serial.println("Starting to link Feature Collector");
   linkFeatureCollector();
@@ -161,13 +139,14 @@ void mainSetup() {
 
   Serial.println("Testing Microphones");
   printTeensyDivide();
-  for (int i = 0; i < num_channels; i++) {
-    fc[i].testMicrophone();;
-  }
+  fc.testMicrophone();
+  
   if (data_logging_active) {
     Serial.println("WARNING - DATALOGGING IS NOT CURRENTLY IMPLEMENTED FOR THIS MODE");
   }
   if (LUX_SENSORS_ACTIVE) {
+    neos[0].colorWipe(0, 0, 0);
+    neos[1].colorWipe(0, 0, 0);
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
     lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
@@ -215,7 +194,7 @@ bool getHueFromTone(FeatureCollector *f) {
   return true;
 }
 
-/*if (COLOR_MAP_MODE == NEO_MAPPING_RGB) {
+/*if (COLOR_MAP_MODE == COLOR_MAPPING_RGB) {
   double red_d, green_d, blue_d, tot;
   red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
   green_d = f->getFFTRange(7, 20);
@@ -231,7 +210,7 @@ bool getHueFromTone(FeatureCollector *f) {
   else*/
 
 double getHueFromFFTAllBins(FeatureCollector *f) {
-  if (COLOR_MAP_MODE == NEO_MAPPING_HSB) {
+  if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
     return (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
     // dprint(PRINT_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(PRINT_FFT_VALS, h);
   } else {
@@ -242,36 +221,56 @@ double getHueFromFFTAllBins(FeatureCollector *f) {
 
 double calculateBrightness(FeatureCollector *f) {
   double b;
-  if (BRIGHTNESS_FEATURE == FEATURE_PEAK) {
+  if (BRIGHTNESS_FEATURE == FEATURE_PEAK_AVG) {
     b = f->getPeakAvg();
     if (b > 1.0) {
       b =  1.0;
     }
     f->resetPeakAvgLog();
-  } else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY){
+  } else if (BRIGHTNESS_FEATURE == FEATURE_RMS_AVG) {
+    b = f->getRMSAvg();
+    if (b > 1.0) {
+      b =  1.0;
+    }
+    f->resetRMSAvgLog();
+  }
+  else if (BRIGHTNESS_FEATURE == FEATURE_RMS) {
+    b = f->getRMS();
+    if (b > 1.0) {
+      b =  1.0;
+    }
+  }
+  else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY){
     b = f->getFFTTotalEnergy();
   } else {
-    Serial.print("ERROR - calculateBrightness does not accept that  BRIGHTNESS_FEATURE");
+    Serial.println("ERROR - calculateBrightness() does not accept that  BRIGHTNESS_FEATURE");
   }
   return b;
 }
 
 double calculateSaturation(FeatureCollector *f) {
   double sat = 0.0;
-  if (SATURATION_FEATURE == FEATURE_PEAK) {
+  if (SATURATION_FEATURE == FEATURE_PEAK_AVG) {
     sat = f->getPeakAvg();
     if (sat > 1.0) {
       sat =  1.0;
     }
     // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
     f->resetPeakAvgLog();
-  } else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
+  } else if (SATURATION_FEATURE == FEATURE_RMS_AVG) {
+    sat = f->getRMSAvg();
+    if (sat > 1.0) {
+      sat =  1.0;
+    }
+    // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
+    f->resetRMSAvgLog();
+  }
+  else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
     // get how much energy is stored in the max bin, get the amount of energy stored in all bins
-    // 
     sat = f->getRelativeEnergy(f->getHighestEnergyBin());
   }
   else {
-    Serial.print("ERROR - calculateBrightness does not accept that  BRIGHTNESS_FEATURE");
+    Serial.print("ERROR - calculateSaturation() does not accept that  SATURATION_FEATURE");
   }
   return sat;
 }
@@ -295,23 +294,38 @@ double calculateHue(FeatureCollector *f) {
   case FEATURE_TONE:
     hue = getHueFromTone(f);
     break;
+  case FEATURE_PEAK_AVG:
+    hue = f->getPeakAvg();
+    f->resetPeakAvgLog();
+    break;
+  case FEATURE_PEAK:
+    hue = f->getPeak();
+    break;
+  case FEATURE_RMS_AVG:
+    hue = f->getRMSAvg();
+    break;
+  case FEATURE_RMS:
+    hue = f->getRMS();
+    break;
+  case DEFAULT:
+    Serial.println("ERROR - calculateHue() does not accept that HUE_FEATURE");
+    break;
   }
   return hue;
 }
 
 void updateNeos() {
-  if (COLOR_MAP_MODE == NEO_MAPPING_HSB) {
+  if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
     uint8_t inactive = 0;
-    for (int chan = 0; chan < num_channels; chan++) {
-      // calculate HSB
+          // calculate HSB
       // the brightness should be the loudness (overall amp of bins)
       // the saturation should be the relatitive loudness of the primary bin
       // the hue should be the bin number (With higher frequencies corresponding to reds and yellows)
-      double s = calculateSaturation(&fc[chan]);
-      double b = calculateBrightness(&fc[chan]);
-      double h = calculateHue(&fc[chan]);
-      
-      if (fc[chan].isActive() == true) {
+      double s = calculateSaturation(&fc);
+      double b = calculateBrightness(&fc);
+      double h = calculateHue(&fc);
+    for (int chan = 0; chan < num_channels; chan++) {
+      if (fc.isActive() == true) {
         // now colorWipe the LEDs with the HSB value
         neos[chan].colorWipeHSB(h, s, b);
       } else {
@@ -321,13 +335,6 @@ void updateNeos() {
     if (inactive > num_channels) {
       Serial.println("ERROR - not able to updateNeos() as there is no active audio channels");
       return;
-    } else if (inactive > 0) {
-      // if the first feature collector is inactive use the values from the second for the front neos
-      if (fc[0].isActive() == false) {
-        neos[0].colorWipe(neos[1].getHue(), neos[1].getSat(), neos[1].getBright());
-      } else if (fc[1].isActive() == false) {
-        neos[1].colorWipe(neos[0].getHue(), neos[0].getSat(), neos[0].getBright());
-      }
     }
   }
   else {
@@ -337,9 +344,14 @@ void updateNeos() {
 
 void updateFeatureCollectors() {
   // update the feature collectors
+  #if NUM_FEATURE_COLLECTORS == 1
+    fc.update();
+  #endif
+  #if NUM_FEATURE_COLLECTORS > 1
   for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
     fc[i].update();
   }
+  #endif
 }
 
 void printColors() {

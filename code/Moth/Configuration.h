@@ -23,11 +23,11 @@
 #define PITCH_MODE                      1
 // FIRMWARE MODE should be set to one  of of the modes defined above...
 // options are CICADA_MODE and PITCH_MODE
-#define FIRMWARE_MODE                   1
+#define FIRMWARE_MODE                   0
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
-  #define NUM_FEATURE_COLLECTORS        2
+  #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2
   #include "Configuration_pitch.h"
@@ -45,18 +45,18 @@
 #define PRINT_EEPROM_CONTENTS           true
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 true
-#define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+#define PRINT_LUX_DEBUG                 false
+#define PRINT_LUX_READINGS              false
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
 #define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 
-#define PRINT_LED_VALUES                true
-#define PRINT_LED_DEBUG                 true
-#define PRINT_COLOR_WIPE_DEBUG          true
+#define PRINT_LED_VALUES                false
+#define PRINT_LED_DEBUG                 false
+#define PRINT_COLOR_WIPE_DEBUG          false
 
 #define PRINT_AUTO_GAIN                 false
 #define PRINT_LOG_WRITE                 false
@@ -66,17 +66,17 @@
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
 #define PRINT_RMS_VALS                  true
-#define PRINT_PEAK_VALS                 true
+#define PRINT_PEAK_VALS                 false
 #define PRINT_TONE_VALS                 false
 #define PRINT_FREQ_VALS                 false
-#define PRINT_FFT_VALS                  true
+#define PRINT_FFT_VALS                  false
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how long the lux sensors need the LEDs to be 
 // turned off in order to get an accurate reading
-#define LUX_SHDN_LEN 40
+#define LUX_SHDN_LEN                    40
 bool front_lux_active = true;
 bool rear_lux_active = true;
 
@@ -228,12 +228,19 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                  33
+#define FC_UPDATE_RATE                  200
 #define AUDIO_MEMORY                    40
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
+#if FIRMWARE_MODE == CICADA_MODE
 #define PEAK_SCALER                     10.0
 #define RMS_SCALER                      10.0
+#define FFT_SCALER                      1000.0
+#elif FIRMWARE_MODE == PITCH_MODE
+#define PEAK_SCALER                     1000.0
+#define RMS_SCALER                      1000.0
+#define FFT_SCALER                      1000.0
+#endif
 
 bool stereo_audio = true;
 uint8_t num_channels = stereo_audio + 1;
@@ -251,7 +258,6 @@ elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////      Leds     /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
-
 // calculate the actual start and end times based on this
 #define EEPROM_LOG_SIZE                 2000
 // How much space will be allocated for the write once logs
@@ -263,7 +269,7 @@ elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
 /////////////////////////////////////////////////////////////////////////
 // minimum amount of time between peak-log resets  which is allowed.
 #define PEAK_LOG_RESET_MIN              2000
-#define USE_SCALED_FFT                  1
+#define RMS_LOG_RESET_MIN               2000
 // used the scaled FFT readings or the normal FFT readings...
 #define USE_SCALED_FFT                  1
 #endif // CONFIGURATION_H

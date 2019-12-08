@@ -2,26 +2,31 @@
 #define __CONFIGURATION_PITCH_H__
 
 ///////////////////////////////////////////////////////////// PITCH MODE /////////////////////////////////////////////////////////////////
-#define INPUT_START_GAIN                    20.0
+#define INPUT_START_GAIN                    30.0
 
-// logic to link left and right values? todo?
-#define BQL_Q                               0.8
-#define BQL_THRESH                          200
-#define BQR_Q                               0.8
-#define BQR_THRESH                          200
+// Settings to cover the BiQuad Filter
+#define BQ_Q                               0.8
+#define BQ_THRESH                          5000
+#define BQ_SHELF                           -24
 
-#define FFT_FEATURE_ACTIVE                  1
-#define PEAK_FEATURE_ACTIVE                 1
+/////////////////////////////// Feature Collector /////////////////////////////////
+// Which Audio features will be activated?
+#define FFT_FEATURE_ACTIVE                  0
+#define PEAK_FEATURE_ACTIVE                 0
 #define RMS_FEATURE_ACTIVE                  1
-#define TONE_FEATURE_ACTIVE                 0
-#define FREQ_FEATURE_ACTIVE                 0
+// these features are not currently implemented
+// #define TONE_FEATURE_ACTIVE                 1
+// #define FREQ_FEATURE_ACTIVE                 1
 
-#define USE_HSB_MAPPING                     1
-
+/////////////////////////////// Audio Features ////////////////////////////////////
 // all the different features that are available to use through the feature collector for 
 // varioud mappings.
 #define FEATURE_RMS                         (1)
+#define FEATURE_RMS_POS_DELTA               (11)
+#define FEATURE_RMS_AVG                     (12)
 #define FEATURE_PEAK                        (2)
+#define FEATURE_PEAK_POS_DELTA              (22)
+#define FEATURE_PEAK_AVG                    (23)
 #define FEATURE_FREQ                        (3)
 #define FEATURE_TONE                        (4)
 #define FEATURE_FFT                         (5)
@@ -30,34 +35,35 @@
 #define FEATURE_FFT_MAX_BIN                 (8)
 #define FEATURE_FFT_BIN_RANGE               (9)
 
+//////////////////////////// FFT //
+// When calculating things such as which bin has the most energy and so on, 
+// what bin is considered the "1st?" and which one is the last?
+// todo what frequency does this correspond to?
+#define FFT_LOWEST_BIN              10
+// todo this needs to be calculated better?
+#define FFT_HIGHEST_BIN             20
+// when using the Freq function generator, what amount of uncertanity is allowed?
+// #define FREQ_UNCERTANITY_ALLOWED    0.15
+
+/////////////////////////////// Color Mapping /////////////////////////////////////
 // when calculating the hue for the NeoPixel leds, what feature do you want to use?
-#define HUE_FEATURE                 (FEATURE_FFT_MAX_BIN)
-#define BRIGHTNESS_FEATURE          (FEATURE_FFT_ENERGY)
-#define SATURATION_FEATURE          (FEATURE_FFT_RELATIVE_ENERGY)
+// look under Audio Features for the Available Features
+#define HUE_FEATURE                         (FEATURE_RMS_AVG)
+#define BRIGHTNESS_FEATURE                  (FEATURE_RMS_AVG)
+#define SATURATION_FEATURE                  (FEATURE_RMS_AVG)
 
 // These are different color mapping modes
-#define NEO_MAPPING_RGB             0
-#define NEO_MAPPING_HSB             1
+#define COLOR_MAPPING_RGB                     0
+#define COLOR_MAPPING_HSB                     1
 
 // For the neopixels will the color mapping exist within the RGB or HSB domain?
-#define COLOR_MAP_MODE              (NEO_MAPPING_HSB)
+#define COLOR_MAP_MODE              (COLOR_MAPPING_HSB)
 
 #define  MODE_SINGLE_RANGE          0
 #define  MODE_ALL_BINS              1
 #define  MODE_BIN_ENERGY            2
 
 // #define HUE_MAPPING
-
-//////////////////////////// FFT ///////////////////////////////////////
-// When calculating things such as which bin has the most energy and so on, 
-// what bin is considered the "1st?" and which one is the last?
-// todo what frequency does this correspond to?
-#define FFT_LOWEST_BIN              3
-// todo this needs to be calculated better?
-#define FFT_HIGHEST_BIN             40
-
-// when using the Freq function generator, what amount of uncertanity is allowed?
-#define FREQ_UNCERTANITY_ALLOWED    0.15
 
 //////////////////////////// Printing and Datalogging ///////////////////////////////////////
 
