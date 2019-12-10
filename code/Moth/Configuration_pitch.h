@@ -2,17 +2,18 @@
 #define __CONFIGURATION_PITCH_H__
 
 ///////////////////////////////////////////////////////////// PITCH MODE /////////////////////////////////////////////////////////////////
-#define INPUT_START_GAIN                    30.0
+#define INPUT_START_GAIN                    4.0
 
 // Settings to cover the BiQuad Filter
-#define BQ_Q                               0.8
-#define BQ_THRESH                          5000
-#define BQ_SHELF                           -24
+#define BQ_Q                               0.5
+// this can't be lower than 400 or else bad things happen =(
+#define BQ_THRESH                          400
+#define BQ_SHELF                           -12
 
 /////////////////////////////// Feature Collector /////////////////////////////////
 // Which Audio features will be activated?
-#define FFT_FEATURE_ACTIVE                  0
-#define PEAK_FEATURE_ACTIVE                 0
+#define FFT_FEATURE_ACTIVE                  1
+#define PEAK_FEATURE_ACTIVE                 1
 #define RMS_FEATURE_ACTIVE                  1
 // these features are not currently implemented
 // #define TONE_FEATURE_ACTIVE                 1
@@ -39,18 +40,18 @@
 // When calculating things such as which bin has the most energy and so on, 
 // what bin is considered the "1st?" and which one is the last?
 // todo what frequency does this correspond to?
-#define FFT_LOWEST_BIN              10
+#define FFT_LOWEST_BIN              1
 // todo this needs to be calculated better?
-#define FFT_HIGHEST_BIN             20
+#define FFT_HIGHEST_BIN             80
 // when using the Freq function generator, what amount of uncertanity is allowed?
 // #define FREQ_UNCERTANITY_ALLOWED    0.15
 
 /////////////////////////////// Color Mapping /////////////////////////////////////
 // when calculating the hue for the NeoPixel leds, what feature do you want to use?
 // look under Audio Features for the Available Features
-#define HUE_FEATURE                         (FEATURE_RMS_AVG)
-#define BRIGHTNESS_FEATURE                  (FEATURE_RMS_AVG)
-#define SATURATION_FEATURE                  (FEATURE_RMS_AVG)
+#define HUE_FEATURE                         (FEATURE_FFT_MAX_BIN)
+#define BRIGHTNESS_FEATURE                  (FEATURE_PEAK_AVG)
+#define SATURATION_FEATURE                  (FEATURE_FFT_RELATIVE_ENERGY)
 
 // These are different color mapping modes
 #define COLOR_MAPPING_RGB                     0

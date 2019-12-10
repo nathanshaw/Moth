@@ -1,14 +1,20 @@
 #ifndef __MODEPITCH_H__
 #define __MODEPITCH_H__
 
-#include <Audio.h>
-#include <PrintUtils.h>
-#include "AudioEngine/AudioEngine.h"
-#include "NeopixelManager/NeopixelManager.h"
 #include <WS2812Serial.h>
-#include "Configuration.h"
-#include "LuxManager/LuxManager.h"
 #include "DLManager/DLManager.h"
+#include "Configuration.h"
+#include "Configuration_pitch.h"
+#include "NeopixelManager/NeopixelManager.h"
+#include "LuxManager/LuxManager.h"
+#include "AudioEngine/AudioEngine.h"
+#include <Audio.h>
+#include <SerialFlash.h>
+#include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
 
 #define COLOR_PRINT_RATE 1000
 
@@ -38,23 +44,32 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
 
 FeatureCollector fc = FeatureCollector("All");
 
-AudioInputI2S            i2s;            //xy=71,111
-AudioMixer4              mixer;          //xy=191,123
-AudioAmplifier           input_amp;      //xy=323,123
-AudioFilterBiquad        biquad;         //xy=458,124
-AudioAnalyzeFFT256       fft256;         //xy=585.0000076293945,171.00000286102295
-AudioAnalyzePeak         peak;           //xy=587,105
-AudioAnalyzeRMS          rms;            //xy=587,139
-AudioOutputUSB           usb;            //xy=760,127
+// GUItool: begin automatically generated code
+AudioInputI2S            i2s;            //xy=77,123
+AudioMixer4              mixer;          //xy=205,137
+AudioFilterBiquad        biquad;         //xy=330.00000381469727,138.00000190734863
+AudioAmplifier           input_amp;      //xy=459.00000381469727,137.00001525878906
+AudioAnalyzePeak         peak;           //xy=650.0000076293945,117.00000190734863
+AudioAnalyzeRMS          rms;            //xy=650.0000076293945,151.00000190734863
+AudioOutputUSB           usb;            //xy=651.000057220459,184.00000381469727
+AudioAnalyzeFFT256       fft256;         //xy=652.0000152587891,215.00000190734863
 AudioConnection          patchCord1(i2s, 0, mixer, 0);
 AudioConnection          patchCord2(i2s, 1, mixer, 1);
-AudioConnection          patchCord3(mixer, input_amp);
-AudioConnection          patchCord4(mixer, 0, usb, 1);
-AudioConnection          patchCord5(input_amp, biquad);
-AudioConnection          patchCord6(biquad, peak);
-AudioConnection          patchCord7(biquad, rms);
-AudioConnection          patchCord8(biquad, 0, usb, 0);
-AudioConnection          patchCord9(biquad, fft256);
+AudioConnection          patchCord3(mixer, biquad);
+AudioConnection          patchCord4(biquad, input_amp);
+AudioConnection          patchCord5(input_amp, peak);
+AudioConnection          patchCord6(input_amp, rms);
+AudioConnection          patchCord7(input_amp, 0, usb, 0);
+AudioConnection          patchCord8(input_amp, 0, usb, 1);
+AudioConnection          patchCord9(input_amp, fft256);
+// GUItool: end automatically generated code
+
+
+
+
+void setupDLManager() {
+  Serial.println("WARNING - DLManager is not properly coded");
+}
 
 void linkFeatureCollector() {
   //front
@@ -78,64 +93,29 @@ void linkFeatureCollector() {
   */
 }
 
-void mainSetup() {
-  AudioMemory(AUDIO_MEMORY);
-  Serial.begin(SERIAL_BAUD_RATE);
-  delay(100);
-  Serial.println("LEDS have been initalised");  
-  leds.begin();
-  delay(100);
-  Serial.println("Setup Loop has started");
-  Serial.println("Leds turned yellow for setup loop\n");
-  neos[0].colorWipe(200, 90, 0);
-  neos[1].colorWipe(200, 90, 0);
-  delay(3000);
-  // leds.clear();
-
-  /*
-    if (JUMPERS_POPULATED) {
-    printMinorDivide();
-    Serial.println("Checking Hardware Jumpers");
-    readJumpers();
-    } else {
-    printMajorDivide("Jumpers are not populated, not printing values");
-    }
-  */
-  if (PRINT_EEPROM_CONTENTS) {
-    delay(100);
-    // TODO, add the datalogger and print the log contents
-    // printEEPROMContents();
-  } else {
-    Serial.println("Not printing the EEPROM Datalog Contents");
-  }
-  neos[0].colorWipe(90, 40, 0);
-  neos[1].colorWipe(90, 40, 0);
-  Serial.println("Running Use Specific Setup Loop...");
-  Serial.println("starting moth setup loop");
-  printMinorDivide();
-
+void audioSetup() {
   // left
-  mixer.gain(0, INPUT_START_GAIN);
-  mixer.gain(1, INPUT_START_GAIN);
+  AudioMemory(AUDIO_MEMORY);
+  mixer.gain(0, 0.5);
+  mixer.gain(1, 0.5);
+  mixer.gain(2, 0.0);
+  mixer.gain(3, 0.0);
   input_amp.gain(INPUT_START_GAIN);
   biquad.setHighpass(0, BQ_THRESH, BQ_Q);
   biquad.setHighpass(1, BQ_THRESH, BQ_Q);
   biquad.setHighpass(2, BQ_THRESH + 50, BQ_Q);
   biquad.setHighpass(3, BQ_THRESH - 50, BQ_Q);
   // biquad.setLowShelf(3, BQ_THRESH, BQ_SHELF);
-
-  // audio features
-  /*
-  if (FREQ_FEATURE_ACTIVE) {
-    freq.begin(FREQ_UNCERTANITY_ALLOWED);
-  }
-  */
+  
   // setup the feature collector
   Serial.println("Starting to link Feature Collector");
   linkFeatureCollector();
   printMinorDivide();
   Serial.println("Finished Audio Setup Loop");
   printDivide();
+}
+/*
+void mainSetup() {
 
   Serial.println("Testing Microphones");
   printTeensyDivide();
@@ -156,6 +136,7 @@ void mainSetup() {
   }
   printMajorDivide("Setup Loop Finished");
 }
+*/
 /*
   void setRGBfromHSB(double h, double s, double b) {
   converter.HsvToRgb(h, s, b, red[0], green[0], blue[0]);
@@ -194,7 +175,9 @@ bool getHueFromTone(FeatureCollector *f) {
   return true;
 }
 
-/*if (COLOR_MAP_MODE == COLOR_MAPPING_RGB) {
+
+double getHueFromFFTAllBins(FeatureCollector *f) {
+  /*if (COLOR_MAP_MODE == COLOR_MAPPING_RGB) {
   double red_d, green_d, blue_d, tot;
   red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
   green_d = f->getFFTRange(7, 20);
@@ -208,8 +191,6 @@ bool getHueFromTone(FeatureCollector *f) {
   rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
   }
   else*/
-
-double getHueFromFFTAllBins(FeatureCollector *f) {
   if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
     return (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
     // dprint(PRINT_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(PRINT_FFT_VALS, h);
@@ -267,7 +248,11 @@ double calculateSaturation(FeatureCollector *f) {
   }
   else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
     // get how much energy is stored in the max bin, get the amount of energy stored in all bins
-    sat = f->getRelativeEnergy(f->getHighestEnergyBin());
+    sat = f->getRelativeEnergy(f->getHighestEnergyBin()) * 10.0;
+    if (sat > 1.0) {
+      sat = 1.0;
+    }
+    // Serial.print("relative energy in highest energy bin: ");Serial.println(sat);
   }
   else {
     Serial.print("ERROR - calculateSaturation() does not accept that  SATURATION_FEATURE");
@@ -356,6 +341,7 @@ void updateFeatureCollectors() {
 
 void printColors() {
   if (print_color_timer > COLOR_PRINT_RATE) {
+    fc.printFFTVals();
     print_color_timer = 0;
     for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
       neos[i].printColors();

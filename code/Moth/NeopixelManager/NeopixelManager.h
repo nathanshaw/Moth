@@ -526,9 +526,9 @@ void NeoGroup::updateOnRatio(int color) {
     on_ratio = (double)on_time / (double)(on_time + off_time);
     on_off_len = 0;
   }
-  dprint(PRINT_LED_DEBUG, "updated led on/off ratio "); dprint(PRINT_LED_DEBUG, " :\t");
-  dprint(PRINT_LED_DEBUG, on_ratio); dprint(PRINT_LED_DEBUG, "\t=\t"); dprint(PRINT_LED_DEBUG, on_time);
-  dprint(PRINT_LED_DEBUG, "\t"); dprintln(PRINT_LED_DEBUG, off_time);
+  dprint(PRINT_LED_ON_RATIO_DEBUG, "updated led on/off ratio "); dprint(PRINT_LED_ON_RATIO_DEBUG, " :\t");
+  dprint(PRINT_LED_ON_RATIO_DEBUG, on_ratio); dprint(PRINT_LED_ON_RATIO_DEBUG, "\t=\t"); dprint(PRINT_LED_ON_RATIO_DEBUG, on_time);
+  dprint(PRINT_LED_ON_RATIO_DEBUG, "\t"); dprintln(PRINT_LED_ON_RATIO_DEBUG, off_time);
 }
 
 #endif // __LEDS_H__

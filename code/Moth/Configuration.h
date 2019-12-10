@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       14
+#define SERIAL_ID                       7
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
@@ -54,8 +54,9 @@
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 
-#define PRINT_LED_VALUES                false
-#define PRINT_LED_DEBUG                 false
+#define PRINT_LED_VALUES                true
+#define PRINT_LED_DEBUG                 true
+#define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 
 #define PRINT_AUTO_GAIN                 false
@@ -67,10 +68,13 @@
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
 #define PRINT_RMS_VALS                  false
+
 #define PRINT_PEAK_VALS                 false
 #define PRINT_PEAK_DEBUG                false
+
 #define PRINT_TONE_VALS                 false
 #define PRINT_FREQ_VALS                 false
+
 #define PRINT_FFT_VALS                  false
 #define PRINT_FFT_DEBUG                 false
 
@@ -231,17 +235,17 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                  200
+#define FC_UPDATE_RATE                  0
 #define AUDIO_MEMORY                    40
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
 #if FIRMWARE_MODE == CICADA_MODE
 #define PEAK_SCALER                     10.0
 #define RMS_SCALER                      10.0
-#define FFT_SCALER                      1000.0
+#define FFT_SCALER                      100.0
 #elif FIRMWARE_MODE == PITCH_MODE
-#define PEAK_SCALER                     1000.0
-#define RMS_SCALER                      1000.0
+#define PEAK_SCALER                     100.0
+#define RMS_SCALER                      100.0
 #define FFT_SCALER                      1000.0
 #endif
 

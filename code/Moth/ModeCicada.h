@@ -22,8 +22,8 @@ uint32_t num_song_peaks[2];
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
 NeoGroup neos[2] = {
-  NeoGroup(&leds, 10, 14, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 15, 19, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -31,6 +31,7 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
+
 
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
@@ -407,57 +408,6 @@ void setupDLManager() {
     Serial.println("Not clearing the EEPROM Datalog Contents");
   }
 }
-
-void mainSetup() {
-  Serial.begin(SERIAL_BAUD_RATE);
-  delay(1000);
-  Serial.println("Serial begun");
-  delay(1000);
-  leds.begin();
-  Serial.println("LEDS have been initalised");
-  neos[0].colorWipe(250, 90, 0); // turn off the LEDs
-  neos[1].colorWipe(250, 90, 0); // turn off the LED
-  delay(3000); Serial.println("Setup Loop has started");
-  if (JUMPERS_POPULATED) {
-    // readJumpers();
-  } else {
-    printMajorDivide("Jumpers are not populated, not printing values");
-  }
-  // create either front and back led group, or just one for both
-  neos[0].colorWipe(120, 70, 0); // turn off the LEDs
-  neos[1].colorWipe(120, 70, 0); // turn off the LEDs
-  Serial.println("Leds turned yellow for setup loop\n");
-  delay(1000);
-  setupDLManager();
-  neos[0].colorWipe(100, 150, 0); // turn off the LEDs
-  neos[1].colorWipe(100, 150, 0); // turn off the LEDs
-  Serial.println("Running Use Specific Setup Loop...");
-  audioSetup();
-  if (LUX_SENSORS_ACTIVE) {
-    Serial.println("turning off LEDs for Lux Calibration");
-    // todo make this proper
-    lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-
-    lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
-    neos[0].colorWipe(0, 0, 0); // turn off the LEDs
-    neos[1].colorWipe(0, 0, 0); // turn off the LED
-    delay(200);
-    lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
-    lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
-  }
-  for (int i  = 0; i < 10; i++) {
-    leds.setPixel(i, 255, 0, 0); // turn off the LEDs
-  }
-  leds.show();
-  printMajorDivide("Setup Loop Finished");
-}
-/*
-  void updateFeatureCollectors() {
-  fc[0].update();
-  fc[1].update();
-  fc[2].update();
-  fc[3].update();
-  }*/
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {

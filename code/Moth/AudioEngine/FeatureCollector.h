@@ -273,7 +273,9 @@ void FeatureCollector::calculateFFT() {
         if (highest != -1) {
             highest_energy_idx = highest;
         }
-        printFFTVals();
+        if (PRINT_FFT_DEBUG) {
+          printFFTVals();
+        }
     }
 }
 
@@ -299,7 +301,9 @@ void FeatureCollector::calculateScaledFFT() {
         if (highest != -1) {
             highest_energy_idx = highest;
         }
-        printFFTVals();
+        if (PRINT_FFT_DEBUG) {
+          printFFTVals();
+        }
     }
 }
 
@@ -467,7 +471,16 @@ void FeatureCollector::printToneVals() {
 
 double FeatureCollector::getRelativeEnergy(uint16_t idx) {
     if (fft_tot_energy > 0) {
-        return fft_vals[idx] / fft_tot_energy;
+        double val = 0.0;
+        /*
+        Serial.print(fft_vals[idx]);
+        Serial.print(" / ");
+        Serial.print(fft_tot_energy);
+        Serial.print("\t");
+        */
+        val = fft_vals[idx] / fft_tot_energy;
+        // Serial.println(val);
+        return val;
     }
     return 0.0;
 }
@@ -525,6 +538,8 @@ void FeatureCollector::update() {
     if (microphone_active == true) {
         if (last_update_timer > FC_UPDATE_RATE) {
             last_update_timer = 0;
+            calculateRMS();
+            calculatePeak();
             if (USE_SCALED_FFT) {
                 calculateScaledFFT();
             }
@@ -532,8 +547,6 @@ void FeatureCollector::update() {
                 calculateFFT();
             }
             calculateTone();
-            calculatePeak();
-            calculateRMS();
             calculateFreq();
             printFeatures();
         }
