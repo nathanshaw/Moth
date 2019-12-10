@@ -77,6 +77,8 @@ class Datalog {
 
         void clear();
         void printLog(uint8_t lines);
+        void printlog(uint8_t lines);
+        void printlog(){printlog(4);};
 
 };
 Datalog::Datalog(){};
@@ -130,8 +132,8 @@ void Datalog::writeDouble(double data) {
     uint8_t b[4];
     uint32_t d = data * DOUBLE_PRECISION;
     for (int i = 0; i < 4; i++) {
-      b[i] = (d >> i * 8) & 0x00FF;
-      EEPROM.update(addr + i, b[i]);
+        b[i] = (d >> i * 8) & 0x00FF;
+        EEPROM.update(addr + i, b[i]);
     }
 }
 
@@ -141,8 +143,8 @@ void Datalog::writeDouble() {
     uint8_t b[4];
     uint32_t d = *dval * DOUBLE_PRECISION;
     for (int i = 0; i < 4; i++) {
-      b[i] = (d >> i * 8) & 0x00FF;
-      EEPROM.update(addr + i, b[i]);
+        b[i] = (d >> i * 8) & 0x00FF;
+        EEPROM.update(addr + i, b[i]);
     }
 }
 
@@ -167,8 +169,8 @@ void Datalog::writeShort() {
 void Datalog::writeLong(uint32_t data) {
     uint8_t b[4];
     for (int i = 0; i < 4; i++) {
-      b[i] = data >> 8 * i;
-      EEPROM.update(addr + i, b[i]);
+        b[i] = data >> 8 * i;
+        EEPROM.update(addr + i, b[i]);
     }
     writeCheck(data);
 }
@@ -177,124 +179,124 @@ void Datalog::writeLong() {
     uint8_t b[4];
     uint32_t v = *lval;
     for (int i = 0; i < 4; i++) {
-      b[i] = v >> 8 * i;
-      EEPROM.update(addr + i, b[i]);
+        b[i] = v >> 8 * i;
+        EEPROM.update(addr + i, b[i]);
     }
     writeCheck(v);
 }
 
 //////////////////////// Reading Methods /////////////////////////////////
 double Datalog::readDouble(int a) {
-  uint32_t data = EEPROM.read(a + 3);
-  for (int i = 2; i > -1; i--) {
-    uint8_t reading = EEPROM.read(a + i);
-    // dprint(PRINT_LOG_WRITE, reading);
-    // dprint(PRINT_LOG_WRITE, "|");
-    data = (data << 8) | reading;
-  }
-  return (double)data / DOUBLE_PRECISION;
+    uint32_t data = EEPROM.read(a + 3);
+    for (int i = 2; i > -1; i--) {
+        uint8_t reading = EEPROM.read(a + i);
+        // dprint(PRINT_LOG_WRITE, reading);
+        // dprint(PRINT_LOG_WRITE, "|");
+        data = (data << 8) | reading;
+    }
+    return (double)data / DOUBLE_PRECISION;
 }
 
 double Datalog::readDouble() {
-  uint32_t data = EEPROM.read(addr + 3);
-  for (int i = 2; i > -1; i--) {
-    uint8_t reading = EEPROM.read(addr + i);
-    // dprint(PRINT_LOG_WRITE, reading);
-    // dprint(PRINT_LOG_WRITE, "|");
-    data = (data << 8) | reading;
-  }
-  return (double)data / DOUBLE_PRECISION;
+    uint32_t data = EEPROM.read(addr + 3);
+    for (int i = 2; i > -1; i--) {
+        uint8_t reading = EEPROM.read(addr + i);
+        // dprint(PRINT_LOG_WRITE, reading);
+        // dprint(PRINT_LOG_WRITE, "|");
+        data = (data << 8) | reading;
+    }
+    return (double)data / DOUBLE_PRECISION;
 }
 
 uint16_t Datalog::readShort(int a) {
-  int data = EEPROM.read(a + 1);
-  data = (data << 8) + EEPROM.read(a);
-  return data;
+    int data = EEPROM.read(a + 1);
+    data = (data << 8) + EEPROM.read(a);
+    return data;
 }
 
 uint16_t Datalog::readShort() {
-  int data = EEPROM.read(addr + 1);
-  data = (data << 8) + EEPROM.read(addr);
-  return data;
+    int data = EEPROM.read(addr + 1);
+    data = (data << 8) + EEPROM.read(addr);
+    return data;
 }
 
 uint32_t Datalog::readLong(int a) {
-  uint32_t data = 0;
-  for (int i = 0; i < 4; i++) {
-    uint32_t n = EEPROM.read(a + i) << 8 * i;
-    data = n | data;
-  }
-  return data;
+    uint32_t data = 0;
+    for (int i = 0; i < 4; i++) {
+        uint32_t n = EEPROM.read(a + i) << 8 * i;
+        data = n | data;
+    }
+    return data;
 }
 
 uint32_t Datalog::readLong() {
-  uint32_t data = 0;
-  for (int i = 0; i < 4; i++) {
-    uint32_t n = EEPROM.read(addr + i) << 8 * i;
-    data = n | data;
-  }
-  return data;
+    uint32_t data = 0;
+    for (int i = 0; i < 4; i++) {
+        uint32_t n = EEPROM.read(addr + i) << 8 * i;
+        data = n | data;
+    }
+    return data;
 }
 
 //////////////////////// Data Checking Methods /////////////////////////
 bool Datalog::writeCheck(double data) {
-  if (EEPROM_WRITE_CHECK) {
-    double temp = readDouble(addr);
-    dprint(PRINT_LOG_WRITE, "data check:\t");
-    dprint(PRINT_LOG_WRITE, data);
-    dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, temp);
-    if (data != temp) {
-        return false;
+    if (EEPROM_WRITE_CHECK) {
+        double temp = readDouble(addr);
+        dprint(PRINT_LOG_WRITE, "data check:\t");
+        dprint(PRINT_LOG_WRITE, data);
+        dprint(PRINT_LOG_WRITE, "\t");
+        dprintln(PRINT_LOG_WRITE, temp);
+        if (data != temp) {
+            return false;
+        }
+        else {return true;};
     }
-    else {return true;};
-  }
-  return false;
+    return false;
 }
 
 bool Datalog::writeCheck(uint8_t data) {
-  if (EEPROM_WRITE_CHECK) {
-    uint8_t temp = EEPROM.read(addr);
-    dprint(PRINT_LOG_WRITE, "data check:\t");
-    dprint(PRINT_LOG_WRITE, data);
-    dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, temp);
-    if (data != temp) {
-        return false;
+    if (EEPROM_WRITE_CHECK) {
+        uint8_t temp = EEPROM.read(addr);
+        dprint(PRINT_LOG_WRITE, "data check:\t");
+        dprint(PRINT_LOG_WRITE, data);
+        dprint(PRINT_LOG_WRITE, "\t");
+        dprintln(PRINT_LOG_WRITE, temp);
+        if (data != temp) {
+            return false;
+        }
+        else {return true;};
     }
-    else {return true;};
-  }
-  return false;
+    return false;
 }
 
 bool Datalog::writeCheck(uint16_t data) {
-  if (EEPROM_WRITE_CHECK) {
-    uint16_t temp = readShort(addr);
-    dprint(PRINT_LOG_WRITE, "data check:\t");
-    dprint(PRINT_LOG_WRITE, data);
-    dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, temp);
-    if (data != temp) {
-        return false;
+    if (EEPROM_WRITE_CHECK) {
+        uint16_t temp = readShort(addr);
+        dprint(PRINT_LOG_WRITE, "data check:\t");
+        dprint(PRINT_LOG_WRITE, data);
+        dprint(PRINT_LOG_WRITE, "\t");
+        dprintln(PRINT_LOG_WRITE, temp);
+        if (data != temp) {
+            return false;
+        }
+        else {return true;};
     }
-    else {return true;};
-  }
-  return false;
+    return false;
 }
 
 bool Datalog::writeCheck(uint32_t data) {
-  if (EEPROM_WRITE_CHECK) {
-    uint32_t temp = readLong(addr);
-    dprint(PRINT_LOG_WRITE, "data check:\t");
-    dprint(PRINT_LOG_WRITE, data);
-    dprint(PRINT_LOG_WRITE, "\t");
-    dprintln(PRINT_LOG_WRITE, temp);
-    if (data != temp) {
-        return false;
+    if (EEPROM_WRITE_CHECK) {
+        uint32_t temp = readLong(addr);
+        dprint(PRINT_LOG_WRITE, "data check:\t");
+        dprint(PRINT_LOG_WRITE, data);
+        dprint(PRINT_LOG_WRITE, "\t");
+        dprintln(PRINT_LOG_WRITE, temp);
+        if (data != temp) {
+            return false;
+        }
+        else {return true;};
     }
-    else {return true;};
-  }
-  return false;
+    return false;
 }
 
 //////////////////////// Misc. Methods /////////////////////////////////
@@ -352,31 +354,36 @@ void Datalog::clear() {
     dprintln(PRINT_LOG_WRITE, " Datalog");
 }
 
-void Datalog::printLog(uint8_t lines) {
-  //printDivide(PRINT_LOG_WRITE);
-  dprint(PRINT_LOG_WRITE, "Printing the ");
-  dprint(PRINT_LOG_WRITE, id);
-  uint32_t per_line;
-  if (end_addr > start_addr) {
-    per_line = (end_addr - start_addr) / value_size / lines;
-  } else {
-      per_line =  1;
-  }
-  dprint(PRINT_LOG_WRITE, " from start/end addr : ");
-  dprint(PRINT_LOG_WRITE, start_addr);dprint(PRINT_LOG_WRITE,"-");
-  dprint(PRINT_LOG_WRITE, end_addr);
-  if (end_addr - start_addr > 4)  {
-    dprintln(PRINT_LOG_WRITE, "");
-  } else  {
-    dprint(PRINT_LOG_WRITE, "\t");
-  }
-  uint8_t itters = 0;
-  double d = 0.0;
-  uint32_t l = 0;
-  uint16_t iv = 0;
-  uint8_t b = 0;
 
-  for (uint16_t i = start_addr; i < end_addr; i += value_size) {
+void Datalog::printlog(uint8_t lines) {
+    printLog(lines);
+}
+
+void Datalog::printLog(uint8_t lines) {
+    //printDivide(PRINT_LOG_WRITE);
+    dprint(PRINT_LOG_WRITE, "Printing the ");
+    dprint(PRINT_LOG_WRITE, id);
+    uint32_t per_line;
+    if (end_addr > start_addr) {
+        per_line = (end_addr - start_addr) / value_size / lines;
+    } else {
+        per_line =  1;
+    }
+    dprint(PRINT_LOG_WRITE, " from start/end addr : ");
+    dprint(PRINT_LOG_WRITE, start_addr);dprint(PRINT_LOG_WRITE,"-");
+    dprint(PRINT_LOG_WRITE, end_addr);
+    if (end_addr - start_addr > 4)  {
+        dprintln(PRINT_LOG_WRITE, "\t");
+    } else  {
+        dprint(PRINT_LOG_WRITE, "\t");
+    }
+    uint8_t itters = 0;
+    double d = 0.0;
+    uint32_t l = 0;
+    uint16_t iv = 0;
+    uint8_t b = 0;
+
+    for (uint16_t i = start_addr; i < end_addr; i += value_size) {
         itters++;
         switch(data_type){
             case DATATYPE_LONG:
@@ -402,9 +409,8 @@ void Datalog::printLog(uint8_t lines) {
         } else {
             dprint(PRINT_LOG_WRITE, "\t");
         }
-  }
-  dprintln(PRINT_LOG_WRITE);
-  
+    }
+    dprintln(PRINT_LOG_WRITE);
 }
 
 #endif // __DATALOG_CONF_H__

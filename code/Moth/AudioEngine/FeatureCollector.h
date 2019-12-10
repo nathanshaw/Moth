@@ -263,7 +263,7 @@ bool FeatureCollector::testMicrophone () {
 //////////////// Update Functions ///////////////////////////////
 void FeatureCollector::calculateFFT() {
     if (fft_active && fft_ana->available()) {
-        Serial.println("FFT Available");
+        dprintln(PRINT_FFT_DEBUG, "FFT Available");
         fft_tot_energy = 0;
         int highest = -1;
         for (int i = min_bin; i < max_bin; i++) {
@@ -279,7 +279,7 @@ void FeatureCollector::calculateFFT() {
 
 void FeatureCollector::calculateScaledFFT() {
     if (fft_active && fft_ana->available()) {
-        // Serial.println("FFT Available");
+        dprintln(PRINT_FFT_DEBUG, "Scaled FFT Available");
         fft_tot_energy = 0;
         int highest = -1;
         double highest_val = -1.0;
@@ -323,13 +323,15 @@ void FeatureCollector::calculatePeak() {
     if (peak_active && avail) {
         double last = peak_val;
         peak_val =  peak_ana->read();
-        Serial.print(peak_val);
+        dprint(PRINT_PEAK_DEBUG, id);
+        dprint(PRINT_PEAK_DEBUG, " Peaks (normal, scaled, pos_delta):\t");
+        dprint(PRINT_PEAK_DEBUG, peak_val);
         peak_val *= (double)PEAK_SCALER;
-        Serial.print("\t");
-        Serial.print(peak_val);
+        dprint(PRINT_PEAK_DEBUG, "\t");
+        dprint(PRINT_PEAK_DEBUG, peak_val);
         peak_pos_delta = getPosDelta(last, peak_val);
-        Serial.print("\t");
-        Serial.println(peak_pos_delta);
+        dprint(PRINT_PEAK_DEBUG, "\t");
+        dprintln(PRINT_PEAK_DEBUG, peak_pos_delta);
         peak_totals += peak_val;
         peak_readings++;
     }

@@ -22,8 +22,8 @@ uint32_t num_song_peaks[2];
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
 NeoGroup neos[2] = {
-  NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 10, 14, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+  NeoGroup(&leds, 15, 19, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -36,8 +36,8 @@ DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
 FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
 
-AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], MIN_SONG_GAIN, MAX_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
-                         AutoGain("Click", &fc[2], &fc[3], MIN_CLICK_GAIN, MAX_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
+AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
+                         AutoGain("Click", &fc[2], &fc[3], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
                         };
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
@@ -293,10 +293,10 @@ void setupDLManager() {
     datalog_manager.logSetupConfigLong("Timer 3 Start Time           : ", datalog_manager.getTimerStart(3));
     datalog_manager.logSetupConfigLong("Timer 3 End Time             : ", datalog_manager.getTimerEnd(3));
     datalog_manager.logSetupConfigLong("Timer 3 Logging Rate         : ", datalog_manager.getTimerRate(3));
-
+    printMinorDivide();
     // runtime log
     if (STATICLOG_RUNTIME) {
-      datalog_manager.addStaticLog("Program Runtime (minutes) : ",
+      datalog_manager.addStaticLog("Program Runtime (minutes)              : ",
                                    STATICLOG_RUNTIME_TIMER, &runtime);
     }
     // the constantly updating logs
@@ -389,8 +389,8 @@ void setupDLManager() {
     }
 
     // printing needs to be at the end so that everything actually displays
-    if (PRINT_EEPROM_CONTENTS  > 0) {
-      delay(1000);
+    if (PRINT_EEPROM_CONTENTS > 0) {
+      delay(100);
       datalog_manager.printAllLogs();
     } else {
       Serial.println("Not printing the EEPROM Datalog Contents");
@@ -404,7 +404,7 @@ void setupDLManager() {
     delay(100);
     datalog_manager.clearLogs();
   } else {
-    Serial.println("Not printing the EEPROM Datalog Contents");
+    Serial.println("Not clearing the EEPROM Datalog Contents");
   }
 }
 
@@ -445,17 +445,19 @@ void mainSetup() {
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
-  neos[0].colorWipe(0, 0, 0); // turn off the LEDs
-  neos[1].colorWipe(0, 0, 0); // turn off the LEDs
+  for (int i  = 0; i < 10; i++) {
+    leds.setPixel(i, 255, 0, 0); // turn off the LEDs
+  }
+  leds.show();
   printMajorDivide("Setup Loop Finished");
 }
 /*
-void updateFeatureCollectors() {
+  void updateFeatureCollectors() {
   fc[0].update();
   fc[1].update();
   fc[2].update();
   fc[3].update();
-}*/
+  }*/
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
@@ -524,14 +526,14 @@ void updateFeatureCollectors() {
 }
 
 /*
-void printColors() {
+  void printColors() {
   if (print_color_timer > COLOR_PRINT_RATE) {
     print_color_timer = 0;
     for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
       neos[i].printColors();
     }
   }
-}
+  }
 */
 void updateLuxManagers() {
   // update the feature collectors

@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       5
+#define SERIAL_ID                       14
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
@@ -59,17 +59,20 @@
 #define PRINT_COLOR_WIPE_DEBUG          false
 
 #define PRINT_AUTO_GAIN                 false
-#define PRINT_LOG_WRITE                 false
+
+#define PRINT_LOG_WRITE                 true
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK              false
+#define EEPROM_WRITE_CHECK              true
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
-#define PRINT_RMS_VALS                  true
+#define PRINT_RMS_VALS                  false
 #define PRINT_PEAK_VALS                 false
+#define PRINT_PEAK_DEBUG                false
 #define PRINT_TONE_VALS                 false
 #define PRINT_FREQ_VALS                 false
 #define PRINT_FFT_VALS                  false
+#define PRINT_FFT_DEBUG                 false
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
@@ -94,11 +97,11 @@ bool rear_lux_active = true;
 #define BRIGHTNESS_SCALER_MIN           0.5
 #define BRIGHTNESS_SCALER_MAX           1.5
 
-uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 0.05); // every 6 minutes
-uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 0.01); // one minute
+uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 10); // every 10 minutes
+uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// NeoPixel Settings ////////////////////////////////
+///////////////////////// NeoPixel Settings ///////////////// ///////////////
 ////////////////////////////////////////////////////////////////////////////
 #define MIN_BRIGHTNESS                  10
 #define MAX_BRIGHTNESS                  255
@@ -123,22 +126,22 @@ bool data_logging_active = true;
 #define DATALOG_4_LENGTH                100000
 
 // record the run time // last value is number of minutes
-#define DATALOG_TIMER_1                 (1000*60*0.5)
-#define DATALOG_TIMER_2                 (1000*60*5)
-#define DATALOG_TIMER_3                 (1000*60*0.5)
-#define DATALOG_TIMER_4                 (1000*60*5)
+#define DATALOG_TIMER_1                 (1000*60*30)
+#define DATALOG_TIMER_2                 (1000*60*60*1)
+#define DATALOG_TIMER_3                 (1000*60*1)
+#define DATALOG_TIMER_4                 (1000*60*10)
 
 // how long the program runs for before the datalog starts logging
-#define DATALOG_START_DELAY_1           (1000*60*0.005)
-#define DATALOG_START_DELAY_2           (1000*60*0.005)
-#define DATALOG_START_DELAY_3           (1000*60*0.005)
-#define DATALOG_START_DELAY_4           (1000*60*0.005)
+#define DATALOG_START_DELAY_1           (1000*60*1)
+#define DATALOG_START_DELAY_2           (1000*60*15)
+#define DATALOG_START_DELAY_3           (1000*60*20)
+#define DATALOG_START_DELAY_4           (1000*60*15)
 
 // how long the data logging  will last for
 #define DATALOG_TIME_FRAME_1            (1000*60*60*0.1)
 #define DATALOG_TIME_FRAME_2            (1000*60*60*1)
-#define DATALOG_TIME_FRAME_3            (1000*60*60*0.1)
-#define DATALOG_TIME_FRAME_4            (1000*60*60*1)
+// #define DATALOG_TIME_FRAME_3            (1000*60*60*0.1)
+// #define DATALOG_TIME_FRAME_4            (1000*60*60*1)
 
 // refresh rates for the static logs
 #define STATICLOG_RATE_FAST             (1000*60*3)
@@ -151,8 +154,8 @@ bool data_logging_active = true;
 #define AUTOLOG_LUX_TIMER               0
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            1
-#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF_F            0
+#define AUTOLOG_LED_ON_OFF_R            0
 #define AUTOLOG_LED_ON_OFF_TIMER        0
 
 // the number of values to store in the logging process
@@ -161,8 +164,8 @@ bool data_logging_active = true;
 #define AUTOLOG_FLASHES_TIMER           0
 
 // the number of values to store in the logging process
-#define AUTOLOG_FPM_F                   1
-#define AUTOLOG_FPM_R                   1
+#define AUTOLOG_FPM_F                   0
+#define AUTOLOG_FPM_R                   0
 #define AUTOLOG_FPM_TIMER               0
 
 // the brightness scaler avg log
@@ -171,10 +174,10 @@ bool data_logging_active = true;
 #define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
 
 /////////////////// for the static logging /////////////////////////////////
-#define STATICLOG_CLICK_GAIN            1
-#define STATICLOG_SONG_GAIN             1
-#define STATICLOG_LUX_VALUES            1
-#define STATICLOG_FLASHES               1
+#define STATICLOG_CLICK_GAIN            0
+#define STATICLOG_SONG_GAIN             0
+#define STATICLOG_LUX_VALUES            0
+#define STATICLOG_FLASHES               0
 #define STATICLOG_RUNTIME               1
 
 #define STATICLOG_LUX_MIN_MAX_TIMER     2
@@ -187,7 +190,7 @@ bool data_logging_active = true;
 ///////////////////////// Jumper Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED 0
+#define JUMPERS_POPULATED               0
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////

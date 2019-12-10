@@ -113,6 +113,8 @@ class DLManager {
         void printTimerConfigs();
         void clearLogs();
 
+        uint16_t getNextFreeAutologIdx() {return autolog_write_idx;};
+
     private:
         String id = "";
         // for keeping track of the datalogging shizzz
@@ -120,6 +122,7 @@ class DLManager {
 
         void addLog(Datalog *, uint8_t);
         void addLog(Datalog, uint8_t);
+        
         ///////////////////// Static Logs //////////////////
         void _addStaticLog(uint32_t log_size, String _id);
 
@@ -311,7 +314,7 @@ void DLManager::logSetupConfigDouble(String str, double data) {
 void DLManager::_addStaticLog(uint32_t log_size, String _id){
         autolog_write_idx += log_size;
         remaining_autolog_space -= log_size;
-        dprintMinorDivide(PRINT_LOG_WRITE);
+        printMinorDivide();
         Serial.println(_id);
         Serial.print("Adding a new static log with size       :\t");Serial.println(log_size);
         Serial.print("remaining static log (autolog) space    :\t");Serial.println(remaining_autolog_space);
@@ -322,7 +325,9 @@ void DLManager::_addStaticLog(uint32_t log_size, String _id){
 void DLManager::addStaticLog(String _id,  uint8_t _timer, double*_val) {
     uint32_t log_size = 4;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        Datalog log = Datalog(_id, autolog_write_idx, _val, 1, false);
+        addLog(log, _timer);
+        log.printLog(1);
         _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
@@ -332,7 +337,8 @@ void DLManager::addStaticLog(String _id,  uint8_t _timer, double*_val) {
 void DLManager::addStaticLog(String _id,  uint8_t _timer, uint8_t*_val) {
     uint32_t log_size = 1;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        Datalog log = Datalog(_id, autolog_write_idx, _val, 1, false);
+        addLog(log, _timer);
         _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
@@ -342,7 +348,8 @@ void DLManager::addStaticLog(String _id,  uint8_t _timer, uint8_t*_val) {
 void DLManager::addStaticLog(String _id,  uint8_t _timer, uint16_t*_val) {
     uint32_t log_size = 2;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        Datalog log = Datalog(_id, autolog_write_idx, _val, 1, false);
+        addLog(log, _timer);
         _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
@@ -352,7 +359,8 @@ void DLManager::addStaticLog(String _id,  uint8_t _timer, uint16_t*_val) {
 void DLManager::addStaticLog(String _id,  uint8_t _timer, uint32_t*_val) {
     uint32_t log_size = 4;
     if (log_size < remaining_autolog_space) {
-        addLog(Datalog(_id, autolog_write_idx, _val, 1, false), _timer);
+        Datalog log = Datalog(_id, autolog_write_idx, _val, 1, false);
+        addLog(log, _timer);
         _addStaticLog(log_size, _id);
     } else {
         Serial.println("ERROR - sorry the autolog is not initiated due to a lack of remaining EEPROM space.");
@@ -376,6 +384,10 @@ void DLManager::addLog(Datalog log, uint8_t timer_num) {
     add_log_idx = min(add_log_idx, DATALOG_MANAGER_MAX_LOGS);
     dprint(PRINT_LOG_WRITE, "Added log to the datamanager under timer ");
     dprint(PRINT_LOG_WRITE, timer_num);dprint(PRINT_LOG_WRITE, " active_logs now: ");dprintln(PRINT_LOG_WRITE, active_logs);
+    dprint(PRINT_LOG_WRITE, "log written under index :");
+    dprint(PRINT_LOG_WRITE, add_log_idx - 1);
+    dprint(PRINT_LOG_WRITE, " and the contents of the log (from the last runtime) is as follows: ");
+    logs[active_logs - 1].printLog(1);
 }
 
 void DLManager::addLog(Datalog *log, uint8_t timer_num) {
@@ -509,6 +521,7 @@ void DLManager::printOneOffLogs() {
 void DLManager::printAutologs() {
     // note this also prints static logs
     for (int i = 0; i < active_logs; i++) {
+        Serial.print("Log idx ");
         Serial.print(i);printTab();
         logs[i].printLog(4);
     }
@@ -521,7 +534,10 @@ void DLManager::printAutologs() {
 
 void DLManager::printAllLogs() {
     printMajorDivide("All Logs Stored in EEPROM");
+    Serial.println("----------- Printing One-off Logs --------------");
     printOneOffLogs();
+    printMinorDivide();
+    Serial.println("----------- Printing Auto and Static Logs --------------");
     printAutologs();
     printMajorDivide("Finished Printing EEPROM Contents");
 }

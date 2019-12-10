@@ -101,7 +101,7 @@ void mainSetup() {
     printMajorDivide("Jumpers are not populated, not printing values");
     }
   */
-  if (PRINT_EEPROM_CONTENTS  > 0) {
+  if (PRINT_EEPROM_CONTENTS) {
     delay(100);
     // TODO, add the datalogger and print the log contents
     // printEEPROMContents();
