@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       7
+#define SERIAL_ID                       6
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
@@ -23,15 +23,17 @@
 #define PITCH_MODE                      1
 // FIRMWARE MODE should be set to one  of of the modes defined above...
 // options are CICADA_MODE and PITCH_MODE
-#define FIRMWARE_MODE                   0
+#define FIRMWARE_MODE                   1
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
+  #define NUM_AUTOGAINS                 1
   #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2
   #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
+  #define NUM_AUTOGAINS                 2
   #define NUM_FEATURE_COLLECTORS        4
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2

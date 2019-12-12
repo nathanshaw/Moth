@@ -11,6 +11,30 @@
 #include "ModePitch.h"
 #endif
 
+void updateFeatureCollectors() {
+  // update the feature collectors
+  #if NUM_FEATURE_COLLECTORS == 1
+    fc.update();
+  #endif
+  #if NUM_FEATURE_COLLECTORS > 1
+  for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
+    fc[i].update();
+  }
+  #endif
+}
+
+void updateLuxManagers() {
+  // update the feature collectors
+  for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
+    lux_managers[i].update();
+  }
+}
+
+void updateDatalog() {
+  datalog_manager.update();
+  runtime = (double)millis() / 60000;
+}
+
 void setup() {
   Serial.begin(SERIAL_BAUD_RATE);
   delay(1000);
@@ -52,6 +76,9 @@ void setup() {
 }
 
 void loop() {
-  // this needs to stay in the faster main loop
-  mainLoop();
+  updateLuxManagers();
+  updateFeatureCollectors();
+  updateMode();
+  updateAutogain();
+  updateDatalog();
 }

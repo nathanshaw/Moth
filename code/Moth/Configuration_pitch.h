@@ -2,7 +2,9 @@
 #define __CONFIGURATION_PITCH_H__
 
 ///////////////////////////////////////////////////////////// PITCH MODE /////////////////////////////////////////////////////////////////
-#define INPUT_START_GAIN                    4.0
+#define STARTING_PITCH_GAIN                4.0
+#define PITCH_AUTOGAIN_MIN                 2.0
+#define PITCH_AUTOGAIN_MAX                 8.0
 
 // Settings to cover the BiQuad Filter
 #define BQ_Q                               0.5
@@ -35,6 +37,7 @@
 #define FEATURE_FFT_RELATIVE_ENERGY         (7)
 #define FEATURE_FFT_MAX_BIN                 (8)
 #define FEATURE_FFT_BIN_RANGE               (9)
+#define FEATURE_STRONG_FFT                  (10)
 
 //////////////////////////// FFT //
 // When calculating things such as which bin has the most energy and so on, 
@@ -42,6 +45,7 @@
 // todo what frequency does this correspond to?
 #define FFT_LOWEST_BIN              1
 // todo this needs to be calculated better?
+#define FFT_NUM_BINS                511
 #define FFT_HIGHEST_BIN             80
 // when using the Freq function generator, what amount of uncertanity is allowed?
 // #define FREQ_UNCERTANITY_ALLOWED    0.15

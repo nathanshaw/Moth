@@ -39,9 +39,10 @@ class FeatureCollector {
         }
 
         //////////////// RMS /////////////////////////
-        void linkRMS(AudioAnalyzeRMS *r) {
+        void linkRMS(AudioAnalyzeRMS *r, double s) {
             rms_ana = r;
             rms_active = true;
+            rms_scaler = s;
         };
         double getRMS();
         double getRMSPosDelta();
@@ -51,9 +52,10 @@ class FeatureCollector {
         void   printRMSVals();
 
         //////////////// Peak /////////////////////////
-        void linkPeak(AudioAnalyzePeak *r) {
+        void linkPeak(AudioAnalyzePeak *r, double s) {
             peak_ana = r;
             peak_active = true;
+            peak_scaler = s;
         };
         double getPeak();
         double getPeakPosDelta() {return peak_pos_delta;};
@@ -79,11 +81,13 @@ class FeatureCollector {
         void printFreqVals();
 
         //////////////// FFT /////////////////////////
-        void linkFFT(AudioAnalyzeFFT256 *r, uint16_t l, uint16_t h) {
+        void linkFFT(AudioAnalyzeFFT1024 *r, uint16_t l, uint16_t h, uint16_t num_bins, double s) {
             fft_ana = r;
             fft_active = true;
             max_bin = h;
             min_bin = l;
+            fft_num_bins = num_bins;
+            fft_scaler = s;
         };
         void printFFTVals();
         double getFFTRange(uint16_t s, uint16_t e);
@@ -120,6 +124,7 @@ class FeatureCollector {
         double rms_val;
         double rms_totals;
         unsigned long rms_readings;
+        double rms_scaler = 1.0;
         double rms_pos_delta;
         elapsedMillis last_rms_reset;
 
@@ -128,6 +133,7 @@ class FeatureCollector {
         bool peak_active = false;
         void calculatePeak();
         double peak_val;
+        double peak_scaler = 1.0;
         double peak_totals = 0;
         unsigned long peak_readings = 0;
         elapsedMillis last_peak_reset;
@@ -146,9 +152,11 @@ class FeatureCollector {
         void calculateFreq();
 
         //////////////// FFT /////////////////////////
-        AudioAnalyzeFFT256 *fft_ana;
+        AudioAnalyzeFFT1024 *fft_ana;
+        uint16_t fft_num_bins = 0;
         bool fft_active = false;
-        double fft_vals[128];
+        double fft_vals[511]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
+        double fft_scaler = 1.0;
         void calculateFFT();
         void calculateScaledFFT();
         double fft_tot_energy;
