@@ -19,8 +19,9 @@
 ////////////////////////////////////////////////////////////////////////////
 // the current modes, or software driven functionality in which 
 // the firmware should use.
-#define CICADA_MODE                     0
-#define PITCH_MODE                      1
+#define TEST_MODE                       0
+#define CICADA_MODE                     1
+#define PITCH_MODE                      2
 // FIRMWARE MODE should be set to one  of of the modes defined above...
 // options are CICADA_MODE and PITCH_MODE
 #define FIRMWARE_MODE                   0
@@ -38,6 +39,11 @@
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2
   #include "Configuration_cicadas.h"
+#elif FIRMWARE_MODE == TEST_MODE
+  #define NUM_AUTOGAINS                 0
+  #define NUM_FEATURE_COLLECTORS        0
+  #define NUM_NEO_GROUPS                2
+  #define NUM_LUX_MANAGERS              2  
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -48,7 +54,7 @@
 
 ///////////////////////// Cicada ///////////////////////////////////////////
 #define PRINT_LUX_DEBUG                 false
-#define PRINT_LUX_READINGS              false
+#define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
 #define PRINT_SONG_DATA                 false
@@ -57,7 +63,7 @@
 #define PRINT_CLICK_DEBUG               false
 
 #define PRINT_LED_VALUES                true
-#define PRINT_LED_DEBUG                 true
+#define PRINT_LED_DEBUG                 false
 #define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 

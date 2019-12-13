@@ -1,11 +1,3 @@
-/*
- * 
- * This is a template file which contains a base for the creation of a new mode
- * 
- * It contains all of the expected files and functionality
- */
-
-/*
 #ifndef TEST_MODE_H
 #define TEST_MODE_H
 
@@ -77,4 +69,3 @@ void updateAutogain() {
 }
 
 #endif
-*/

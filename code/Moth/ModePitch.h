@@ -206,7 +206,7 @@ void linkFeatureCollector() {
   */
 }
 
-void audioSetup() {
+void setupAudio() {
   // left
   AudioMemory(AUDIO_MEMORY);
   mixer.gain(0, 0.5);

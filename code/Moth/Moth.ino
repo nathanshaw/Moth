@@ -9,6 +9,8 @@
 #include "ModeCicada.h"
 #elif FIRMWARE_MODE == PITCH_MODE
 #include "ModePitch.h"
+#elif FIRMWARE_MODE == TEST_MODE
+#include "ModeTest.h"
 #endif
 
 void updateFeatureCollectors() {
@@ -59,7 +61,7 @@ void setup() {
   neos[0].colorWipe(30, 50, 0); // turn off the LEDs
   neos[1].colorWipe(30, 50, 0); // turn off the LEDs
 
-  audioSetup();
+  setupAudio();
   
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");

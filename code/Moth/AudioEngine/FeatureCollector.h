@@ -275,7 +275,7 @@ void FeatureCollector::calculateFFT() {
         fft_tot_energy = 0;
         int highest = -1;
         for (int i = min_bin; i < max_bin; i++) {
-            fft_vals[i] = fft_ana->read(i) * FFT_SCALER;
+            fft_vals[i] = fft_ana->read(i) * fft_scaler;
             fft_tot_energy += fft_vals[i];
         }
         if (highest != -1) {
@@ -294,7 +294,7 @@ void FeatureCollector::calculateScaledFFT() {
         int highest = -1;
         double highest_val = -1.0;
         for (int i = min_bin; i < max_bin; i++) {
-            fft_vals[i] = fft_ana->read(i) * FFT_SCALER;
+            fft_vals[i] = fft_ana->read(i) * fft_scaler;
             fft_tot_energy += fft_vals[i];
             if (fft_vals[i] >= highest_val) {
                 highest_val = fft_vals[i];
@@ -338,7 +338,7 @@ void FeatureCollector::calculatePeak() {
         dprint(PRINT_PEAK_DEBUG, id);
         dprint(PRINT_PEAK_DEBUG, " Peaks (normal, scaled, pos_delta):\t");
         dprint(PRINT_PEAK_DEBUG, peak_val);
-        peak_val *= (double)PEAK_SCALER;
+        peak_val *= peak_scaler;
         dprint(PRINT_PEAK_DEBUG, "\t");
         dprint(PRINT_PEAK_DEBUG, peak_val);
         peak_pos_delta = getPosDelta(last, peak_val);
@@ -361,7 +361,7 @@ void FeatureCollector::calculateRMS() {
     if (rms_active  && (rms_ana->available())) {
         double temp = rms_val;
         rms_val = rms_ana->read();
-        rms_val *= RMS_SCALER;
+        rms_val *= rms_scaler;
         rms_pos_delta = getPosDelta(temp, rms_val);
         rms_totals += rms_val;
         rms_readings++;

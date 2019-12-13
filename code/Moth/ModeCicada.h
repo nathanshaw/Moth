@@ -147,7 +147,7 @@ void linkFeatureCollectors() {
   }
 }
 
-void audioSetup() {
+void setupAudio() {
   ////////////// Audio ////////////
   AudioMemory(AUDIO_MEMORY);
   linkFeatureCollectors();
