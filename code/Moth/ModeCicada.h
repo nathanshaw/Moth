@@ -128,7 +128,7 @@ void linkFeatureCollectors() {
   fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
   fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
   fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  
+
   if (RMS_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
     fc[0].linkRMS(&song_rms1, RMS_SCALER);
@@ -335,6 +335,21 @@ void setupDLManager() {
                                    STATICLOG_FLASHES_TIMER, &total_flashes[1]);
     }
 
+    if (STATICLOG_RGB_AVG_VALS) {
+      datalog_manager.addStaticLog("Average Red Value (Front)     : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].red_avg);
+      datalog_manager.addStaticLog("Average Red Value (Rear)      : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].red_avg);
+      datalog_manager.addStaticLog("Average Green Value (Front)   : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].green_avg);
+      datalog_manager.addStaticLog("Average Green Value (Rear)    : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].green_avg);
+      datalog_manager.addStaticLog("Average Blue Value (Front)    : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].blue_avg);
+      datalog_manager.addStaticLog("Average Blue Value (Rear)     : ",
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].blue_avg);
+    }
+
     // todo double check the addr
     // Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
     // datalog_manager.startAutolog(0);
@@ -472,11 +487,11 @@ void updateClick() {
 */
 
 void updateAutogain() {
-  #if (AUTOGAIN_ACTIVE)
-    auto_gain[0].updateExternal((neos[0].getOnRatio() + neos[1].getOnRatio()) * 0.5);
-    auto_gain[1].updateExternal((neos[0].fpm + neos[1].fpm) * 0.5);
-    return;
-  #endif
+#if (AUTOGAIN_ACTIVE)
+  auto_gain[0].updateExternal((neos[0].getOnRatio() + neos[1].getOnRatio()) * 0.5);
+  auto_gain[1].updateExternal((neos[0].fpm + neos[1].fpm) * 0.5);
+  return;
+#endif
 }
 
 

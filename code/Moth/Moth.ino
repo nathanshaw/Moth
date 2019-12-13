@@ -42,8 +42,8 @@ void setup() {
   delay(1000);
   leds.begin();
   Serial.println("LEDS have been initalised");
-  neos[0].colorWipe(250, 90, 0); // turn off the LEDs
-  neos[1].colorWipe(250, 90, 0); // turn off the LED
+  neos[0].colorWipe(50, 15, 0); // turn off the LEDs
+  neos[1].colorWipe(50, 15, 0); // turn off the LED
   delay(3000); Serial.println("Setup Loop has started");
   if (JUMPERS_POPULATED) {
     // readJumpers();
@@ -51,20 +51,20 @@ void setup() {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
   // create either front and back led group, or just one for both
-  neos[0].colorWipe(120, 70, 0); // turn off the LEDs
-  neos[1].colorWipe(120, 70, 0); // turn off the LEDs
+  neos[0].colorWipe(40, 20, 0); // turn off the LEDs
+  neos[1].colorWipe(40, 20, 0); // turn off the LEDs
   Serial.println("Leds turned yellow for setup loop\n");
   delay(1000);
   setupDLManager();
-  neos[0].colorWipe(100, 150, 0); // turn off the LEDs
-  neos[1].colorWipe(100, 150, 0); // turn off the LEDs
-  Serial.println("Running Use Specific Setup Loop...");
+  neos[0].colorWipe(30, 50, 0); // turn off the LEDs
+  neos[1].colorWipe(30, 50, 0); // turn off the LEDs
+
   audioSetup();
+  
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
     lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-
     lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
     neos[0].colorWipe(0, 0, 0); // turn off the LEDs
     neos[1].colorWipe(0, 0, 0); // turn off the LED
@@ -72,6 +72,11 @@ void setup() {
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
+  /*
+  for (int i = 0; i < 10; i++){
+    leds.setPixel(i, 32, 32, 32);
+    leds.show();
+  }*/
   printMajorDivide("Setup Loop Finished");
 }
 

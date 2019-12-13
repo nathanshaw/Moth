@@ -9,7 +9,6 @@
   int16_t remaining_flash_delay[2];           // to keep track of the flash
   bool flash_on[2] = {false, false};              // to keep track of the flash
 
-
   elapsedMillis last_click_flash[2]; // ensures that the LEDs are not turned on when they are in shutdown mode to allow for an accurate LUX reading
   elapsedMillis led_shdn_timer[2];
   bool leds_on[2] = {false, false};               // set to false if the LEDs are turned off and true if the leds are on...
@@ -29,13 +28,12 @@
 // #include <elapsedMillis.h>
 
 uint32_t packColors(uint8_t red, uint8_t green, uint8_t blue, double scaler) {
-  // TODO change code to account for front and back sides
+    /*
+     * TODO write a function summary
+     * 
+     * */
   uint32_t color = 0;
-  // Serial.print("red: ");
-  // Serial.print(red);
   red = red * scaler;
-  // Serial.print("\t");
-  // Serial.println(red);
   green = green * scaler;
   blue = blue * scaler;
   red = min(red, MAX_BRIGHTNESS);
@@ -48,94 +46,74 @@ uint32_t packColors(uint8_t red, uint8_t green, uint8_t blue, double scaler) {
   return color;
 }
 
+// todo add on/off bools for the datalogging shiz
 class NeoGroup {
-    // class to control a sub group of neopixels easily
-    // init should cover
+    /* TODO add a class summary
+     *
+     */
   public:
     NeoGroup(WS2812Serial *neos, int start_idx, int end_idx, String _id, uint32_t f_min, uint32_t f_max);
 
-    // for externally getting and setting the flash_on status
-    void setFlashOn(bool val) {flash_on = val;};
-    bool getFlashOn() {return flash_on;};
+    /////////////////////////////// Datatracking /////////////////////////////
+    double red_avg, green_avg, blue_avg;
+    void resetRGBAverageTracker();
+    bool getLedsOn() {return leds_on;}; // for externally determining if the LEDs are currently on
 
-    // for externally determining if the LEDs are currently on
-    bool getLedsOn() {return leds_on;};
-
+    /////////////////////////////// Flashes //////////////////////////////////
     uint32_t getOnOffLen() {return on_off_len;};
     uint32_t getShdnTimer() {return shdn_timer;};
     uint32_t getNumFlashes() {return num_flashes;};
-
+    void setFlashOn(bool val) {flash_on = val;};
+    bool getFlashOn() {return flash_on;};
     uint32_t num_flashes = 0;// these are public so they can be tracked by the datalog manager
     uint32_t total_flashes = 0;
-
     double fpm;
     double getFPM();
     void resetFPM();
+    void addToRemainingFlashDelay(long i);
+    void setRemainingFlashDelay(long d);
 
+    ////////////////////////////// SHDN Timer ///////////////////////////////
     uint32_t getShdnLen();
-
-    bool isInShutdown() {
-      if (shdn_timer < shdn_len) {
-        return true;
-      }
-      return false;
-    };
-
+    bool isInShutdown();
     void updateAvgBrightnessScaler();
     void resetAvgBrightnessScaler();
-
-    void setBrightnessScaler(double scaler) {
-      brightness_scaler = scaler;
-      updateAvgBrightnessScaler();
-    };
-
-    double getOnRatio() {
-      return on_ratio;
-    };
+    void setBrightnessScaler(double scaler) {brightness_scaler = scaler;updateAvgBrightnessScaler();};
+    double getOnRatio() {return on_ratio;};
     double on_ratio = 0.5;
 
-    double getBrightnessScaler() {
-      return brightness_scaler;
-    };
+    ////////////////////////// Brightness Scaler //////////////////////////////
+    double getBrightnessScaler() {return brightness_scaler;};
     double getAvgBrightnessScaler();
     double getAvgBrightness(String type);
-    long getRemainingFlashDelay() {
-      return remaining_flash_delay;
-    };
-    void addToRemainingFlashDelay(long i) {
-      remaining_flash_delay += i;
-      if (remaining_flash_delay > flash_max_time) {
-        remaining_flash_delay = flash_max_time;
-      }
-    };
-    void setRemainingFlashDelay(long d) {
-      remaining_flash_delay = d;
-    };
-    // Controlling the LEDs
+    long getRemainingFlashDelay() {return remaining_flash_delay;};
+
+    ///////////////////////////////// HSB Colors //////////////////////////////
     void updateHSB(double h, double s, double b);
     double getHue(){return hsb[0];};
     double getSat(){return hsb[1];};
     double getBright(){return hsb[2];};
+
+    //////////////////////////////// ColorWipes ///////////////////////////////
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs);
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
     void colorWipeHSB(double h, double s, double b);
 
-    // void wipeAll(uint8_t red, uint8_t green, uint8_t blue);
-
+    //////////////////////////////// Flashes //////////////////////////////////
     bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
     bool flashOn();
     void flashOff();
     void update();
+    void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
+    void powerOn(); // force a power on, overriding any shdn_timer
 
-    // printing functions
+    /////////////////////////////// Printing /////////////////////////////////
     void printGroupConfigs();
     void printColors();
 
+    ///////////////////////////// Misc //////////////////////////////////////
     bool shutdown(uint32_t len);
-    void powerOn();
-    void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
-
     String getName() { return id;};
 
   private:
@@ -145,7 +123,7 @@ class NeoGroup {
     void RgbToHsb(uint8_t red, uint8_t green, uint8_t blue);
     void HsbToRgb(double hue, double saturation, double lightness);
 
-    // related to the flash command
+    ////////////////////////////// Flashes //////////////////////////////////
     uint8_t flash_red = 0;
     uint8_t flash_green = 0;
     uint8_t flash_blue = 255;
@@ -155,33 +133,33 @@ class NeoGroup {
     long flash_max_time;  // how about the longest?
     elapsedMillis fpm_timer;
 
+    //////////////////////////// Data Tracking /////////////////////////////
+    uint32_t red_tot, green_tot, blue_tot;
+    uint32_t red_readings, green_readings, blue_readings;
     // related to auto-calibration and datalogging
     bool update_on_off_ratios = UPDATE_ON_OFF_RATIOS;
     String id;
 
-    // controling leds
+    //////////////////////////  LED Linking ////////////////////////////////
     WS2812Serial *leds;
     int idx_start;
     int idx_end;
     int num_pixels;
-
     elapsedMillis shdn_timer; // if this is below a certain threshold then shutdown everything
     uint32_t shdn_len = 0;
-
     bool leds_on = false;
-
     elapsedMillis last_flash; // the last time a flash message was received
     elapsedMillis on_off_len; // this is reset every time the leds shutdown or turn on (length of time on or off)
     elapsedMillis last_flash_update;
-
+    //////////////////////// On Ratio /////////////////////////////////////
     uint32_t on_time = 1;
     uint32_t off_time = 1;
+    void updateOnRatio(int color);
+
+    /////////////////////// Brightness Scaler ////////////////////////////
     double brightness_scaler = 1.0;
     double brightness_scaler_total;
     double brightness_scaler_changes;
-    // functions
-
-    void updateOnRatio(int color);
     void updateBrightnessScalerTotals();
     void resetOnOffRatioCounters();
 };
@@ -240,7 +218,7 @@ void NeoGroup::powerOn() {
 
 uint32_t NeoGroup::getShdnLen() {
   if (shdn_timer <= shdn_len) {
-    return shdn_timer;
+    return shdn_len - shdn_timer;
   } else  {
     return 0;
   }
@@ -329,6 +307,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 	}
 }
 
+void NeoGroup::resetRGBAverageTracker() {
+    red_tot = 0;
+    green_tot = 0;
+    blue_tot = 0;
+    red_readings = 0;
+    green_readings = 0;
+    blue_readings = 0;
+}
+
 void NeoGroup::colorWipeHSB(double h, double s, double b) {
   updateHSB(h, s, b);
   HsbToRgb(h, s, b);
@@ -346,6 +333,15 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   rgb[0] = red;
   rgb[1] = green;
   rgb[2] = blue;
+  red_tot += red;
+  green_tot += green;
+  blue_tot += blue;
+  red_readings++;
+  green_readings++;
+  blue_readings++;
+  red_avg = red_tot / (double)red_readings;
+  green_avg = green_tot / (double)green_readings;
+  blue_avg = blue_tot / (double)blue_readings;
 
   int colors = packColors(red, green, blue, bs);
   if (update_on_off_ratios) {
@@ -531,4 +527,21 @@ void NeoGroup::updateOnRatio(int color) {
   dprint(PRINT_LED_ON_RATIO_DEBUG, "\t"); dprintln(PRINT_LED_ON_RATIO_DEBUG, off_time);
 }
 
+void NeoGroup::addToRemainingFlashDelay(long i) {
+  remaining_flash_delay += i;
+  if (remaining_flash_delay > flash_max_time) {
+    remaining_flash_delay = flash_max_time;
+  }
+};
+
+void NeoGroup::setRemainingFlashDelay(long d) {
+  remaining_flash_delay = d;
+};
+
+bool NeoGroup::isInShutdown() {
+  if (shdn_timer < shdn_len) {
+    return true;
+  }
+  return false;
+};
 #endif // __LEDS_H__

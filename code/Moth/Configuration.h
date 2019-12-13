@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       6
+#define SERIAL_ID                       12
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
@@ -23,7 +23,7 @@
 #define PITCH_MODE                      1
 // FIRMWARE MODE should be set to one  of of the modes defined above...
 // options are CICADA_MODE and PITCH_MODE
-#define FIRMWARE_MODE                   1
+#define FIRMWARE_MODE                   0
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -134,13 +134,13 @@ bool data_logging_active = true;
 // record the run time // last value is number of minutes
 #define DATALOG_TIMER_1                 (1000*60*30)
 #define DATALOG_TIMER_2                 (1000*60*60*1)
-#define DATALOG_TIMER_3                 (1000*60*1)
+#define DATALOG_TIMER_3                 (1000*60*0.5)
 #define DATALOG_TIMER_4                 (1000*60*10)
 
 // how long the program runs for before the datalog starts logging
 #define DATALOG_START_DELAY_1           (1000*60*1)
 #define DATALOG_START_DELAY_2           (1000*60*15)
-#define DATALOG_START_DELAY_3           (1000*60*20)
+#define DATALOG_START_DELAY_3           (1000*60*0.01)
 #define DATALOG_START_DELAY_4           (1000*60*15)
 
 // how long the data logging  will last for
@@ -185,12 +185,14 @@ bool data_logging_active = true;
 #define STATICLOG_LUX_VALUES            0
 #define STATICLOG_FLASHES               0
 #define STATICLOG_RUNTIME               1
+#define STATICLOG_RGB_AVG_VALS          1
 
 #define STATICLOG_LUX_MIN_MAX_TIMER     2
 #define STATICLOG_CLICK_GAIN_TIMER      2
 #define STATICLOG_SONG_GAIN_TIMER       2
 #define STATICLOG_FLASHES_TIMER         2
 #define STATICLOG_RUNTIME_TIMER         2
+#define STATICLOG_RGB_AVG_VALS_TIMER    2
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
