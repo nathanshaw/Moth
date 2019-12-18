@@ -138,6 +138,8 @@ class NeoGroup {
     long flash_max_time;  // how about the longest?
     elapsedMillis fpm_timer;
 
+    // a linked neogroup for sharing flash info?
+
     //////////////////////////// Data Tracking /////////////////////////////
     uint32_t red_tot, green_tot, blue_tot;
     uint32_t red_readings, green_readings, blue_readings;

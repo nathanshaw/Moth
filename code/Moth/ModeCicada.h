@@ -465,14 +465,29 @@ void updateClick() {
       total_flashes[0]++;
       fpm[0] = num_flashes[0] / fpm_timer;
       // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
+      if (INDEPENDENT_FLASHES == false) {
+        if (neos[1].flashOn()) {
+          num_flashes[1]++;
+          total_flashes[1]++;
+          fpm[1] = num_flashes[1] / fpm_timer;
+          return;
+        }
+      }
     }
   }
   if (fc[3].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
     if (neos[1].flashOn()) {
       num_flashes[1]++;
       total_flashes[1]++;
-      fpm[0] = num_flashes[1] / fpm_timer;
+      fpm[1] = num_flashes[1] / fpm_timer;
       // Serial.print("num_flashes 1: "); Serial.println(num_flashes[1]);
+      if (INDEPENDENT_FLASHES == false) {
+        if (neos[0].flashOn()) {
+          num_flashes[0]++;
+          total_flashes[0]++;
+          fpm[0] = num_flashes[0] / fpm_timer;
+        }
+      }
     }
   }
   for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {

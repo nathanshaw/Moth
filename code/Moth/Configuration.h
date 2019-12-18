@@ -56,8 +56,7 @@ bool gain_adjust_active =                true;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Debuggings ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-// set to true if you want to print out data stored in EEPROM on boot
-#define PRINT_EEPROM_CONTENTS           true
+
 
 ///////////////////////// Cicada ///////////////////////////////////////////
 #define PRINT_LUX_DEBUG                 true
@@ -67,7 +66,7 @@ bool gain_adjust_active =                true;
 #define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
-#define PRINT_CLICK_DEBUG               false
+#define PRINT_CLICK_DEBUG               true
 
 #define PRINT_LED_VALUES                false
 #define PRINT_LED_DEBUG                 false
@@ -111,6 +110,7 @@ bool rear_lux_active =                  true;
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               100
 #define HIGH_LUX_THRESHOLD              1000.0
+#define EXTREME_LUX_THRESHOLD           2000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
 #define BRIGHTNESS_SCALER_MIN           0.125

@@ -106,4 +106,7 @@ void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
   printDivide();
 }
 
+// set to true if you want to print out data stored in EEPROM on boot
+#define PRINT_EEPROM_CONTENTS           true
+
 #endif // __HARDWARE_CONFIGURATION_H__
