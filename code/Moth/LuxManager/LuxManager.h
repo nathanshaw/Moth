@@ -228,17 +228,26 @@ void LuxManager::readLux(Adafruit_VEML7700 *s) {
 double LuxManager::calculateBrightnessScaler() {
   // todo need to make this function better... linear mapping does not really work, need to map li
   // dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
-  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "lux constrained:\t");
   double t = constrain(lux, LOW_LUX_THRESHOLD, HIGH_LUX_THRESHOLD);
   double bs;
   // conduct brightness scaling depending on if the reading is above or below the mid thresh
   if (t == HIGH_LUX_THRESHOLD) {
-      neo->setBrightnessScaler(0.0);
+      if (neo->getLuxShdn() == false) {
+          neo->setExtremeLuxShdn(1);
+          dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "Neopixel brightness scaler set to 0.0 due to extreme lux");
+      }
   } else if (t < MID_LUX_THRESHOLD)  {
     bs = map(t, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
+    if (neo->getLuxShdn() == true) {
+        neo->setExtremeLuxShdn(false);
+    }
   } else {
     bs = map(t, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
+    if (neo->getLuxShdn() == true) {
+        neo->setExtremeLuxShdn(false);
+    }
   }
+  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "lux constrained:\t");
   dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, t); dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tbrightness_scaler:\t");
   dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, bs);
   return bs;

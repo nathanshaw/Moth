@@ -64,9 +64,6 @@ AudioConnection          patchCord6(input_amp, rms);
 AudioConnection          patchCord7(input_amp, 0, usb, 0);
 AudioConnection          patchCord8(input_amp, 0, usb, 1);
 AudioConnection          patchCord9(input_amp, fft);
-// GUItool: end automatically generated code
-
-
 
 
 void setupDLManager() {

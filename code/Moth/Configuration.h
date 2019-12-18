@@ -31,7 +31,7 @@ bool gain_adjust_active =                true;
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE                    TEST_MODE
+#define FIRMWARE_MODE                    CICADA_MODE
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -64,13 +64,13 @@ bool gain_adjust_active =                true;
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
-#define PRINT_SONG_DATA                 true
+#define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 
-#define PRINT_LED_VALUES                true
-#define PRINT_LED_DEBUG                 true
+#define PRINT_LED_VALUES                false
+#define PRINT_LED_DEBUG                 false
 #define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 
@@ -127,6 +127,10 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 #define UPDATE_ON_OFF_RATIOS true
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
+
+#define FLASH_RED                       50
+#define FLASH_GREEN                     100
+#define FLASH_BLUE                      255
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////

@@ -105,7 +105,7 @@ class NeoGroup {
     bool flashOn();
     void flashOff();
     void update();
-    void updateFlashColors(uint8_t red, uint8_t green, uint8_t blue);
+    void setFlashColors(uint8_t red, uint8_t green, uint8_t blue);
     void powerOn(); // force a power on, overriding any shdn_timer
 
     /////////////////////////////// Printing /////////////////////////////////
@@ -117,6 +117,7 @@ class NeoGroup {
     String getName() { return id;};
 
     void setExtremeLuxShdn(bool e){extreme_lux_shdn = e;};
+    bool getLuxShdn() { return extreme_lux_shdn;};
 
   private:
     double hsb[3]; // limited from 0 - 255
@@ -228,7 +229,7 @@ uint32_t NeoGroup::getShdnLen() {
   }
 }
 
-void NeoGroup::updateFlashColors(uint8_t red, uint8_t green, uint8_t blue) {
+void NeoGroup::setFlashColors(uint8_t red, uint8_t green, uint8_t blue) {
   flash_red = red;
   flash_green = green;
   flash_blue = blue;
@@ -350,7 +351,7 @@ void NeoGroup::updateColorLog(uint8_t red, uint8_t green, uint8_t blue) {
 
 void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   // TODO this logic is broken...
-  if (extreme_lux_shdn = true) {
+  if (extreme_lux_shdn == true) {
     dprintln(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due extreme lux conditions");
     return;
   }

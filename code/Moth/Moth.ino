@@ -64,10 +64,12 @@ void setup() {
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
-  Serial.println("Leds turned yellow for setup loop\n");
-  delay(1000);
   setupDLManager();
   setupAudio();
+
+  for (int i = 0; i < NUM_NEO_GROUPS; i++) {
+    neos[i].setFlashColors(FLASH_RED, FLASH_GREEN, FLASH_BLUE);
+  }
 
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
