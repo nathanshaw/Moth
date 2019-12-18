@@ -12,19 +12,26 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       12
+#define SERIAL_ID                       3
 
-////////////////////////////////////////////////////////////////////////////
-///////////////////////// Operating Modes //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// the current modes, or software driven functionality in which 
-// the firmware should use.
-#define TEST_MODE                       0
-#define CICADA_MODE                     1
-#define PITCH_MODE                      2
-// FIRMWARE MODE should be set to one  of of the modes defined above...
-// options are CICADA_MODE and PITCH_MODE
-#define FIRMWARE_MODE                   0
+// will there be a USB audio output object created?
+#define USB_OUTPUT                      1
+
+// if false, a click detected on either side results in a LED flash on both sides
+// if true, a click detected on one side will only result in a flash on that side
+bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
+
+// WARNING NOT IMPLEMENTED - TODO
+#define   COMBINE_LUX_READINGS           true  
+
+bool gain_adjust_active =                true;
+
+// WARNING NOT IMPLEMENTED - TODO
+#define DEACTIVATE_UNDER_EXTREME_LUX     true   
+
+// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
+// depending on what functionality you want
+#define FIRMWARE_MODE                    CICADA_MODE
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -53,17 +60,17 @@
 #define PRINT_EEPROM_CONTENTS           true
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 false
+#define PRINT_LUX_DEBUG                 true
 #define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
-#define PRINT_SONG_DATA                 false
+#define PRINT_SONG_DATA                 true
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 
 #define PRINT_LED_VALUES                true
-#define PRINT_LED_DEBUG                 false
+#define PRINT_LED_DEBUG                 true
 #define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 
@@ -89,33 +96,33 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+#define LUX_SENSORS_ACTIVE              true
 // how long the lux sensors need the LEDs to be 
 // turned off in order to get an accurate reading
 #define LUX_SHDN_LEN                    40
-bool front_lux_active = true;
-bool rear_lux_active = true;
+bool front_lux_active =                 true;
+bool rear_lux_active =                  true;
 
-#define LUX_SENSORS_ACTIVE              true
-#define LUX_CALIBRATION_TIME            4000
-#define SMOOTH_LUX_READINGS             true
+#define LUX_CALIBRATION_TIME            3000
+#define SMOOTH_LUX_READINGS             false
 
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               16.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               100
-#define HIGH_LUX_THRESHOLD              450.0
+#define HIGH_LUX_THRESHOLD              1000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.5
+#define BRIGHTNESS_SCALER_MIN           0.125
 #define BRIGHTNESS_SCALER_MAX           1.5
 
-uint32_t lux_max_reading_delay = long(1000.0 * 60.0 * 10); // every 10 minutes
-uint32_t lux_min_reading_delay = long(1000.0 * 60.0 * 1); // one minute
+uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
+uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// NeoPixel Settings ///////////////// ///////////////
+///////////////////////// NeoPixel Settings ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define MIN_BRIGHTNESS                  10
+#define MIN_BRIGHTNESS                  0
 #define MAX_BRIGHTNESS                  255
 #define UPDATE_ON_OFF_RATIOS true
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
@@ -125,7 +132,7 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 double runtime;
-bool data_logging_active = true;
+bool data_logging_active =              true;
 
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS           0
@@ -144,9 +151,9 @@ bool data_logging_active = true;
 #define DATALOG_TIMER_4                 (1000*60*10)
 
 // how long the program runs for before the datalog starts logging
-#define DATALOG_START_DELAY_1           (1000*60*1)
+#define DATALOG_START_DELAY_1           (1000*60*60*1)
 #define DATALOG_START_DELAY_2           (1000*60*15)
-#define DATALOG_START_DELAY_3           (1000*60*0.01)
+#define DATALOG_START_DELAY_3           (1000*60*60*1)
 #define DATALOG_START_DELAY_4           (1000*60*15)
 
 // how long the data logging  will last for
@@ -211,16 +218,16 @@ bool data_logging_active = true;
 ////////////////////////////////////////////////////////////////////////////
 #define DATALOG_MANAGER_MAX_LOGS        25
 #define DATALOG_MANAGER_TIMER_NUM       4
-uint8_t datalog_timer_num = DATALOG_MANAGER_TIMER_NUM;
-uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
-#define DOUBLE_PRECISION ((double)100000.0)
+uint8_t datalog_timer_num =             DATALOG_MANAGER_TIMER_NUM;
+uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
+#define DOUBLE_PRECISION                ((double)100000.0)
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-#define AUTOGAIN_ACTIVE                 1
-#define MAX_GAIN_ADJUSTMENT             0.10
+#define AUTOGAIN_ACTIVE                 0
+#define MAX_GAIN_ADJUSTMENT             0.125
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
 // auto gain code. This value needs to be less than 1. 0.5 would mean that the gain can change
@@ -232,13 +239,7 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 
 #define AUTOGAIN_START_DELAY            30000
 // how often to calculate auto-gain (in ms)
-#define AUTOGAIN_FREQUENCY              (1000 * 60 * 0.5) 
-
-/////////////////////////////////////////////////////////////////////////
-//////////////////////// Firmware Controls //////////////////////////////
-/////////////////////////////////////////////////////////////////////////
-// will there be a USB audio output object created?
-#define USB_OUTPUT                      1
+#define AUTOGAIN_FREQUENCY              (1000 * 60 * 15) 
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
@@ -259,21 +260,21 @@ uint32_t datalog_timer_lens[4] = {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIME
 #define FFT_SCALER                      1000.0
 #endif
 
-bool stereo_audio = true;
-uint8_t num_channels = stereo_audio + 1;
+bool stereo_audio =                     true;
+uint8_t num_channels =                  stereo_audio + 1;
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false
 #define FRONT_MICROPHONE_INSTALLED      true
 #define REAR_MICROPHONE_INSTALLED       true
-bool front_mic_active = FRONT_MICROPHONE_INSTALLED;
-bool rear_mic_active = REAR_MICROPHONE_INSTALLED;
+bool front_mic_active =                 FRONT_MICROPHONE_INSTALLED;
+bool rear_mic_active =                  REAR_MICROPHONE_INSTALLED;
 // audio usage loggings
-uint8_t audio_usage_max = 0;
-elapsedMillis last_usage_print = 0;// for keeping track of audio memory usage
+uint8_t audio_usage_max =               0;
+elapsedMillis last_usage_print =        0;// for keeping track of audio memory usage
 
 /////////////////////////////////////////////////////////////////////////
-/////////////////////////      Leds     /////////////////////////////////
+/////////////////////////      Datalogging     /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 // calculate the actual start and end times based on this
 #define EEPROM_LOG_SIZE                 2000

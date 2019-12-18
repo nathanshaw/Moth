@@ -18,6 +18,7 @@ class LuxManager {
     };
     void startSensor(byte g, byte r);
     double forceLuxReading();
+    void forceLuxReading(double);
     void calibrate(long len, bool first_time);
     bool update();
 
@@ -42,6 +43,7 @@ class LuxManager {
 
   private:
     Adafruit_VEML7700 sensor = Adafruit_VEML7700();
+    uint8_t num_sensors = 0;
 
     int tca_addr;
 
@@ -52,6 +54,7 @@ class LuxManager {
 
     double past_readings[10];
     void readLux();
+    void readLux(Adafruit_VEML7700 *);
 
     unsigned long min_reading_time;
     unsigned long max_reading_time;
@@ -77,6 +80,7 @@ class LuxManager {
 //////////////////////////// lux and stuff /////////////////////////
 
 LuxManager::LuxManager (long minrt, long maxrt, int tca, String _name, NeoGroup *n) {
+  num_sensors = 1;
   tca_addr = tca;
   id = _name;
   neo = n;
@@ -141,12 +145,51 @@ double LuxManager::checkForLuxOverValue() {
   return lux;
 }
 
+void LuxManager::forceLuxReading(double temp) {
+  dprintln(PRINT_LUX_DEBUG, "\nForce lux reading");
+  dprint(PRINT_LUX_DEBUG, last_reading); dprint(PRINT_LUX_DEBUG, " readLux("); dprint(PRINT_LUX_DEBUG, id); dprint(PRINT_LUX_DEBUG, ")\t");
+  if (temp > 10000) {
+    return;
+  }
+  if (SMOOTH_LUX_READINGS && lux != 0) {
+    lux = (lux + temp) * 0.5;
+    checkForLuxOverValue();
+    lux_total += lux;
+    lux_readings++;
+  } else {
+    lux = temp;
+    checkForLuxOverValue();
+    lux_total += lux;
+    lux_readings++;
+  }
+  dprint(PRINT_LUX_READINGS, id); dprint(PRINT_LUX_READINGS,":");
+  dprint(PRINT_LUX_READINGS, lux); dprintln(PRINT_LUX_READINGS,"");
+  // update the brightness scales TODO , this logic does not work if the number of lux sensors is less than the number of groups
+  // todo have the brightness scaler mapping
+  brightness_scaler = calculateBrightnessScaler();
+  num_brightness_scaler_vals++;
+  brightness_scaler_total += brightness_scaler;
+  brightness_scaler_avg = brightness_scaler_total / num_brightness_scaler_vals;
+
+  neo->setBrightnessScaler(brightness_scaler);
+  if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0) {
+      dprint(PRINT_LUX_READINGS, "\tbs: "); 
+      dprintln(PRINT_LUX_READINGS, brightness_scaler);
+  };
+  updateMinMax();
+  last_reading = 0;
+}
+
 void LuxManager::readLux() {
+    readLux(&sensor);
+}
+
+void LuxManager::readLux(Adafruit_VEML7700 *s) {
   dprint(PRINT_LUX_DEBUG, last_reading); dprint(PRINT_LUX_DEBUG, " readLux("); dprint(PRINT_LUX_DEBUG, id); dprint(PRINT_LUX_DEBUG, ")\t");
   if (tca_addr > -1) {
     tcaselect(tca_addr);
   }
-  double temp  = sensor.readLux();
+  double temp  = s->readLux();
   if (temp > 10000) {
     return;
   }
@@ -185,11 +228,13 @@ void LuxManager::readLux() {
 double LuxManager::calculateBrightnessScaler() {
   // todo need to make this function better... linear mapping does not really work, need to map li
   // dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
-  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tconstrained:\t");
+  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "lux constrained:\t");
   double t = constrain(lux, LOW_LUX_THRESHOLD, HIGH_LUX_THRESHOLD);
   double bs;
   // conduct brightness scaling depending on if the reading is above or below the mid thresh
-  if (t < MID_LUX_THRESHOLD)  {
+  if (t == HIGH_LUX_THRESHOLD) {
+      neo->setBrightnessScaler(0.0);
+  } else if (t < MID_LUX_THRESHOLD)  {
     bs = map(t, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
   } else {
     bs = map(t, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
@@ -260,11 +305,13 @@ double LuxManager::forceLuxReading() {
 
 bool LuxManager::update() {
   if ((neo->getLedsOn() == false && neo->getOnOffLen() >= LUX_SHDN_LEN) || (neo->getShdnLen() > LUX_SHDN_LEN)) {
-    readLux();
-    if (neo->getShdnLen() > LUX_SHDN_LEN) {
-      neo->powerOn();
+    if (last_reading > min_reading_time) {
+        readLux();
+        if (neo->getShdnLen() > LUX_SHDN_LEN) {
+          neo->powerOn();
+        }
+        return true;
     }
-    return true;
   } else if (last_reading > max_reading_time && neo->getLedsOn() == true) {
     // shdn len has to be longer to ensure the lux sensors get a good reading
     neo->shutdown(LUX_SHDN_LEN*1.25);

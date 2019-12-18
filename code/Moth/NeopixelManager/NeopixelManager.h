@@ -27,7 +27,7 @@
 #include <PrintUtils.h>
 // #include <elapsedMillis.h>
 
-uint32_t packColors(uint8_t red, uint8_t green, uint8_t blue, double scaler) {
+uint32_t packColors(uint8_t &red, uint8_t &green, uint8_t &blue, double scaler) {
     /*
      * TODO write a function summary
      * 
@@ -116,12 +116,16 @@ class NeoGroup {
     bool shutdown(uint32_t len);
     String getName() { return id;};
 
+    void setExtremeLuxShdn(bool e){extreme_lux_shdn = e;};
+
   private:
     double hsb[3]; // limited from 0 - 255
     uint8_t rgb[3]; // limited from 0.0 - 1.0
     double hue2rgb(double p, double q, double t);
     void RgbToHsb(uint8_t red, uint8_t green, uint8_t blue);
     void HsbToRgb(double hue, double saturation, double lightness);
+    void updateColorLog(uint8_t red, uint8_t green, uint8_t blue);
+    bool extreme_lux_shdn = false;
 
     ////////////////////////////// Flashes //////////////////////////////////
     uint8_t flash_red = 0;
@@ -326,10 +330,7 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue) {
   colorWipe(red, green, blue, brightness_scaler);
 }
 
-void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
-  // TODO this logic is broken...
-  dprint(PRINT_COLOR_WIPE_DEBUG, id);
-  dprint(PRINT_COLOR_WIPE_DEBUG, " Starting colorWipe in NeoGroup - ");
+void NeoGroup::updateColorLog(uint8_t red, uint8_t green, uint8_t blue) {
   rgb[0] = red;
   rgb[1] = green;
   rgb[2] = blue;
@@ -342,23 +343,41 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   red_avg = red_tot / (double)red_readings;
   green_avg = green_tot / (double)green_readings;
   blue_avg = blue_tot / (double)blue_readings;
-
-  int colors = packColors(red, green, blue, bs);
   if (update_on_off_ratios) {
-    updateOnRatio(colors);
+    updateOnRatio(red + green + blue);
+  }
+}
+
+void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
+  // TODO this logic is broken...
+  if (extreme_lux_shdn = true) {
+    dprintln(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due extreme lux conditions");
+    return;
   }
   if (shdn_timer < shdn_len) {
     // if the LEDs are in shutdown mode than simply exit without changing the LEDs
     dprint(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due to shdn_timer : "); dprintln(PRINT_COLOR_WIPE_DEBUG, shdn_timer);
+    updateColorLog(0, 0, 0);
     return;
   }
+
   if (flash_on == true) {
+      // if the flash is on then add the flash colors to the color wipe colors
       dprintln(PRINT_COLOR_WIPE_DEBUG, " Flash blocked colorWipe");
-      return;
+      red += flash_red;
+      green += flash_green;
+      blue += flash_blue;
   }
+
+  int colors = packColors(red, green, blue, bs);
+  updateColorLog(red, green, blue);
+
+  dprint(PRINT_COLOR_WIPE_DEBUG, id);
+  dprint(PRINT_COLOR_WIPE_DEBUG, " Starting colorWipe in NeoGroup - ");
   dprint(PRINT_COLOR_WIPE_DEBUG, " num_pixels: ");
   dprint(PRINT_COLOR_WIPE_DEBUG, num_pixels); 
   dprint(PRINT_COLOR_WIPE_DEBUG, " - ");
+
   for (int i = 0; i < num_pixels; i++) {
       leds->setPixel(idx_start + i, colors);
       dprint(PRINT_COLOR_WIPE_DEBUG, idx_start+i);

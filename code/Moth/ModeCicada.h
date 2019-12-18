@@ -18,6 +18,10 @@ double fpm[2];
 double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
+#if COMBINE_LUX_READINGS == true
+double combined_lux = 0.0;
+#endif // combine lux readings
+
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 

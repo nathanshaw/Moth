@@ -31,11 +31,12 @@
 /////////////////////// colors ////////////////////////////
 #define RED                   0xff0000
 #define GREEN                 0x00ff00
-#define BLUE   0x0000ff
-#define YELLOW 0x101400
-#define PINK   0x120009
-#define ORANGE 0x100400
-#define WHITE  0xf0f0f0
+#define BLUE                  0x0000ff
+#define YELLOW                0x101400
+#define PINK                  0x120009
+#define ORANGE                0x100400
+#define WHITE                 0xf0f0f0
+#define PURPLE                0xf000f0
 
 ////////////////////// datatypes /////////////////
 #define DATATYPE_DOUBLE        0

@@ -60,10 +60,6 @@ void setupAudio() {
   Serial.println("WARNING - linkFeatureCollector() is not implemented yet");
  }
 
-void mainLoop() {
-   Serial.println("WARNING - mainLoop() is not implemented yet");
-}
-
 void setupDLManager() {
  Serial.println("WARNING - setupDLManager() is not implemented yet");
 }
