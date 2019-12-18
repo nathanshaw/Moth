@@ -80,7 +80,7 @@ void handleReceivedMessage(char *b) {
     }
   }
   uint8_t val = sval.toInt();
-  Serial.print("val is "); Serial.println(val);
+  // Serial.print("val is "); Serial.println(val);
   // if the message is R 0-255 turn the neopixels red, same for green and blue
   if (inc_byte == 'r' || inc_byte == 'R') {
     red = val;
@@ -127,12 +127,15 @@ void handleReceivedMessage(char *b) {
     switch (last_color_written) {
       case RED:
         red -= 1;
+        Serial.print("red now :"); Serial.println(red);
         break;
       case GREEN:
         green -= 1;
+        Serial.print("green now :"); Serial.println(green);
         break;
       case BLUE:
         blue -= 1;
+        Serial.print("blue now :"); Serial.println(blue);
         break;
       case YELLOW:
         green -= 1;
@@ -149,15 +152,19 @@ void handleReceivedMessage(char *b) {
         break;
     }
   } else if (inc_byte == '+') {
+    Serial.println("entered in a increase gain msg");
     switch (last_color_written) {
       case RED:
         red += 1;
+        Serial.print("red now :"); Serial.println(red);
         break;
       case GREEN:
         green += 1;
+        Serial.print("green now :"); Serial.println(green);
         break;
       case BLUE:
         blue += 1;
+        Serial.print("blue now :"); Serial.println(blue);
         break;
       case YELLOW:
         green += 1;

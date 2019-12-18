@@ -31,7 +31,7 @@ bool gain_adjust_active =                true;
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE                    CICADA_MODE
+#define FIRMWARE_MODE                    TEST_MODE
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
