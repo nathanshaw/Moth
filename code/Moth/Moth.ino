@@ -39,13 +39,15 @@ void updateLuxManagers() {
       // calculate what the combined lux is
       combined_lux = 0;
       for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-        combined_lux = lux_managers[i].getLux();
+        combined_lux += lux_managers[i].getLux();
       }
       combined_lux /= NUM_LUX_MANAGERS;
-
+      dprint(PRINT_LUX_DEBUG, " combined_lux value is : ");
+      dprint(PRINT_LUX_DEBUG, combined_lux);
       // set the new combined lux value to both managers
       for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
         lux_managers[i].forceLuxReading(combined_lux);
+        dprint(PRINT_LUX_DEBUG, "\t");
         dprint(PRINT_LUX_DEBUG, lux_managers[i].getName());
         dprint(PRINT_LUX_DEBUG, " lux reading : ");
         dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());

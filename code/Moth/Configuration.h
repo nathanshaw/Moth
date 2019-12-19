@@ -23,7 +23,7 @@
 bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
-#define   COMBINE_LUX_READINGS           false  
+#define   COMBINE_LUX_READINGS           true  
 
 bool gain_adjust_active =                true;
 
