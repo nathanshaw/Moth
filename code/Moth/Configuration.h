@@ -12,9 +12,10 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       3
+#define SERIAL_ID                       9
 
 // will there be a USB audio output object created?
+#define USB_INPUT                       1
 #define USB_OUTPUT                      1
 
 // if false, a click detected on either side results in a LED flash on both sides
@@ -22,7 +23,7 @@
 bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
-#define   COMBINE_LUX_READINGS           true  
+#define   COMBINE_LUX_READINGS           false  
 
 bool gain_adjust_active =                true;
 
@@ -63,10 +64,10 @@ bool gain_adjust_active =                true;
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
-#define PRINT_SONG_DATA                 false
+#define PRINT_SONG_DATA                 true
 
 #define PRINT_CLICK_FEATURES            false
-#define PRINT_CLICK_DEBUG               true
+#define PRINT_CLICK_DEBUG               false
 
 #define PRINT_LED_VALUES                false
 #define PRINT_LED_DEBUG                 false
@@ -87,6 +88,7 @@ bool gain_adjust_active =                true;
 #define PRINT_PEAK_DEBUG                false
 
 #define PRINT_TONE_VALS                 false
+
 #define PRINT_FREQ_VALS                 false
 
 #define PRINT_FFT_VALS                  false
@@ -103,14 +105,15 @@ bool front_lux_active =                 true;
 bool rear_lux_active =                  true;
 
 #define LUX_CALIBRATION_TIME            3000
+// will the current lux reading be averaged with the past lux reading?
 #define SMOOTH_LUX_READINGS             false
 
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               16.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               100
-#define HIGH_LUX_THRESHOLD              1000.0
-#define EXTREME_LUX_THRESHOLD           2000.0
+#define HIGH_LUX_THRESHOLD              500.0
+#define EXTREME_LUX_THRESHOLD           800.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
 #define BRIGHTNESS_SCALER_MIN           0.125

@@ -34,14 +34,24 @@ void updateLuxManagers() {
         updated++;
       }
     }
-    if (COMBINE_LUX_READINGS && updated) {
+#if COMBINE_LUX_READINGS > 0
+    if (updated) {
+      // calculate what the combined lux is
+      combined_lux = 0;
       for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-        lux_managers[i].forceLuxReading(lux_managers[NUM_LUX_MANAGERS - i].getLux());
+        combined_lux = lux_managers[i].getLux();
+      }
+      combined_lux /= NUM_LUX_MANAGERS;
+
+      // set the new combined lux value to both managers
+      for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
+        lux_managers[i].forceLuxReading(combined_lux);
         dprint(PRINT_LUX_DEBUG, lux_managers[i].getName());
         dprint(PRINT_LUX_DEBUG, " lux reading : ");
         dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());
       }
     }
+#endif
   }
 }
 
@@ -86,7 +96,7 @@ void setup() {
   }
 #if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < 10; i++) {
-    leds.setPixel(i, 8, 8, 8);
+    leds.setPixel(i, 64, 64, 64);
     leds.show();
   }
 #endif

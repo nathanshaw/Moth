@@ -132,6 +132,7 @@ double LuxManager::checkForLuxOverValue() {
     dprintln(PRINT_LUX_DEBUG, "lux "); dprintln(PRINT_LUX_DEBUG, id); dprintln(PRINT_LUX_DEBUG, " reading error: ");
     dprintln(PRINT_LUX_DEBUG, (String)lux);
     // take the reading again
+    // todo also need to remove the current reading from the logs 
     if (SMOOTH_LUX_READINGS && lux != 0) {
       lux = (lux + sensor.readLux()) * 0.5;
       lux_total += lux;
@@ -214,43 +215,63 @@ void LuxManager::readLux(Adafruit_VEML7700 *s) {
   num_brightness_scaler_vals++;
   brightness_scaler_total += brightness_scaler;
   brightness_scaler_avg = brightness_scaler_total / num_brightness_scaler_vals;
-
   neo->setBrightnessScaler(brightness_scaler);
+  
   if (PRINT_BRIGHTNESS_SCALER_DEBUG == 0) {
       dprint(PRINT_LUX_READINGS, "\tbs: "); 
       dprintln(PRINT_LUX_READINGS, brightness_scaler);
   };
+
   updateMinMax();
   last_reading = 0;
 }
 
 
 double LuxManager::calculateBrightnessScaler() {
-  // todo need to make this function better... linear mapping does not really work, need to map li
-  // dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
-  double t = constrain(lux, LOW_LUX_THRESHOLD, HIGH_LUX_THRESHOLD);
-  double bs;
-  // conduct brightness scaling depending on if the reading is above or below the mid thresh
-  if (t == HIGH_LUX_THRESHOLD) {
-      if (neo->getLuxShdn() == false) {
-          neo->setExtremeLuxShdn(1);
-          dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "Neopixel brightness scaler set to 0.0 due to extreme lux");
-      }
-  } else if (t < MID_LUX_THRESHOLD)  {
-    bs = map(t, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
-    if (neo->getLuxShdn() == true) {
-        neo->setExtremeLuxShdn(false);
+    // todo need to make this function better... linear mapping does not really work, need to map li
+    double bs;
+    // conduct brightness scaling depending on if the reading is above or below the mid thresh
+    // is the unconstrained lux above the extreme_lux_thresh?
+    dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, id);
+    if (lux >= EXTREME_LUX_THRESHOLD) {
+        bs = 0.0;
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " Neopixel brightness scaler set to 0.0 due to extreme lux");
+        if (neo->getLuxShdn() == false) {
+            neo->setExtremeLuxShdn(1);
+        }
+    } 
+    else if (lux >= HIGH_LUX_THRESHOLD) {
+        bs = BRIGHTNESS_SCALER_MAX;
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MAX_LUX_THRESHOLD, setting brightness scaler to BRIGHTNESS_SCALER_MAX");
+        if (neo->getLuxShdn() == true) {
+            neo->setExtremeLuxShdn(false);
+        }
     }
-  } else {
-    bs = map(t, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
-    if (neo->getLuxShdn() == true) {
-        neo->setExtremeLuxShdn(false);
+    else if (lux >= MID_LUX_THRESHOLD) {
+        bs = map(lux, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MID_LUX_THRESHOLD, setting brightness scaler to a value > 1.0");
+        if (neo->getLuxShdn() == true) {
+            neo->setExtremeLuxShdn(false);
+        }
     }
-  }
-  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "lux constrained:\t");
-  dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, t); dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tbrightness_scaler:\t");
-  dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, bs);
-  return bs;
+    else if (lux >= LOW_LUX_THRESHOLD)  {
+        bs = map(lux, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MIN_LUX_THRESHOLD, setting brightness scaler to a value < 1.0");
+        if (neo->getLuxShdn() == true) {
+            neo->setExtremeLuxShdn(false);
+        }
+    } else {
+        bs = BRIGHTNESS_SCALER_MIN;
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is lower than the MIN_LUX_THRESHOLD, setting brightness scaler to BRIGHTNESS_SCALER_MIN");
+        if (neo->getLuxShdn() == true) {
+            neo->setExtremeLuxShdn(false);
+        }
+    }
+    dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "lux:\t");
+    dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, lux);
+    dprint(PRINT_BRIGHTNESS_SCALER_DEBUG, "\tbrightness_scaler:\t");
+    dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, bs);
+    return bs;
 }
 
 double LuxManager::getBrightnessScaler() {
@@ -314,7 +335,16 @@ double LuxManager::forceLuxReading() {
 
 bool LuxManager::update() {
   if ((neo->getLedsOn() == false && neo->getOnOffLen() >= LUX_SHDN_LEN) || (neo->getShdnLen() > LUX_SHDN_LEN)) {
-    if (last_reading > min_reading_time) {
+      // if currently in extreme lux shutdown then poll 20x faster
+    if (neo->getLuxShdn() && last_reading > min_reading_time * 0.05) {
+        dprint(PRINT_LUX_DEBUG, "QUICK UPDATE due to extreme lux reading");
+        readLux();
+        if (neo->getShdnLen() > LUX_SHDN_LEN) {
+          neo->powerOn();
+        }
+        return true;
+    }
+    else if (last_reading > min_reading_time) {
         readLux();
         if (neo->getShdnLen() > LUX_SHDN_LEN) {
           neo->powerOn();
