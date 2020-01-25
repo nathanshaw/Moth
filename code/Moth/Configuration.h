@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       9
+#define SERIAL_ID                       5
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
@@ -20,19 +20,19 @@
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side
-bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
+bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
-#define   COMBINE_LUX_READINGS           true  
+#define   COMBINE_LUX_READINGS          false  
 
-bool gain_adjust_active =                true;
+bool gain_adjust_active =               true;
 
 // WARNING NOT IMPLEMENTED - TODO
-#define DEACTIVATE_UNDER_EXTREME_LUX     true   
+#define DEACTIVATE_UNDER_EXTREME_LUX    true   
 
-// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
+// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, STATIC_LIGHTING_MODE or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE                    CICADA_MODE
+#define FIRMWARE_MODE                   CICADA_MODE
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -60,11 +60,11 @@ bool gain_adjust_active =                true;
 
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 true
-#define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+#define PRINT_LUX_DEBUG                 false
+#define PRINT_LUX_READINGS              false
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
-#define PRINT_SONG_DATA                 true
+#define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
@@ -76,9 +76,9 @@ bool gain_adjust_active =                true;
 
 #define PRINT_AUTO_GAIN                 false
 
-#define PRINT_LOG_WRITE                 true
+#define PRINT_LOG_WRITE                 false
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK              true
+#define EEPROM_WRITE_CHECK              false
 
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
@@ -108,12 +108,15 @@ bool rear_lux_active =                  true;
 // will the current lux reading be averaged with the past lux reading?
 #define SMOOTH_LUX_READINGS             false
 
+// todo these values should be determined by data specific to the location?
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               16.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               100
-#define HIGH_LUX_THRESHOLD              500.0
-#define EXTREME_LUX_THRESHOLD           800.0
+#define MID_LUX_THRESHOLD               200
+// todo what does this do?
+#define HIGH_LUX_THRESHOLD              800.0
+// todo what does this do?
+#define EXTREME_LUX_THRESHOLD           3000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
 #define BRIGHTNESS_SCALER_MIN           0.125
@@ -258,17 +261,23 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
 #if FIRMWARE_MODE == CICADA_MODE
-#define PEAK_SCALER                     10.0
-#define RMS_SCALER                      10.0
-#define FFT_SCALER                      100.0
+  #define PEAK_SCALER                     10.0
+  #define RMS_SCALER                      10.0
+  #define FFT_SCALER                      100.0
 #elif FIRMWARE_MODE == PITCH_MODE
-#define PEAK_SCALER                     100.0
-#define RMS_SCALER                      100.0
-#define FFT_SCALER                      1000.0
+  #define PEAK_SCALER                     100.0
+  #define RMS_SCALER                      100.0
+  #define FFT_SCALER                      1000.0
 #endif
 
 bool stereo_audio =                     true;
 uint8_t num_channels =                  stereo_audio + 1;
+
+// if using the ground enclosure then only one channel should be used
+#if (ENCLOSURE_TYPE == GROUND_ENCLOSURE)
+  num_channels = 1;
+#endif
+
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false
@@ -276,6 +285,11 @@ uint8_t num_channels =                  stereo_audio + 1;
 #define REAR_MICROPHONE_INSTALLED       true
 bool front_mic_active =                 FRONT_MICROPHONE_INSTALLED;
 bool rear_mic_active =                  REAR_MICROPHONE_INSTALLED;
+
+#if ENCLOSURE_TYPE == GROUND_ENCLOSURE
+  front_mic_active = false;
+#endif
+
 // audio usage loggings
 uint8_t audio_usage_max =               0;
 elapsedMillis last_usage_print =        0;// for keeping track of audio memory usage

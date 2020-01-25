@@ -23,16 +23,30 @@
 #define H_VERSION_MAJOR           2
 #define H_VERSION_MINOR           1
 
-#if H_VERSION_MAJOR > 1
+// the type of enclosure determines how the NeoPixels will be assigned, if there is a ground enclosure then the stereo audio image
+// and two sided feedback wll be turned off
+
+// TODO - fully implement this, right now it just changes the size of the LED array
+#define GROUND_ENCLOSURE                0
+#define ORB_ENCLOSURE                   1
+
+#define ENCLOSURE_TYPE                  ORB_ENCLOSURE
+
+#if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define NUM_LUX_SENSORS           2
+#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
+#define NUM_LUX_SENSORS           1
 #endif
 
 // todo add logic to change these if needed...
-#if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0)
+#if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0 && ENCLOSURE_TYPE == GROUND_ENCLOSURE)
 #define NUM_LED                   12   
-#endif
-#if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
+#elif (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1 && ENCLOSURE_TYPE == GROUND_ENCLOSURE)
 #define NUM_LED                   10
+#elif (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0 && ENCLOSURE_TYPE == ORB_ENCLOSURE)
+#define NUM_LED                   6   
+#elif (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1 && ENCLOSURE_TYPE == ORB_ENCLOSURE)
+#define NUM_LED                   5
 #endif 
 
 ////////////// TCA Bus Expanders     /////
@@ -61,7 +75,7 @@
 #define TEST_MODE                       0
 #define CICADA_MODE                     1
 #define PITCH_MODE                      2
-
+#define STATIC_LIGHTING_MODE            3
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////

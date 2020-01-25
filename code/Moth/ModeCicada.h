@@ -25,25 +25,36 @@ double combined_lux = 0.0;
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
-NeoGroup neos[2] = {
-  NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
-};
+#if (ENCLOSURE_TYPE == ORB_ENCLOSURE)
+  NeoGroup neos[2] = {
+    NeoGroup(&leds, 0, (NUM_LED * 0.5) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+    NeoGroup(&leds, NUM_LED * 0.5, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  };
+  // lux managers to keep track of the VEML readings
+  LuxManager lux_managers[NUM_LUX_SENSORS] = {
+    LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
+    LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
+  };
+  FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
 
-// lux managers to keep track of the VEML readings
-LuxManager lux_managers[NUM_LUX_SENSORS] = {
-  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
-  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
-};
+  AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
+                           AutoGain("Click", &fc[2], &fc[3], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
+                          };
 
+#elif (ENCLOSURE_TYPE == GROUND_ENCLOSURE)
+  NeoGroup neos[1] =   {NeoGroup(&leds, 0, NUM_LED - 1, "FRONT", MIN_FLASH_TIME, MAX_FLASH_TIME)};
+
+  LuxManager lux_managers[NUM_LUX_SENSORS] = {
+    LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
+  };
+  FeatureCollector fc[2] = {FeatureCollector("front song"), FeatureCollector("front click")};
+
+  AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[0], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
+                           AutoGain("Click", &fc[1], &fc[1], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
+                          }; // tODO the way that the FC's are passed into this might cause some problems...
+#endif
 
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
-
-FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
-
-AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
-                         AutoGain("Click", &fc[2], &fc[3], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
-                        };
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
 AudioInputI2S            i2s1;           //xy=58,421
@@ -119,6 +130,7 @@ void initAutoGain() {
   auto_gain[1].setStartDelay(AUTOGAIN_START_DELAY);
 }
 
+//TODO have to compensate for both enclosure types here...
 void linkFeatureCollectors() {
   fc[0].linkAmplifier(&song_input_amp1, MIN_SONG_GAIN, MAX_SONG_GAIN);
   fc[0].linkAmplifier(&song_mid_amp1, MIN_SONG_GAIN, MAX_SONG_GAIN);
@@ -126,18 +138,20 @@ void linkFeatureCollectors() {
   fc[1].linkAmplifier(&song_input_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
   fc[1].linkAmplifier(&song_mid_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
   fc[1].linkAmplifier(&song_post_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[2].linkAmplifier(&click_input_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[2].linkAmplifier(&click_mid_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[2].linkAmplifier(&click_post_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-
+  if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
+    fc[2].linkAmplifier(&click_input_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+    fc[2].linkAmplifier(&click_mid_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+    fc[2].linkAmplifier(&click_post_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+    fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+    fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+    fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+  }
   if (RMS_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
     fc[0].linkRMS(&song_rms1, RMS_SCALER);
     fc[1].linkRMS(&song_rms2, RMS_SCALER);
     // fc 2-3 are for the click front/rear
+
     fc[2].linkRMS(&click_rms1, RMS_SCALER);
     fc[3].linkRMS(&click_rms2, RMS_SCALER);
   }
@@ -208,10 +222,15 @@ void setupAudio() {
   Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(SONG_BQ2_Q); Serial.print("\tdB"); Serial.println(SONG_BQ2_DB);
 
-  fc[0].updateGain(STARTING_SONG_GAIN);
-  fc[1].updateGain(STARTING_SONG_GAIN);
-  fc[2].updateGain(STARTING_CLICK_GAIN);
-  fc[3].updateGain(STARTING_CLICK_GAIN);
+  for (int i = 0; i < NUM_FEATURE_COLLECTORS / 2; i++) {
+    if (NUM_FEATURE_COLLECTORS == 4) {
+      fc[i].updateGain(STARTING_SONG_GAIN);
+      fc[i + 2].updateGain(STARTING_CLICK_GAIN); // TODO - compensate for the enclosure types
+    } else if (NUM_FEATURE_COLLECTORS == 2 && i == 0) {
+      fc[i].updateGain(STARTING_SONG_GAIN);
+      fc[i + 1].updateGain(STARTING_CLICK_GAIN);
+    }
+  }
 
   Serial.println("Testing Microphones");
   printTeensyDivide();

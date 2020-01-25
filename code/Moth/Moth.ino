@@ -11,6 +11,8 @@
 #include "ModePitch.h"
 #elif FIRMWARE_MODE == TEST_MODE
 #include "ModeTest.h"
+#elif FIRMWARE_MODE == STATIC_LIGHTING_MODE
+#include "ModeTest.h"
 #endif
 
 void updateFeatureCollectors() {
@@ -86,17 +88,17 @@ void setup() {
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
-    lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-    lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+    for (int i = 0; i < NUM_LUX_SENSORS; i++) {
+    lux_managers[i].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
     delay(200);
-    lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
-    lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
+    lux_managers[i].calibrate(LUX_CALIBRATION_TIME);
+    }
   }
   for (int i = 0; i < 10; i++) {
     leds.setPixel(i, 0, 0, 0);
     leds.show();
   }
-#if FIRMWARE_MODE == TEST_MODE
+#if FIRMWARE_MODE == STATIC_LIGHTING_MODE
   for (int i = 0; i < 10; i++) {
     leds.setPixel(i, 64, 64, 64);
     leds.show();

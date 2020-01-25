@@ -21,11 +21,21 @@
 uint8_t red, green, blue;
 uint32_t last_color_written = 0;
 
+#if FIRMWARE_MODE == STATIC_LIGHTING_MODE
+WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
+NeoGroup neos[NUM_NEO_GROUPS] = {
+  NeoGroup(&leds, 10, 14, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+  NeoGroup(&leds, 15, 19, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+};
+#endif
+
+#if FIRMWARE_MODE == TEST_MODE
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 NeoGroup neos[NUM_NEO_GROUPS] = {
   NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
   NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
+#endif
 
 // lux managers to keep track of the VEML readings
 LuxManager lux_managers[NUM_LUX_SENSORS] = {
