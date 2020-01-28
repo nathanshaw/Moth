@@ -30,7 +30,7 @@
 #define GROUND_ENCLOSURE                0
 #define ORB_ENCLOSURE                   1
 
-#define ENCLOSURE_TYPE                  ORB_ENCLOSURE
+#define ENCLOSURE_TYPE                  GROUND_ENCLOSURE
 
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define NUM_LUX_SENSORS           2

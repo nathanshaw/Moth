@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       5
+#define SERIAL_ID                       4
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
@@ -83,14 +83,10 @@ bool gain_adjust_active =               true;
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
 #define PRINT_RMS_VALS                  false
-
 #define PRINT_PEAK_VALS                 false
 #define PRINT_PEAK_DEBUG                false
-
 #define PRINT_TONE_VALS                 false
-
 #define PRINT_FREQ_VALS                 false
-
 #define PRINT_FFT_VALS                  false
 #define PRINT_FFT_DEBUG                 false
 
@@ -271,23 +267,30 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 #endif
 
 bool stereo_audio =                     true;
-uint8_t num_channels =                  stereo_audio + 1;
 
 // if using the ground enclosure then only one channel should be used
 #if (ENCLOSURE_TYPE == GROUND_ENCLOSURE)
-  num_channels = 1;
+uint8_t num_channels =                  1;
+#else
+uint8_t num_channels =                  stereo_audio + 1;
 #endif
 
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false
 #define FRONT_MICROPHONE_INSTALLED      true
+#if (ENCLOSURE_TYPE == ORB_ENCLOSURE)
 #define REAR_MICROPHONE_INSTALLED       true
-bool front_mic_active =                 FRONT_MICROPHONE_INSTALLED;
+#else
+#define REAR_MICROPHONE_INSTALLED       false
+#endif
+
 bool rear_mic_active =                  REAR_MICROPHONE_INSTALLED;
 
 #if ENCLOSURE_TYPE == GROUND_ENCLOSURE
-  front_mic_active = false;
+  bool front_mic_active =               false;
+  #else
+  bool front_mic_active =               FRONT_MICROPHONE_INSTALLED;
 #endif
 
 // audio usage loggings

@@ -98,6 +98,7 @@ void setup() {
     leds.setPixel(i, 0, 0, 0);
     leds.show();
   }
+  Serial.println("Turned off the LEDs");
 #if FIRMWARE_MODE == STATIC_LIGHTING_MODE
   for (int i = 0; i < 10; i++) {
     leds.setPixel(i, 64, 64, 64);

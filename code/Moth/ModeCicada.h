@@ -14,6 +14,7 @@ elapsedMillis fpm_timer;
 uint32_t num_flashes[2];
 double total_flashes[2];
 double fpm[2];
+
 // for tracking the peak something or another?
 double total_song_peaks[2];
 uint32_t num_song_peaks[2];
@@ -23,26 +24,30 @@ double combined_lux = 0.0;
 #endif // combine lux readings
 
 //////////////////////////////// Global Objects /////////////////////////
-WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
-#if (ENCLOSURE_TYPE == ORB_ENCLOSURE)
+// #if (ENCLOSURE_TYPE == ORB_ENCLOSURE)
+  WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
+  
   NeoGroup neos[2] = {
     NeoGroup(&leds, 0, (NUM_LED * 0.5) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
     NeoGroup(&leds, NUM_LED * 0.5, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
   };
+  
   // lux managers to keep track of the VEML readings
-  LuxManager lux_managers[NUM_LUX_SENSORS] = {
+  LuxManager lux_managers[2] = {
     LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
     LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
   };
+  
   FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
 
   AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
                            AutoGain("Click", &fc[2], &fc[3], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
                           };
-
+/*
 #elif (ENCLOSURE_TYPE == GROUND_ENCLOSURE)
-  NeoGroup neos[1] =   {NeoGroup(&leds, 0, NUM_LED - 1, "FRONT", MIN_FLASH_TIME, MAX_FLASH_TIME)};
+  WS2812Serial leds(NUM_LED/2, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
+  NeoGroup neos[1] =   {NeoGroup(&leds, 0, NUM_LED/2 - 1, "FRONT", MIN_FLASH_TIME, MAX_FLASH_TIME)};
 
   LuxManager lux_managers[NUM_LUX_SENSORS] = {
     LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
@@ -53,7 +58,7 @@ WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS28
                            AutoGain("Click", &fc[1], &fc[1], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
                           }; // tODO the way that the FC's are passed into this might cause some problems...
 #endif
-
+*/
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
@@ -117,7 +122,6 @@ AudioConnection          patchCord27(song_post_amp2, song_peak2);
 AudioConnection          patchCord28(song_post_amp1, song_rms1);
 AudioConnection          patchCord29(song_post_amp1, song_peak1);
 AudioConnection          patchCord30(song_post_amp1, 0, usb1, 1);
-
 
 void initAutoGain() {
   auto_gain[0].setExternalThresholds((String)"Led ON Ratio", MIN_ON_RATIO_THRESH, LOW_ON_RATIO_THRESH,
@@ -531,8 +535,6 @@ void updateAutogain() {
   return;
 #endif
 }
-
-
 
 void updateMode() {
   updateClick();
