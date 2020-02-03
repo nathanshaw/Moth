@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       9
+#define SERIAL_ID                       4
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
@@ -23,7 +23,7 @@
 bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
-#define   COMBINE_LUX_READINGS           true  
+#define   COMBINE_LUX_READINGS           false  
 
 bool gain_adjust_active =                true;
 
@@ -57,7 +57,6 @@ bool gain_adjust_active =                true;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Debuggings ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-
 
 ///////////////////////// Cicada ///////////////////////////////////////////
 #define PRINT_LUX_DEBUG                 true
@@ -131,8 +130,8 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
-#define FLASH_RED                       50
-#define FLASH_GREEN                     100
+#define FLASH_RED                       0
+#define FLASH_GREEN                     0
 #define FLASH_BLUE                      255
 
 ////////////////////////////////////////////////////////////////////////////
