@@ -67,6 +67,10 @@ void setup() {
   Serial.println("Serial begun");
   delay(1000);
   leds.begin();
+  for (int i = 0; i < 10; i++) {
+    leds.setPixel(i, 12, 12, 0);
+    leds.show();
+  }
   Serial.println("LEDS have been initalised");
   delay(3000); Serial.println("Setup Loop has started");
   if (JUMPERS_POPULATED) {
