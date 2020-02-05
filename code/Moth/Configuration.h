@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       4
+#define SERIAL_ID                       2
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
@@ -82,8 +82,9 @@ bool gain_adjust_active =                true;
 ///////////////////////// Feature Collector ///////////////////////////////
 // feature collector related
 #define PRINT_RMS_VALS                  false
+#define PRINT_RMS_DEBUG                 false
 
-#define PRINT_PEAK_VALS                 false
+#define PRINT_PEAK_VALS                 true
 #define PRINT_PEAK_DEBUG                false
 
 #define PRINT_TONE_VALS                 false

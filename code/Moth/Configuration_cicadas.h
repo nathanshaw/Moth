@@ -42,6 +42,11 @@
 #define CLICK_RMS_DELTA_THRESH          0.3
 #define CLICK_PEAK_DELTA_THRESH         0.3
 
+// these values are used to ensure that the light do not turn on when there are low 
+// amplitudes in the sonic environment
+#define RMS_LOW_THRESH 0.1
+#define PEAK_LOW_THRESH 0.1
+
 // One click per ten minutes
 #define MIN_FPM_THRESH                  0.1
 #define LOW_FPM_THRESH                  1.0

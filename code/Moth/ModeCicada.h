@@ -223,11 +223,14 @@ void setupAudio() {
   printDivide();
 }
 
+
 uint8_t calculateRMSWeighted(FeatureCollector *f) {
   double rms = 0;
   rms = f->getRMS() * (double)RMS_SCALER;
   if (rms > 1.0) {
     rms = 1.0;
+  } else if (rms < RMS_LOW_THRESH) {
+      rms = 0.0;
   }
   uint8_t scaler = (uint8_t)(rms * (double)MAX_BRIGHTNESS);
   return scaler;
@@ -238,8 +241,10 @@ uint8_t calculatePeakWeighted(FeatureCollector *f) {
   peak = f->getPeak() * (double)PEAK_SCALER;
   if (peak > 1.0) {
     peak = 1.0;
+  } else if (peak < PEAK_LOW_THRESH){
+      peak = 0.0;
   }
-  uint8_t scaler = peak * MAX_BRIGHTNESS;
+  uint8_t scaler = uint8_t(peak * (double)MAX_BRIGHTNESS);
   return scaler;
 }
 
@@ -423,10 +428,9 @@ void setupDLManager() {
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
-    uint8_t song_rms_weighted = calculateRMSWeighted(&fc[i]);
-    uint8_t song_peak_weighted = calculatePeakWeighted(&fc[i]);
     // if (flash_on[i] == false) {
     if (SONG_FEATURE == PEAK_DELTA) {
+      uint8_t song_peak_weighted = calculatePeakWeighted(&fc[i]);
       if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
         if (front_mic_active == true && i == 0) {
           neos[0].colorWipe(song_peak_weighted, 0, 0);
@@ -439,6 +443,7 @@ void updateSong() {
         neos[i].colorWipe(song_peak_weighted, 0, 0);
       }
     } else if (SONG_FEATURE == RMS_DELTA) {
+      uint8_t song_rms_weighted = calculateRMSWeighted(&fc[i]);
       if (stereo_audio == false) {
         if (front_mic_active == true && i == 0) {
           neos[0].colorWipe(song_rms_weighted, 0, 0);
