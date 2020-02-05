@@ -268,7 +268,11 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 #endif
 
 bool stereo_audio =                     true;
-uint8_t num_channels =                  stereo_audio + 1;
+#if ENCLOSURE_TYPE == GROUND_ENCLOSURE
+ uint8_t num_channels = 1;
+#elif ENCLOSURE_TYPE == ORB_ENCLOSURE
+ uint8_t num_channels =                  stereo_audio + 1;
+#endif
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false

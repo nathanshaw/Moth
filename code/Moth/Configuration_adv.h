@@ -12,6 +12,10 @@
 ////////////////////// Hardware Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+#define ORB_ENCLOSURE             0
+#define GROUND_ENCLOSURE          1
+#define ENCLOSURE_TYPE            1
+
 // different microcontrollers which can be used for the system
 #define TEENSY30                  0
 #define TEENSY32                  1

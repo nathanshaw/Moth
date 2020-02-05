@@ -223,14 +223,13 @@ void setupAudio() {
   printDivide();
 }
 
-
 uint8_t calculateRMSWeighted(FeatureCollector *f) {
   double rms = 0;
   rms = f->getRMS() * (double)RMS_SCALER;
   if (rms > 1.0) {
     rms = 1.0;
   } else if (rms < RMS_LOW_THRESH) {
-      rms = 0.0;
+    rms = 0.0;
   }
   uint8_t scaler = (uint8_t)(rms * (double)MAX_BRIGHTNESS);
   return scaler;
@@ -241,8 +240,8 @@ uint8_t calculatePeakWeighted(FeatureCollector *f) {
   peak = f->getPeak() * (double)PEAK_SCALER;
   if (peak > 1.0) {
     peak = 1.0;
-  } else if (peak < PEAK_LOW_THRESH){
-      peak = 0.0;
+  } else if (peak < PEAK_LOW_THRESH) {
+    peak = 0.0;
   }
   uint8_t scaler = uint8_t(peak * (double)MAX_BRIGHTNESS);
   return scaler;
@@ -427,6 +426,7 @@ void setupDLManager() {
 }
 
 void updateSong() {
+  // TODO - double check that these are both pulling the correct feature collector
   for (int i = 0; i < num_channels; i++) {
     // if (flash_on[i] == false) {
     if (SONG_FEATURE == PEAK_DELTA) {
@@ -464,39 +464,32 @@ void updateSong() {
 }
 
 void updateClick() {
-  if (fc[2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
-    if (neos[0].flashOn()) {
-      num_flashes[0]++;
-      total_flashes[0]++;
-      fpm[0] = num_flashes[0] / fpm_timer;
-      // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
-      if (INDEPENDENT_FLASHES == false) {
-        if (neos[1].flashOn()) {
-          num_flashes[1]++;
-          total_flashes[1]++;
-          fpm[1] = num_flashes[1] / fpm_timer;
-          return;
+  for (int i = 0; i < num_channels; i++) {
+    if (fc[i + 2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
+      if (neos[i].flashOn()) {
+        num_flashes[i]++;
+        total_flashes[i]++;
+        fpm[i] = num_flashes[i] / fpm_timer;
+        // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
+        if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
+          if (neos[1].flashOn()) {
+            num_flashes[1]++;
+            total_flashes[1]++;
+            fpm[1] = num_flashes[1] / fpm_timer;
+          }
+        }
+        if (INDEPENDENT_FLASHES == false && i == 1) {
+          if (neos[0].flashOn()) {
+            num_flashes[0]++;
+            total_flashes[0]++;
+            fpm[0] = num_flashes[0] / fpm_timer;
+          }
         }
       }
-    }
-  }
-  if (fc[3].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
-    if (neos[1].flashOn()) {
-      num_flashes[1]++;
-      total_flashes[1]++;
-      fpm[1] = num_flashes[1] / fpm_timer;
-      // Serial.print("num_flashes 1: "); Serial.println(num_flashes[1]);
-      if (INDEPENDENT_FLASHES == false) {
-        if (neos[0].flashOn()) {
-          num_flashes[0]++;
-          total_flashes[0]++;
-          fpm[0] = num_flashes[0] / fpm_timer;
-        }
+      for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
+        neos[i].update();
       }
     }
-  }
-  for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
-    neos[i].update();
   }
 }
 /*
@@ -517,8 +510,6 @@ void updateAutogain() {
   return;
 #endif
 }
-
-
 
 void updateMode() {
   updateClick();

@@ -3,7 +3,6 @@
    Written by Nathan Villicana-Shaw in 2019
    The runtime, boot, and all other configurations are found in the Configuration.h file
 */
-
 #include "Configuration.h"
 #if FIRMWARE_MODE == CICADA_MODE
 #include "ModeCicada.h"
