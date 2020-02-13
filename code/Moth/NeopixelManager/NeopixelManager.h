@@ -477,36 +477,43 @@ bool NeoGroup::flashOn() {
   return flashOn(flash_red, flash_green, flash_blue);
 }
 
+//////////////////////////////////////////////////////
 ////////////// Update Methods/////////////////////////
-//
+//////////////////////////////////////////////////////
 void NeoGroup::update() {
-  // if there is time remaining in the flash it either needs to be turned on or the timer needs to increment
+  // if there is time remaining in the flash it either needs to be turned
+  // on or the timer needs to increment
   if (remaining_flash_delay > 0) {
-    // dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, " : ");
-    // dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
-    // dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
+    dprintln(PRINT_CLICK_DEBUG, "-------------------------------------");
+    dprint(PRINT_CLICK_DEBUG, "flash delay "); dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, " : ");
+    dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprintTab(PRINT_CLICK_DEBUG);
+    dprint(PRINT_CLICK_DEBUG, last_flash_update); dprintTab(PRINT_CLICK_DEBUG);
+    // if the flash is not currently on, turn the flash on
     if (flash_on < 1) { //and the light is not currently on
       dprintln(PRINT_CLICK_DEBUG, "-- Turning the Flash ON --");
       flashOn(flash_red, flash_green, flash_blue);// flash on
     }
+    // if the flash is already on subtract from the timer
     else {
-      // if the light is already on subtract the number of ms which have gone by since the last check
-      // dprint(PRINT_CLICK_DEBUG, "last_flash :\t"); dprintln(PRINT_CLICK_DEBUG, last_flash);
-      // dprint(PRINT_CLICK_DEBUG, "remaining_flash_delay "); 
-      // dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, ":\t");
-      // dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprint(PRINT_CLICK_DEBUG, "\t");
+      dprintln(PRINT_CLICK_DEBUG, "- - - - - - - - - - - - - - - - - - -");
+      dprint(PRINT_CLICK_DEBUG, "last_flash :\t"); dprintln(PRINT_CLICK_DEBUG, last_flash);
+      dprint(PRINT_CLICK_DEBUG, "remaining_flash_delay "); 
+      dprint(PRINT_CLICK_DEBUG, id); dprint(PRINT_CLICK_DEBUG, ":\t");
+      dprint(PRINT_CLICK_DEBUG, remaining_flash_delay); dprint(PRINT_CLICK_DEBUG, "\t");
       remaining_flash_delay = remaining_flash_delay - last_flash_update;
       remaining_flash_delay = max(remaining_flash_delay, 0);
-      // dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
+      dprintln(PRINT_CLICK_DEBUG, remaining_flash_delay);
       if (remaining_flash_delay == 0) {
         dprint(PRINT_CLICK_DEBUG, "Click time over, turning off flash "); dprintln(PRINT_CLICK_DEBUG, id);
         flashOff(); // turn off the NeoPixels
       }
     }
   }
-  // this is so the timer does not get reset if it has been running for less than one ms
+  // this is so the timer does not get reset 
+  // if it has been running for less than one ms
   if (last_flash_update != 0) {
     last_flash_update = 0;
+    Serial.println("updated last_flash_upate to 0");
   }
 }
 

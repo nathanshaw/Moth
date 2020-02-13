@@ -204,7 +204,7 @@ bool FeatureCollector::testMicrophoneRMS() {
     uint8_t readings = 0;
     double values = 0.0;
     unsigned long a_time = millis();
-    Serial.print("Testing ");Serial.print(id);Serial.println(" Microphone using RMSM");
+    Serial.print("Testing ");Serial.print(id);Serial.println(" Microphone using RMS");
     while (readings < 10 && millis() < a_time + MICROPHONE_TEST_DURATION) {
         if (rms_ana->available()) {
             values += rms_ana->read();

@@ -46,39 +46,41 @@ AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, ST
                         };
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
-AudioInputI2S            i2s1;           //xy=58,421
-AudioAmplifier           click_input_amp1; //xy=264,393
-AudioAmplifier           song_input_amp1; //xy=264,426
-AudioAmplifier           song_input_amp2; //xy=264,459
-AudioAmplifier           click_input_amp2; //xy=268,360
-AudioFilterBiquad        click_biquad2;  //xy=442,363
-AudioFilterBiquad        song_biquad2;   //xy=444,458
-AudioFilterBiquad        click_biquad1;  //xy=446,395
-AudioFilterBiquad        song_biquad1;   //xy=446,425
-AudioAmplifier           click_mid_amp2; //xy=612,361
-AudioAmplifier           click_mid_amp1; //xy=615,392
-AudioAmplifier           song_mid_amp2;  //xy=616,460
-AudioAmplifier           song_mid_amp1;  //xy=618,428
-AudioFilterBiquad        song_biquad11;  //xy=792,428.0000123977661
-AudioFilterBiquad        click_biquad21; //xy=793,361.0000114440918
-AudioFilterBiquad        song_biquad21;  //xy=794,460.00001335144043
-AudioFilterBiquad        click_biquad11; //xy=795,392
-AudioAmplifier           click_post_amp2; //xy=973,361.0000114440918
-AudioAmplifier           click_post_amp1; //xy=973,392.0000114440918
-AudioAmplifier           song_post_amp2; //xy=973,460.00001335144043
-AudioAmplifier           song_post_amp1; //xy=974,428.0000114440918
-AudioAnalyzeRMS          song_rms1;      //xy=1239,435
-AudioAnalyzeRMS          song_rms2;      //xy=1240,400
-AudioAnalyzeRMS          click_rms1;     //xy=1242,262
-AudioAnalyzeRMS          click_rms2;     //xy=1243,227
-AudioAnalyzePeak         song_peak1;     //xy=1243,467
-AudioAnalyzePeak         song_peak2;     //xy=1244,499
-AudioAnalyzePeak         click_peak1;    //xy=1246,294
-AudioAnalyzePeak         click_peak2;    //xy=1247,327
-AudioOutputUSB           usb1;           //xy=1289,585
+// GUItool: begin automatically generated code
+AudioInputI2S            i2s1;   
+AudioAmplifier           click_input_amp1; //xy=261,1209.000005722046
+AudioAmplifier           song_input_amp1; //xy=261,1242.000005722046
+AudioAmplifier           song_input_amp2; //xy=261,1275.000005722046
+AudioAmplifier           click_input_amp2; //xy=265,1176.000005722046
+AudioFilterBiquad        click_biquad2;  //xy=439,1179.000005722046
+AudioFilterBiquad        song_biquad2;   //xy=441,1274.000005722046
+AudioFilterBiquad        click_biquad1;  //xy=443,1211.000005722046
+AudioFilterBiquad        song_biquad1;   //xy=443,1241.000005722046
+AudioAmplifier           click_mid_amp2; //xy=609,1177.000005722046
+AudioAmplifier           click_mid_amp1; //xy=612,1208.000005722046
+AudioAmplifier           song_mid_amp2;  //xy=613,1276.000005722046
+AudioAmplifier           song_mid_amp1;  //xy=615,1244.000005722046
+AudioFilterBiquad        song_biquad11;  //xy=789,1244.000005722046
+AudioFilterBiquad        click_biquad21; //xy=790,1177.000005722046
+AudioFilterBiquad        song_biquad21;  //xy=791,1276.000005722046
+AudioFilterBiquad        click_biquad11; //xy=792,1208.000005722046
+AudioAmplifier           click_post_amp2; //xy=970,1177.000005722046
+AudioAmplifier           click_post_amp1; //xy=970,1208.000005722046
+AudioAmplifier           song_post_amp2; //xy=970,1276.000005722046
+AudioAmplifier           song_post_amp1; //xy=971,1244.000005722046
+AudioAnalyzeRMS          song_rms1;      //xy=1236,1251.000005722046
+AudioAnalyzeRMS          song_rms2;      //xy=1237,1216.000005722046
+AudioAnalyzeRMS          click_rms1;     //xy=1239,1078.000005722046
+AudioAnalyzeRMS          click_rms2;     //xy=1240,1043.000005722046
+AudioAnalyzePeak         song_peak1;     //xy=1240,1283.000005722046
+AudioAnalyzePeak         song_peak2;     //xy=1241,1315.000005722046
+AudioAnalyzePeak         click_peak1;    //xy=1243,1110.000005722046
+AudioAnalyzePeak         click_peak2;    //xy=1244,1143.000005722046
+AudioOutputUSB           usb1;           //xy=1286,1401.000005722046
+
 AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
-AudioConnection          patchCord2(i2s1, 0, song_input_amp1, 0);
-AudioConnection          patchCord3(i2s1, 1, click_input_amp2, 0);
+AudioConnection          patchCord2(i2s1, 0, click_input_amp2, 0);
+AudioConnection          patchCord3(i2s1, 1, song_input_amp1, 0);
 AudioConnection          patchCord4(i2s1, 1, song_input_amp2, 0);
 AudioConnection          patchCord5(click_input_amp1, click_biquad1);
 AudioConnection          patchCord6(song_input_amp1, song_biquad1);

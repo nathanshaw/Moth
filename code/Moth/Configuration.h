@@ -12,20 +12,28 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       4
+#define SERIAL_ID                       11
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
 #define USB_OUTPUT                      1
+
+// if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
+// the main loop, it will also store the min and max loop length values as well as calculate 
+// what the average loop length is
+#define LOOP_LENGTH                     true
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side
 bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
-#define   COMBINE_LUX_READINGS           false  
-
-bool gain_adjust_active =                true;
+#if ENCLOSURE_TYPE == ORB_ENCLOSURE
+#define   COMBINE_LUX_READINGS           true  
+#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE 
+#define   
+#endif // enclosure type
+bool gain_adjust_active =                false;
 
 // WARNING NOT IMPLEMENTED - TODO
 #define DEACTIVATE_UNDER_EXTREME_LUX     true   
@@ -59,11 +67,11 @@ bool gain_adjust_active =                true;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 true
-#define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+#define PRINT_LUX_DEBUG                 false
+#define PRINT_LUX_READINGS              false
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
-#define PRINT_SONG_DATA                 true
+#define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
@@ -75,24 +83,25 @@ bool gain_adjust_active =                true;
 
 #define PRINT_AUTO_GAIN                 false
 
-#define PRINT_LOG_WRITE                 true
+#define PRINT_LOG_WRITE                 false
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK              true
+#define EEPROM_WRITE_CHECK              false
 
+////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Feature Collector ///////////////////////////////
-// feature collector related
+////////////////////////////////////////////////////////////////////////////
 #define PRINT_RMS_VALS                  false
 #define PRINT_RMS_DEBUG                 false
 
-#define PRINT_PEAK_VALS                 true
+#define PRINT_PEAK_VALS                 false
 #define PRINT_PEAK_DEBUG                false
 
 #define PRINT_TONE_VALS                 false
 
 #define PRINT_FREQ_VALS                 false
 
-#define PRINT_FFT_VALS                  false
-#define PRINT_FFT_DEBUG                 false
+#define PRINT_FFT_VALS                  true
+#define PRINT_FFT_DEBUG                 true
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
@@ -111,13 +120,13 @@ bool rear_lux_active =                  true;
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               16.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               100
-#define HIGH_LUX_THRESHOLD              500.0
-#define EXTREME_LUX_THRESHOLD           800.0
+#define MID_LUX_THRESHOLD               300
+#define HIGH_LUX_THRESHOLD              1200.0
+#define EXTREME_LUX_THRESHOLD           3000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.125
-#define BRIGHTNESS_SCALER_MAX           1.5
+#define BRIGHTNESS_SCALER_MIN           0.75
+#define BRIGHTNESS_SCALER_MAX           3.00
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -127,13 +136,13 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 ////////////////////////////////////////////////////////////////////////////
 #define MIN_BRIGHTNESS                  0
 #define MAX_BRIGHTNESS                  255
-#define UPDATE_ON_OFF_RATIOS true
+#define UPDATE_ON_OFF_RATIOS            true
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
 #define FLASH_RED                       0
-#define FLASH_GREEN                     0
-#define FLASH_BLUE                      255
+#define FLASH_GREEN                     55
+#define FLASH_BLUE                      200
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
@@ -173,16 +182,18 @@ bool data_logging_active =              true;
 #define STATICLOG_RATE_FAST             (1000*60*3)
 #define STATICLOG_RATE_SLOW             (1000*60*12)
 
-/////////////////// for the auto logging ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// auto logging ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 // will the lux readings be logged?
-#define AUTOLOG_LUX_F                   0
-#define AUTOLOG_LUX_R                   0
-#define AUTOLOG_LUX_TIMER               0
+#define AUTOLOG_LUX_F                   1
+#define AUTOLOG_LUX_R                   1
+#define AUTOLOG_LUX_TIMER               1
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            0
-#define AUTOLOG_LED_ON_OFF_R            0
-#define AUTOLOG_LED_ON_OFF_TIMER        0
+#define AUTOLOG_LED_ON_OFF_F            1
+#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF_TIMER        1
 
 // the number of values to store in the logging process
 #define AUTOLOG_FLASHES_F               0
@@ -190,20 +201,22 @@ bool data_logging_active =              true;
 #define AUTOLOG_FLASHES_TIMER           0
 
 // the number of values to store in the logging process
-#define AUTOLOG_FPM_F                   0
-#define AUTOLOG_FPM_R                   0
-#define AUTOLOG_FPM_TIMER               0
+#define AUTOLOG_FPM_F                   1
+#define AUTOLOG_FPM_R                   1
+#define AUTOLOG_FPM_TIMER               1
 
 // the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     0
-#define AUTOLOG_BRIGHTNESS_SCALER_R     0
-#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
+#define AUTOLOG_BRIGHTNESS_SCALER_F     1
+#define AUTOLOG_BRIGHTNESS_SCALER_R     1
+#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 1
 
-/////////////////// for the static logging /////////////////////////////////
-#define STATICLOG_CLICK_GAIN            0
-#define STATICLOG_SONG_GAIN             0
-#define STATICLOG_LUX_VALUES            0
-#define STATICLOG_FLASHES               0
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// static logging /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#define STATICLOG_CLICK_GAIN            1
+#define STATICLOG_SONG_GAIN             1
+#define STATICLOG_LUX_VALUES            1
+#define STATICLOG_FLASHES               1
 #define STATICLOG_RUNTIME               1
 #define STATICLOG_RGB_AVG_VALS          1
 
@@ -218,12 +231,12 @@ bool data_logging_active =              true;
 ///////////////////////// Jumper Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED               0
+#define JUMPERS_POPULATED               1
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define DATALOG_MANAGER_MAX_LOGS        25
+#define DATALOG_MANAGER_MAX_LOGS        50
 #define DATALOG_MANAGER_TIMER_NUM       4
 uint8_t datalog_timer_num =             DATALOG_MANAGER_TIMER_NUM;
 uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
@@ -233,20 +246,20 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-#define AUTOGAIN_ACTIVE                 0
+#define AUTOGAIN_ACTIVE                 1
 #define MAX_GAIN_ADJUSTMENT             0.125
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
-// auto gain code. This value needs to be less than 1. 0.5 would mean that the gain can change
+// auto gain code. This value needs to be less than 1. 0.5 would mean that the gain  can change
 // by a factor of half its current gain. So, if the gain was 2.0 then it could be increased/decreased by 1.0
 // with a max/min value of 1.0 / 3.0.
 #define USE_LED_ON_RATIO                (1)
-#define MIN_LED_ON_RATIO                (0.3)
-#define MAX_LED_ON_RATIO                (0.95)
+#define MIN_LED_ON_RATIO                (0.01)
+#define MAX_LED_ON_RATIO                (0.5)
 
-#define AUTOGAIN_START_DELAY            30000
+#define AUTOGAIN_START_DELAY            (1000 * 30)
 // how often to calculate auto-gain (in ms)
-#define AUTOGAIN_FREQUENCY              (1000 * 60 * 15) 
+#define AUTOGAIN_FREQUENCY              (1000 * 60 * 5) 
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
@@ -258,7 +271,7 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // for scaling the peak readings in the Audio Engine
 // to make it easier to debug things, etc.
 #if FIRMWARE_MODE == CICADA_MODE
-#define PEAK_SCALER                     10.0
+#define PEAK_SCALER                     5.0
 #define RMS_SCALER                      10.0
 #define FFT_SCALER                      100.0
 #elif FIRMWARE_MODE == PITCH_MODE
@@ -285,7 +298,7 @@ uint8_t audio_usage_max =               0;
 elapsedMillis last_usage_print =        0;// for keeping track of audio memory usage
 
 /////////////////////////////////////////////////////////////////////////
-/////////////////////////      Datalogging     /////////////////////////////////
+/////////////////////////      Datalogging     //////////////////////////
 /////////////////////////////////////////////////////////////////////////
 // calculate the actual start and end times based on this
 #define EEPROM_LOG_SIZE                 2000

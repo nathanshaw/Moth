@@ -14,7 +14,7 @@
 
 #define ORB_ENCLOSURE             0
 #define GROUND_ENCLOSURE          1
-#define ENCLOSURE_TYPE            1
+#define ENCLOSURE_TYPE            0
 
 // different microcontrollers which can be used for the system
 #define TEENSY30                  0
@@ -77,16 +77,16 @@
 ////////////////////// Neopixel Managers  //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how high the click flash timer will go up to
-#define MAX_FLASH_TIME            300
+#define MAX_FLASH_TIME            200
 // where the click flash timer will start
-#define MIN_FLASH_TIME            100
+#define MIN_FLASH_TIME            30
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME       400
+#define FLASH_DEBOUNCE_TIME       200
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
 #define SERIAL_BAUD_RATE          115200
 
-void readJumpers(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
+void readJumpersByReference(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
   printMajorDivide("reading jumpers");
   pinMode(JMP1_PIN, INPUT);
   pinMode(JMP2_PIN, INPUT);
