@@ -46,38 +46,38 @@ AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, ST
                         };
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
-// GUItool: begin automatically generated code
-AudioInputI2S            i2s1;   
-AudioAmplifier           click_input_amp1; //xy=261,1209.000005722046
-AudioAmplifier           song_input_amp1; //xy=261,1242.000005722046
-AudioAmplifier           song_input_amp2; //xy=261,1275.000005722046
-AudioAmplifier           click_input_amp2; //xy=265,1176.000005722046
-AudioFilterBiquad        click_biquad2;  //xy=439,1179.000005722046
-AudioFilterBiquad        song_biquad2;   //xy=441,1274.000005722046
-AudioFilterBiquad        click_biquad1;  //xy=443,1211.000005722046
-AudioFilterBiquad        song_biquad1;   //xy=443,1241.000005722046
-AudioAmplifier           click_mid_amp2; //xy=609,1177.000005722046
-AudioAmplifier           click_mid_amp1; //xy=612,1208.000005722046
-AudioAmplifier           song_mid_amp2;  //xy=613,1276.000005722046
-AudioAmplifier           song_mid_amp1;  //xy=615,1244.000005722046
-AudioFilterBiquad        song_biquad11;  //xy=789,1244.000005722046
-AudioFilterBiquad        click_biquad21; //xy=790,1177.000005722046
-AudioFilterBiquad        song_biquad21;  //xy=791,1276.000005722046
-AudioFilterBiquad        click_biquad11; //xy=792,1208.000005722046
-AudioAmplifier           click_post_amp2; //xy=970,1177.000005722046
-AudioAmplifier           click_post_amp1; //xy=970,1208.000005722046
-AudioAmplifier           song_post_amp2; //xy=970,1276.000005722046
-AudioAmplifier           song_post_amp1; //xy=971,1244.000005722046
-AudioAnalyzeRMS          song_rms1;      //xy=1236,1251.000005722046
-AudioAnalyzeRMS          song_rms2;      //xy=1237,1216.000005722046
-AudioAnalyzeRMS          click_rms1;     //xy=1239,1078.000005722046
-AudioAnalyzeRMS          click_rms2;     //xy=1240,1043.000005722046
-AudioAnalyzePeak         song_peak1;     //xy=1240,1283.000005722046
-AudioAnalyzePeak         song_peak2;     //xy=1241,1315.000005722046
-AudioAnalyzePeak         click_peak1;    //xy=1243,1110.000005722046
-AudioAnalyzePeak         click_peak2;    //xy=1244,1143.000005722046
-AudioOutputUSB           usb1;           //xy=1286,1401.000005722046
-
+AudioInputI2S            i2s1;           //xy=430.0000194311142,1016.9999933242798
+AudioAmplifier           click_input_amp1; //xy=651,1006
+AudioAmplifier           song_input_amp1; //xy=651,1039
+AudioAmplifier           song_input_amp2; //xy=651,1072
+AudioAmplifier           click_input_amp2; //xy=655,973
+AudioFilterBiquad        click_biquad2;  //xy=829,976
+AudioFilterBiquad        song_biquad2;   //xy=831,1071
+AudioFilterBiquad        click_biquad1;  //xy=833,1008
+AudioFilterBiquad        song_biquad1;   //xy=833,1038
+AudioAmplifier           click_mid_amp2; //xy=999,974
+AudioAmplifier           click_mid_amp1; //xy=1002,1005
+AudioAmplifier           song_mid_amp2;  //xy=1003,1073
+AudioAmplifier           song_mid_amp1;  //xy=1005,1041
+AudioFilterBiquad        song_biquad11;  //xy=1179,1041
+AudioFilterBiquad        click_biquad21; //xy=1180,974
+AudioFilterBiquad        song_biquad21;  //xy=1181,1073
+AudioFilterBiquad        click_biquad11; //xy=1182,1005
+AudioAmplifier           click_post_amp2; //xy=1360,974
+AudioAmplifier           click_post_amp1; //xy=1360,1005
+AudioAmplifier           song_post_amp2; //xy=1360,1073
+AudioAmplifier           song_post_amp1; //xy=1361,1041
+AudioOutputUSB           usb1;           //xy=1623.5000457763672,975.500036239624
+AudioAnalyzeRMS          song_rms1;      //xy=1626,1048
+AudioAnalyzeRMS          song_rms2;      //xy=1627,1013
+AudioAnalyzeRMS          click_rms1;     //xy=1629,875
+AudioAnalyzeRMS          click_rms2;     //xy=1630,840
+AudioAnalyzePeak         song_peak1;     //xy=1630,1080
+AudioAnalyzePeak         song_peak2;     //xy=1631,1112
+AudioAnalyzePeak         click_peak1;    //xy=1633,907
+AudioAnalyzeFFT256      song_fft1;       //xy=1632.5000457763672,1145.000036239624
+// AudioAnalyzeFFT1024      song_fft2;       //xy=1632.5000457763672,1177.5000343322754
+AudioAnalyzePeak         click_peak2;    //xy=1634,940
 AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
 AudioConnection          patchCord2(i2s1, 0, click_input_amp2, 0);
 AudioConnection          patchCord3(i2s1, 1, song_input_amp1, 0);
@@ -105,10 +105,11 @@ AudioConnection          patchCord24(click_post_amp1, click_peak1);
 AudioConnection          patchCord25(click_post_amp1, 0, usb1, 0);
 AudioConnection          patchCord26(song_post_amp2, song_rms2);
 AudioConnection          patchCord27(song_post_amp2, song_peak2);
-AudioConnection          patchCord28(song_post_amp1, song_rms1);
-AudioConnection          patchCord29(song_post_amp1, song_peak1);
-AudioConnection          patchCord30(song_post_amp1, 0, usb1, 1);
-
+// AudioConnection          patchCord28(song_post_amp2, song_fft2);
+AudioConnection          patchCord29(song_post_amp1, song_rms1);
+AudioConnection          patchCord30(song_post_amp1, song_peak1);
+AudioConnection          patchCord31(song_post_amp1, 0, usb1, 1);
+AudioConnection          patchCord32(song_post_amp1, song_fft1);
 
 void initAutoGain() {
   auto_gain[0].setExternalThresholds((String)"Led ON Ratio", MIN_ON_RATIO_THRESH, LOW_ON_RATIO_THRESH,
@@ -150,6 +151,11 @@ void linkFeatureCollectors() {
     // fc 2-3 are for the click front/rear
     fc[2].linkPeak(&click_peak1, PEAK_SCALER);
     fc[3].linkPeak(&click_peak2, PEAK_SCALER);
+  }
+  if (FFT_FEATURE_ACTIVE) {
+    // fc 0-1 are for the song front/rear
+    fc[0].linkFFT(&song_fft1, 23, 93, (double)FFT_SCALER);
+    // fc[1].linkFFT(&song_fft2, 2, 127, (double)FFT_SCALER);
   }
 }
 
@@ -433,29 +439,49 @@ void updateSong() {
     // if (flash_on[i] == false) {
     if (SONG_FEATURE == PEAK_DELTA) {
       uint8_t song_peak_weighted = calculatePeakWeighted(&fc[i]);
+      uint16_t red, green;
+      if (FFT_FEATURE_ACTIVE) {
+        double cent = fc[0].getRelativeBinPos();
+        Serial.print("cent is : ");
+        Serial.println(cent);
+        red = song_peak_weighted * cent;
+        green = song_peak_weighted * (1.0 - cent);
+      } else{
+        red = song_peak_weighted;
+        green = 0;
+      }
       if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
         if (front_mic_active == true && i == 0) {
-          neos[0].colorWipe(song_peak_weighted, 0, 0);
-          neos[1].colorWipe(song_peak_weighted, 0, 0);
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
         } else if (rear_mic_active == true && i == 1) {
-          neos[0].colorWipe(song_peak_weighted, 0, 0);
-          neos[1].colorWipe(song_peak_weighted, 0, 0);
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
         }
       } else {
-        neos[i].colorWipe(song_peak_weighted, 0, 0);
+        neos[i].colorWipe(red, green, 0);
       }
     } else if (SONG_FEATURE == RMS_DELTA) {
       uint8_t song_rms_weighted = calculateRMSWeighted(&fc[i]);
+      uint16_t red, green;
+      if (FFT_FEATURE_ACTIVE) {
+        double cent = fc[0].getRelativeBinPos();
+        red = song_rms_weighted * cent;
+        green = song_rms_weighted * (1.0 - cent);
+      } else{
+        red = song_rms_weighted;
+        green = 0;
+      }
       if (stereo_audio == false) {
         if (front_mic_active == true && i == 0) {
-          neos[0].colorWipe(song_rms_weighted, 0, 0);
-          neos[1].colorWipe(song_rms_weighted, 0, 0);
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
         } else if (rear_mic_active == true && i == 1) {
-          neos[0].colorWipe(song_rms_weighted, 0, 0);
-          neos[1].colorWipe(song_rms_weighted, 0, 0);
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
         }
       } else  {
-        neos[i].colorWipe(song_rms_weighted, 0, 0);
+        neos[i].colorWipe(red, 0, 0);
       }
     } else {
       Serial.print("ERROR: the SONG_FEATURE ");

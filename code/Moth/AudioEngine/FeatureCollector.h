@@ -44,6 +44,7 @@ class FeatureCollector {
             rms_active = true;
             rms_scaler = s;
         };
+
         double getRMS();
         double getRMSPosDelta();
         double getRMSAvg();
@@ -57,6 +58,7 @@ class FeatureCollector {
             peak_active = true;
             peak_scaler = s;
         };
+
         double getPeak();
         double getPeakPosDelta() {return peak_pos_delta;};
         double getPeakAvg();
@@ -69,6 +71,7 @@ class FeatureCollector {
             tone_ana = r;
             tone_active = true;
         };
+
         double getToneLevel();
         void   printToneVals();
 
@@ -77,18 +80,20 @@ class FeatureCollector {
             freq_ana = r;
             freq_active = true;
         };
+
         double getFreq();
         void printFreqVals();
 
         //////////////// FFT /////////////////////////
-        void linkFFT(AudioAnalyzeFFT1024 *r, uint16_t l, uint16_t h, uint16_t num_bins, double s) {
+        void linkFFT(AudioAnalyzeFFT256*r, uint16_t l, uint16_t h, double s) {
             fft_ana = r;
             fft_active = true;
             max_bin = h;
             min_bin = l;
-            fft_num_bins = num_bins;
+            fft_num_bins = h - l;
             fft_scaler = s;
         };
+
         void printFFTVals();
         double getFFTRange(uint16_t s, uint16_t e);
         int getHighestEnergyBin() {
@@ -97,6 +102,7 @@ class FeatureCollector {
         int getHighestEnergyBin(int start, int end);
         double getRelativeEnergy(uint16_t);
         double getFFTTotalEnergy();
+        double getRelativeBinPos() {return relative_bin_pos;};
 
         //////////////// General ///////////////////////
         void update();
@@ -152,7 +158,7 @@ class FeatureCollector {
         void calculateFreq();
 
         //////////////// FFT /////////////////////////
-        AudioAnalyzeFFT1024 *fft_ana;
+        AudioAnalyzeFFT256*fft_ana;
         uint16_t fft_num_bins = 0;
         bool fft_active = false;
         double fft_vals[511]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
@@ -161,6 +167,7 @@ class FeatureCollector {
         void calculateScaledFFT();
         double fft_tot_energy;
         int highest_energy_idx;
+        double relative_bin_pos = 0.0;
         uint16_t max_bin;// what is the highest index bin that we care about?
         uint16_t min_bin;// what is the lowest index bin that we care about?
 };
@@ -284,8 +291,23 @@ void FeatureCollector::calculateFFT() {
         if (PRINT_FFT_DEBUG) {
           printFFTVals();
         }
+        relative_bin_pos = (double)(highest_energy_idx - min_bin) / (double)(max_bin - min_bin);
+        Serial.print("relative_bin_pos : ");Serial.println(relative_bin_pos);
     }
 }
+
+    /*
+void FeatureCollector::calculateCentroid() {
+     * TODO 
+    double cent = 0.0;
+    double mags = 0.0;
+    for (int i = min_bin; i < max_bin; i++) {
+
+
+
+    }
+}
+    */
 
 void FeatureCollector::calculateScaledFFT() {
     if (fft_active && fft_ana->available()) {
@@ -312,6 +334,8 @@ void FeatureCollector::calculateScaledFFT() {
         if (PRINT_FFT_DEBUG) {
           printFFTVals();
         }
+        relative_bin_pos = (double)(highest_energy_idx - min_bin) / (double)(max_bin - min_bin);
+        Serial.print("relative_bin_pos : ");Serial.println(relative_bin_pos);
     }
 }
 
@@ -493,8 +517,15 @@ double FeatureCollector::getRelativeEnergy(uint16_t idx) {
     return 0.0;
 }
 
+void printFreqRangeOfBin(int idx, int max_idx) {
+    Serial.print(idx * 172);
+    Serial.print(" - ");
+    Serial.println((idx + 1) * 172);
+}
+
 void FeatureCollector::printFFTVals() {
     if (fft_active) {
+        /*
         if (USE_SCALED_FFT) {
             Serial.print("Scaled ");
         }
@@ -506,12 +537,16 @@ void FeatureCollector::printFFTVals() {
             for (int i = l + min_bin; i < max_bin; i = i + w) {
                 if (i != l) {
                     Serial.print(", ");
+                    Serial.print(i);
+                    Serial.print(":");
                 };
                 Serial.print(fft_vals[i]);
             }
         }
+        */
         Serial.println();
-        Serial.print("Bin with highest energy: "); Serial.println(highest_energy_idx);
+        Serial.print("Bin with highest energy: "); Serial.print(highest_energy_idx);Serial.print(" = ");Serial.println(fft_vals[highest_energy_idx]);
+        printFreqRangeOfBin(highest_energy_idx, max_bin);
     }
 }
 

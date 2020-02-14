@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       11
+#define SERIAL_ID                       12
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
@@ -100,8 +100,8 @@ bool gain_adjust_active =                false;
 
 #define PRINT_FREQ_VALS                 false
 
-#define PRINT_FFT_VALS                  true
-#define PRINT_FFT_DEBUG                 true
+#define PRINT_FFT_VALS                  false
+#define PRINT_FFT_DEBUG                 false
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////

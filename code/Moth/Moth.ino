@@ -110,7 +110,10 @@ void setup() {
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
     neos[i].setFlashColors(FLASH_RED, FLASH_GREEN, FLASH_BLUE);
   }
-
+  for (int i = 0; i < 10; i++) {
+    leds.setPixel(i, 0, 0, 0);
+    leds.show();
+  }
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
@@ -120,10 +123,7 @@ void setup() {
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
-  for (int i = 0; i < 10; i++) {
-    leds.setPixel(i, 0, 0, 0);
-    leds.show();
-  }
+
 #if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < 10; i++) {
     leds.setPixel(i, 64, 64, 64);
