@@ -18,16 +18,12 @@ double fpm[2];
 double total_song_peaks[2];
 uint32_t num_song_peaks[2];
 
-#if COMBINE_LUX_READINGS == true
-double combined_lux = 0.0;
-#endif // combine lux readings
-
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
 NeoGroup neos[2] = {
-  NeoGroup(&leds, 0, 4, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, 5, 9, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 0, (NUM_LED/2)-1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+  NeoGroup(&leds, NUM_LED/2, NUM_LED-1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -138,23 +134,24 @@ void linkFeatureCollectors() {
 
   if (RMS_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
-    fc[0].linkRMS(&song_rms1, RMS_SCALER);
-    fc[1].linkRMS(&song_rms2, RMS_SCALER);
+    fc[0].linkRMS(&song_rms1, global_rms_scaler);
+    fc[1].linkRMS(&song_rms2, global_rms_scaler);
     // fc 2-3 are for the click front/rear
-    fc[2].linkRMS(&click_rms1, RMS_SCALER);
-    fc[3].linkRMS(&click_rms2, RMS_SCALER);
+    fc[2].linkRMS(&click_rms1, global_rms_scaler);
+    fc[3].linkRMS(&click_rms2, global_rms_scaler);
   }
   if (PEAK_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
-    fc[0].linkPeak(&song_peak1, PEAK_SCALER);
-    fc[1].linkPeak(&song_peak2, PEAK_SCALER);
+    fc[0].linkPeak(&song_peak1, global_peak_scaler);
+    fc[1].linkPeak(&song_peak2, global_peak_scaler);
     // fc 2-3 are for the click front/rear
-    fc[2].linkPeak(&click_peak1, PEAK_SCALER);
-    fc[3].linkPeak(&click_peak2, PEAK_SCALER);
+    fc[2].linkPeak(&click_peak1, global_peak_scaler);
+    fc[3].linkPeak(&click_peak2, global_peak_scaler);
   }
   if (FFT_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
-    fc[0].linkFFT(&song_fft1, 23, 93, (double)FFT_SCALER);
+    // this equates to about 4k - 16k, perhaps I shoul
+    fc[0].linkFFT(&song_fft1, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, true);
     // fc[1].linkFFT(&song_fft2, 2, 127, (double)FFT_SCALER);
   }
 }
@@ -223,6 +220,7 @@ void setupAudio() {
 
   Serial.println("Testing Microphones");
   printTeensyDivide();
+
   // todo make this adapt to when microphones are broken on one or more side...
   for (int i = 0; i < num_channels; i++) {
     fc[i].testMicrophone();
@@ -233,7 +231,7 @@ void setupAudio() {
 
 uint8_t calculateRMSWeighted(FeatureCollector *f) {
   double rms = 0;
-  rms = f->getRMS() * (double)RMS_SCALER;
+  rms = f->getRMS() * global_rms_scaler;
   if (rms > 1.0) {
     rms = 1.0;
   } else if (rms < RMS_LOW_THRESH) {
@@ -245,7 +243,7 @@ uint8_t calculateRMSWeighted(FeatureCollector *f) {
 
 uint8_t calculatePeakWeighted(FeatureCollector *f) {
   double peak = 0;
-  peak = f->getPeak() * (double)PEAK_SCALER;
+  peak = f->getPeak() * global_peak_scaler;
   if (peak > 1.0) {
     peak = 1.0;
   } else if (peak < PEAK_LOW_THRESH) {
@@ -266,11 +264,11 @@ void setupDLManager() {
     datalog_manager.printTimerConfigs();
 
     // Hardware / Software / Serial Numbers
-    datalog_manager.logSetupConfigByte("Hardware Version majo       : ", H_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Hardware Version mino       : ", H_VERSION_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_VERSION_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version majo       : ", S_SUBVERSION);
+    datalog_manager.logSetupConfigByte("Hardware Version major      : ", H_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Hardware Version minor      : ", H_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MAJOR);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", S_SUBVERSION);
     datalog_manager.logSetupConfigByte("Bot ID Number               : ", SERIAL_ID);
     datalog_manager.logSetupConfigByte("Datalog Active              : ", data_logging_active);
     datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE);
@@ -291,18 +289,18 @@ void setupDLManager() {
     datalog_manager.logSetupConfigLong("Autogain Frequency          : ", AUTOGAIN_FREQUENCY);
     // Autolog settings
     printMinorDivide();
-    datalog_manager.logSetupConfigLong("Timer 0 Start Time           : ", datalog_manager.getTimerStart(0));
-    datalog_manager.logSetupConfigLong("Timer 0 End Time             : ", datalog_manager.getTimerEnd(0));
-    datalog_manager.logSetupConfigLong("Timer 0 Logging Rate         : ", datalog_manager.getTimerRate(0));
-    datalog_manager.logSetupConfigLong("Timer 1 Start Time           : ", datalog_manager.getTimerStart(1));
-    datalog_manager.logSetupConfigLong("Timer 1 End Time             : ", datalog_manager.getTimerEnd(1));
-    datalog_manager.logSetupConfigLong("Timer 1 Logging Rate         : ", datalog_manager.getTimerRate(1));
-    datalog_manager.logSetupConfigLong("Timer 2 Start Time           : ", datalog_manager.getTimerStart(2));
-    datalog_manager.logSetupConfigLong("Timer 2 End Time             : ", datalog_manager.getTimerEnd(2));
-    datalog_manager.logSetupConfigLong("Timer 2 Logging Rate         : ", datalog_manager.getTimerRate(2));
-    datalog_manager.logSetupConfigLong("Timer 3 Start Time           : ", datalog_manager.getTimerStart(3));
-    datalog_manager.logSetupConfigLong("Timer 3 End Time             : ", datalog_manager.getTimerEnd(3));
-    datalog_manager.logSetupConfigLong("Timer 3 Logging Rate         : ", datalog_manager.getTimerRate(3));
+    datalog_manager.logSetupConfigLong("Timer 0 Start Time          : ", datalog_manager.getTimerStart(0));
+    datalog_manager.logSetupConfigLong("Timer 0 End Time            : ", datalog_manager.getTimerEnd(0));
+    datalog_manager.logSetupConfigLong("Timer 0 Logging Rate        : ", datalog_manager.getTimerRate(0));
+    datalog_manager.logSetupConfigLong("Timer 1 Start Time          : ", datalog_manager.getTimerStart(1));
+    datalog_manager.logSetupConfigLong("Timer 1 End Time            : ", datalog_manager.getTimerEnd(1));
+    datalog_manager.logSetupConfigLong("Timer 1 Logging Rate        : ", datalog_manager.getTimerRate(1));
+    datalog_manager.logSetupConfigLong("Timer 2 Start Time          : ", datalog_manager.getTimerStart(2));
+    datalog_manager.logSetupConfigLong("Timer 2 End Time            : ", datalog_manager.getTimerEnd(2));
+    datalog_manager.logSetupConfigLong("Timer 2 Logging Rate        : ", datalog_manager.getTimerRate(2));
+    datalog_manager.logSetupConfigLong("Timer 3 Start Time          : ", datalog_manager.getTimerStart(3));
+    datalog_manager.logSetupConfigLong("Timer 3 End Time            : ", datalog_manager.getTimerEnd(3));
+    datalog_manager.logSetupConfigLong("Timer 3 Logging Rate        : ", datalog_manager.getTimerRate(3));
     printMinorDivide();
     // runtime log
     if (STATICLOG_RUNTIME) {
@@ -434,19 +432,60 @@ void setupDLManager() {
 }
 
 void updateSong() {
+  for (int i = 0; i < num_channels; i++) {
+    uint8_t brightness = 0;
+    uint16_t red, green;
+    if (SONG_FEATURE == PEAK_RAW) {
+        brightness = calculatePeakWeighted(&fc[i]);
+    } else if (SONG_FEATURE == RMS_RAW) {
+        brightness = calculateRMSWeighted(&fc[i]);
+    }
+    if (FFT_FEATURE_ACTIVE) {
+        double cent = fc[0].getRelativeBinPos()*1.5;
+        double flux = fc[2].getSpectralFlux();
+        if (cent > 1.0) {cent = 1.0;};
+        Serial.print("cent: ");
+        Serial.print(cent);
+        Serial.print("\tflux: ");
+        Serial.println(flux);
+        red = brightness * cent;
+        green = brightness * (1.0 - cent);
+      } else {
+        red = brightness;
+        green = 0;
+      }
+      if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
+        if (front_mic_active == true && i == 0) {
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
+        } else if (rear_mic_active == true && i == 1) {
+          neos[0].colorWipe(red, green, 0);
+          neos[1].colorWipe(red, green, 0);
+        }
+      } else {
+        neos[i].colorWipe(red, green, 0);
+      }
+    }
+}
+/*
+void updateSong() {
   // TODO - double check that these are both pulling the correct feature collector
   for (int i = 0; i < num_channels; i++) {
     // if (flash_on[i] == false) {
-    if (SONG_FEATURE == PEAK_DELTA) {
+    if (SONG_FEATURE == PEAK_RAW) {
       uint8_t song_peak_weighted = calculatePeakWeighted(&fc[i]);
       uint16_t red, green;
       if (FFT_FEATURE_ACTIVE) {
-        double cent = fc[0].getRelativeBinPos();
-        Serial.print("cent is : ");
-        Serial.println(cent);
+        double cent = fc[0].getRelativeBinPos()*1.5;
+        double flux = fc[2].getSpectralFlux();
+        if (cent > 1.0) {cent = 1.0;};
+        // Serial.print("cent is : ");
+        // Serial.println(cent);
+        Serial.print("flux is : ");
+        Serial.println(flux);
         red = song_peak_weighted * cent;
         green = song_peak_weighted * (1.0 - cent);
-      } else{
+      } else {
         red = song_peak_weighted;
         green = 0;
       }
@@ -461,14 +500,14 @@ void updateSong() {
       } else {
         neos[i].colorWipe(red, green, 0);
       }
-    } else if (SONG_FEATURE == RMS_DELTA) {
+    } else if (SONG_FEATURE == RMS_RAW) {
       uint8_t song_rms_weighted = calculateRMSWeighted(&fc[i]);
       uint16_t red, green;
-      if (FFT_FEATURE_ACTIVE) {
-        double cent = fc[0].getRelativeBinPos();
+      if (SONG_COLOR_FEATURE == CENTROID) {
+        double cent = fc[0].getCentroid();
         red = song_rms_weighted * cent;
         green = song_rms_weighted * (1.0 - cent);
-      } else{
+      } else {
         red = song_rms_weighted;
         green = 0;
       }
@@ -490,10 +529,23 @@ void updateSong() {
     }
   }
 }
-
+*/
 void updateClick() {
   for (int i = 0; i < num_channels; i++) {
-    if (fc[i + 2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
+    double feature = 0.0;
+    double threshold = 0.0;
+    if (CLICK_FEATURE == PEAK_DELTA) {
+        feature = fc[i + 2].getPeakPosDelta();
+        threshold = CLICK_PEAK_DELTA_THRESH;
+    } else if (CLICK_FEATURE == RMS_DELTA) {
+        feature = fc[i + 2].getRMSPosDelta();
+        threshold = CLICK_RMS_DELTA_THRESH;
+    }
+    if (feature > threshold) {
+        Serial.print("click feature is above threshold: ");
+        Serial.print(feature);
+        Serial.print(" - ");
+        Serial.println(threshold);
       if (neos[i].flashOn()) {
         num_flashes[i]++;
         total_flashes[i]++;
@@ -520,6 +572,42 @@ void updateClick() {
     }
   }
 }
+/*
+void updateClick() {
+  for (int i = 0; i < num_channels; i++) {
+    if (fc[i + 2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
+      Serial.print("Peak pos delta is above threshold: ");
+      Serial.print(fc[i + 2].getPeakPosDelta());
+      Serial.print(" / ");
+      Serial.println(CLICK_PEAK_DELTA_THRESH);
+      if (neos[i].flashOn()) {
+        num_flashes[i]++;
+        total_flashes[i]++;
+        fpm[i] = num_flashes[i] / fpm_timer;
+        // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
+        if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
+          if (neos[1].flashOn()) {
+            num_flashes[1]++;
+            total_flashes[1]++;
+            fpm[1] = num_flashes[1] / fpm_timer;
+          }
+        }
+        if (INDEPENDENT_FLASHES == false && i == 1) {
+          if (neos[0].flashOn()) {
+            num_flashes[0]++;
+            total_flashes[0]++;
+            fpm[0] = num_flashes[0] / fpm_timer;
+          }
+        }
+      }
+      for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
+        neos[i].update();
+      }
+    }
+  }
+}
+*/
+
 /*
   void printColors() {
   if (print_color_timer > COLOR_PRINT_RATE) {

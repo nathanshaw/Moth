@@ -13,7 +13,8 @@
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-#define SONG_FEATURE                    (PEAK_DELTA)
+int SONG_FEATURE =                      RMS_DELTA;
+int SONG_COLOR_FEATURE =                CENTROID;
 
 #define SONG_ACTIVATION_THRESH          0.25
 
@@ -21,17 +22,23 @@
 #define MIN_SONG_PEAK_AVG               0.002
 #define MAX_SONG_PEAK_AVG               0.2
 
+#if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define STARTING_SONG_GAIN              4.0
+#define STARTING_CLICK_GAIN             8.0
+#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
+#define STARTING_SONG_GAIN              6.0
+#define STARTING_CLICK_GAIN             10.0
+#endif//enclosure type
 
 #define SONG_BQ1_THRESH                 4000
 #define SONG_BQ1_Q                      0.85
 #define SONG_BQ1_DB                     -12
-#define SONG_BQ2_THRESH                 14000
+#define SONG_BQ2_THRESH                 16000
 #define SONG_BQ2_Q                      0.85
 #define SONG_BQ2_DB                     -12
 
-#define MIN_SONG_GAIN                   (STARTING_SONG_GAIN * 0.75)
-#define MAX_SONG_GAIN                   (STARTING_SONG_GAIN * 1.25)
+#define MIN_SONG_GAIN                   (STARTING_SONG_GAIN * 0.5)
+#define MAX_SONG_GAIN                   (STARTING_SONG_GAIN * 1.5)
 
 ///////// Click Settings
 // what feature will be used to determine if a click has been found
@@ -39,9 +46,9 @@
 // "peak_delta" will use that feature along with CLICK_PEAK_DELTA_THRESH
 // "all" will use all available features with their corresponding thresholds
 
-#define CLICK_FEATURE                   PEAK_DELTA
-#define CLICK_RMS_DELTA_THRESH          0.2
-#define CLICK_PEAK_DELTA_THRESH         0.2
+int CLICK_FEATURE =                     PEAK_DELTA;
+#define CLICK_RMS_DELTA_THRESH          0.05
+#define CLICK_PEAK_DELTA_THRESH         0.15
 
 // these values are used to ensure that the light do not turn on when there are low 
 // amplitudes in the sonic environment
@@ -59,15 +66,13 @@
 #define HIGH_ON_RATIO_THRESH            0.60
 #define MAX_ON_RATIO_THRESH             0.90
 
-#define STARTING_CLICK_GAIN             7.0
-
-#define MIN_CLICK_GAIN                  (STARTING_CLICK_GAIN * 0.75)
-#define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.25)
+#define MIN_CLICK_GAIN                  (STARTING_CLICK_GAIN * 0.5)
+#define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.5)
 
 #define CLICK_BQ1_THRESH                1200
 #define CLICK_BQ1_Q                     0.95
 #define CLICK_BQ1_DB                    -24
-#define CLICK_BQ2_THRESH                2500
+#define CLICK_BQ2_THRESH                3500
 #define CLICK_BQ2_Q                     0.95
 #define CLICK_BQ2_DB                    -24
 

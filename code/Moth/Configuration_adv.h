@@ -3,7 +3,9 @@
 // contains all the hardware specific variables
 #define HARDWARE_NAME "Moth"
 #include "PrintUtils.h"
+#include "Macros.h"
 
+// TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
 // how long does the microphone test routine last for in the feature collector testMicrophone() function
 #define MICROPHONE_TEST_DURATION  2000
 #define LUX_TEST_DURATION         2000
@@ -12,9 +14,16 @@
 ////////////////////// Hardware Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-#define ORB_ENCLOSURE             0
-#define GROUND_ENCLOSURE          1
-#define ENCLOSURE_TYPE            0
+uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE;
+// different enclosures result in a different amount of attenuation from environmental sounds.
+// the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
+#if ENCLOSURE_TYPE == ORB_ENCLOSURE
+#define ENC_ATTENUATION_FACTOR          1.0
+#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
+#define ENC_ATTENUATION_FACTOR         1.5
+#else 
+#define ENC_ATTENUATION_FACTOR         1.0
+#endif
 
 // different microcontrollers which can be used for the system
 #define TEENSY30                  0
@@ -33,11 +42,14 @@
 
 // todo add logic to change these if needed...
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0)
-#define NUM_LED                   12   
+#define NUM_LED                   12
 #endif
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
-#define NUM_LED                   10
+#define NUM_LED                   20
 #endif 
+
+#define FRONT_MICROPHONE_INSTALLED      true
+#define REAR_MICROPHONE_INSTALLED       true
 
 ////////////// TCA Bus Expanders     /////
 // I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
@@ -77,11 +89,11 @@
 ////////////////////// Neopixel Managers  //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how high the click flash timer will go up to
-#define MAX_FLASH_TIME            200
+#define MAX_FLASH_TIME            40
 // where the click flash timer will start
-#define MIN_FLASH_TIME            30
+#define MIN_FLASH_TIME            10
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME       200
+#define FLASH_DEBOUNCE_TIME       80
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
 #define SERIAL_BAUD_RATE          115200
@@ -95,6 +107,7 @@ void readJumpersByReference(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bo
   pinMode(JMP5_PIN, INPUT);
   pinMode(JMP6_PIN, INPUT);
   delay(100);
+
   v1 = digitalRead(JMP1_PIN);
   Serial.print(v1); printTab();
   v2 = digitalRead(JMP2_PIN);

@@ -36,55 +36,115 @@ void updateLuxManagers() {
 #if COMBINE_LUX_READINGS > 0
     if (updated) {
       // calculate what the combined lux is
-      combined_lux = 0;
+      double combined_lux = 0;
       for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-        combined_lux += lux_managers[i].getLux();
+        if (combined_lux < lux_managers[i].getLux()) {
+          combined_lux = lux_managers[i].getLux();
+        }
+        dprint(PRINT_LUX_DEBUG, " combined_lux value is : ");
+        dprint(PRINT_LUX_DEBUG, combined_lux);
+        // set the new combined lux value to both managers
+        for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
+          lux_managers[i].setLuxValue(combined_lux);
+          dprint(PRINT_LUX_DEBUG, "\t");
+          dprint(PRINT_LUX_DEBUG, lux_managers[i].getName());
+          dprint(PRINT_LUX_DEBUG, " lux reading : ");
+          dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());
+        }
       }
-      combined_lux /= NUM_LUX_MANAGERS;
-      dprint(PRINT_LUX_DEBUG, " combined_lux value is : ");
-      dprint(PRINT_LUX_DEBUG, combined_lux);
-      // set the new combined lux value to both managers
-      for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-        lux_managers[i].forceLuxReading(combined_lux);
-        dprint(PRINT_LUX_DEBUG, "\t");
-        dprint(PRINT_LUX_DEBUG, lux_managers[i].getName());
-        dprint(PRINT_LUX_DEBUG, " lux reading : ");
-        dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());
-      }
-    }
 #endif
+    }
   }
 }
-
 void updateDatalog() {
   datalog_manager.update();
   runtime = (double)millis() / 60000;
 }
 
-void readJumpers() {
-  Serial.println("Reading Jumpers");
-  pinMode(JMP1_PIN, INPUT);
-  pinMode(JMP2_PIN, INPUT);
-  pinMode(JMP3_PIN, INPUT);
-  pinMode(JMP4_PIN, INPUT);
-  pinMode(JMP5_PIN, INPUT);
-  pinMode(JMP6_PIN, INPUT);
-  Serial.print(digitalRead(JMP1_PIN));
-  Serial.print("\t");
-  Serial.print(digitalRead(JMP2_PIN));
-  Serial.print("\t");
-  Serial.print(digitalRead(JMP3_PIN));
-  Serial.print("\t");
-  Serial.print(digitalRead(JMP4_PIN));
-  Serial.print("\t");
-  Serial.print(digitalRead(JMP5_PIN));
-  Serial.print("\t");
-  Serial.println(digitalRead(JMP6_PIN));
+bool testJumpers() {
+  bool populated = true;
+  bool values[6];
+  values[0] = digitalRead(JMP1_PIN);
+  values[1] = digitalRead(JMP2_PIN);
+  values[2] = digitalRead(JMP3_PIN);
+  values[3] = digitalRead(JMP4_PIN);
+  values[4] = digitalRead(JMP5_PIN);
+  values[5] = digitalRead(JMP6_PIN);
+  for (int i = 0; i < 10; i++) {
+    if (values[0] != digitalRead(JMP1_PIN)){
+        populated = false;
+        Serial.println("JMP1_PIN returned multiple values");
+    }
+        if (values[1] != digitalRead(JMP2_PIN)){
+        populated = false;
+        Serial.println("JMP2_PIN returned multiple values");
+    }
+        if (values[2] != digitalRead(JMP3_PIN)){
+        populated = false;
+        Serial.println("JMP3_PIN returned multiple values");
+    }
+        if (values[3] != digitalRead(JMP4_PIN)){
+        populated = false;
+        Serial.println("JMP4_PIN returned multiple values");
+    }
+        if (values[4] != digitalRead(JMP5_PIN)){
+        populated = false;
+        Serial.println("JMP5_PIN returned multiple values");
+    }
+        if (values[5] != digitalRead(JMP6_PIN)){
+        populated = false;
+        Serial.println("JMP6_PIN returned multiple values");
+    }
+  }
+  return populated;
+}
 
-  num_channels = digitalRead(JMP1_PIN);
-  num_channels++;
-  Serial.print("Number of channels changed to : ");
-  Serial.println(num_channels);
+void readJumpers() {
+  if (testJumpers() == true) {
+    Serial.println("Jumpers passed continuity test...");
+    pinMode(JMP1_PIN, INPUT);
+    pinMode(JMP2_PIN, INPUT);
+    pinMode(JMP3_PIN, INPUT);
+    pinMode(JMP4_PIN, INPUT);
+    pinMode(JMP5_PIN, INPUT);
+    pinMode(JMP6_PIN, INPUT);
+    Serial.print(digitalRead(JMP1_PIN));
+    Serial.print("\t");
+    Serial.print(digitalRead(JMP2_PIN));
+    Serial.print("\t");
+    Serial.print(digitalRead(JMP3_PIN));
+    Serial.print("\t");
+    Serial.print(digitalRead(JMP4_PIN));
+    Serial.print("\t");
+    Serial.print(digitalRead(JMP5_PIN));
+    Serial.print("\t");
+    Serial.println(digitalRead(JMP6_PIN));
+
+    bool temp_b;
+    ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
+    Serial.print("(pin1) Enclosure                      : ");
+    Serial.println(ENCLOSURE_TYPE);
+
+    temp_b = digitalRead(JMP4_PIN);
+    if (temp_b == 0) {
+      SONG_FEATURE = RMS_RAW;
+    } else {
+      SONG_FEATURE = PEAK_RAW;
+    }
+    Serial.print("(pin4) Song Feature                  : ");
+    Serial.println(SONG_FEATURE);
+
+    temp_b = digitalRead(JMP5_PIN);
+    if (temp_b == 0) {
+      CLICK_FEATURE = RMS_DELTA;
+    } else {
+      CLICK_FEATURE = PEAK_DELTA;
+    }
+    Serial.print("(pin5) Click Feature                 : ");
+    Serial.println(CLICK_FEATURE);
+  } else {
+    Serial.println("ERROR - this PCB does not contain jumpers, or jumper pins are not populated");
+  }
 }
 
 void setup() {
@@ -99,7 +159,7 @@ void setup() {
   }
   Serial.println("LEDS have been initalised");
   delay(3000); Serial.println("Setup Loop has started");
-  if (JUMPERS_POPULATED) {
+  if (JUMPERS_POPULATED) {// TODO this should also check the READ_JUMPERS bool, jumpers populated should be determined by hardware revision
     readJumpers();
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
@@ -141,11 +201,32 @@ void listenForSerialCommands() {
   }
 }
 
-elapsedMillis loop_length = 0;
-unsigned long num_loops = 0;
-unsigned long loop_totals = 0;
-unsigned long longest_loop = 0;
-unsigned long shortest_loop = 0;
+/*
+  #if PRINT_LOOP_LENGTH == true
+  elapsedMicros loop_length = 0;
+  unsigned long num_loops = 0;
+  unsigned long loop_totals = 0;
+  unsigned long longest_loop = 0;
+  unsigned long shortest_loop = 0;
+
+  void updateLoopLength() {
+  if (num_loops > 0) {
+    if (loop_length > longest_loop) {
+      longest_loop = loop_length;
+      Serial.print("new longest loop (in  micros)   : ");
+      Serial.println(longest_loop);
+    }
+    loop_totals += loop_length;
+    if (loop_totals % 1000 == 1) {
+      Serial.print("average loop length (in micros) : ");
+      Serial.println((double)loop_totals / (double) num_loops);
+    }
+  }
+  num_loops++;
+  loop_length = 0;
+  }
+  #endif//print loop length
+*/
 
 void loop() {
   updateLuxManagers();
@@ -154,20 +235,6 @@ void loop() {
   updateAutogain();
   updateDatalog();
   listenForSerialCommands();
-  #if LOOP_LENGTH == true
-  if (num_loops > 0) {
-    if (loop_length > longest_loop) {
-      longest_loop = loop_length;
-      Serial.print("new longest loop : ");
-      Serial.println(longest_loop);
-    }
-    loop_totals += loop_length;
-    if (loop_totals % 1000 == 1) {
-      Serial.print("average loop length: ");
-      Serial.println((double)loop_totals / (double) num_loops);
-    }
-  }
-  #endif// LOOP_LENGTH == true
-  num_loops++;
-  loop_length = 0;
+  //updateLoopLength();
+
 }

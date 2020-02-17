@@ -12,16 +12,11 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       12
+#define SERIAL_ID                       2
 
 // will there be a USB audio output object created?
 #define USB_INPUT                       1
 #define USB_OUTPUT                      1
-
-// if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
-// the main loop, it will also store the min and max loop length values as well as calculate 
-// what the average loop length is
-#define LOOP_LENGTH                     true
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side
@@ -29,14 +24,15 @@ bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TOD
 
 // WARNING NOT IMPLEMENTED - TODO
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define   COMBINE_LUX_READINGS           true  
+#define   COMBINE_LUX_READINGS           true
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE 
-#define   
+#define   COMBINE_LUX_READINGS           true
 #endif // enclosure type
+
 bool gain_adjust_active =                false;
 
 // WARNING NOT IMPLEMENTED - TODO
-#define DEACTIVATE_UNDER_EXTREME_LUX     true   
+#define DEACTIVATE_UNDER_EXTREME_LUX     true
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
@@ -74,7 +70,7 @@ bool gain_adjust_active =                false;
 #define PRINT_SONG_DATA                 false
 
 #define PRINT_CLICK_FEATURES            false
-#define PRINT_CLICK_DEBUG               false
+#define PRINT_CLICK_DEBUG               true
 
 #define PRINT_LED_VALUES                false
 #define PRINT_LED_DEBUG                 false
@@ -84,6 +80,11 @@ bool gain_adjust_active =                false;
 #define PRINT_AUTO_GAIN                 false
 
 #define PRINT_LOG_WRITE                 false
+// if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
+// the main loop, it will also store the min and max loop length values as well as calculate 
+// what the average loop length is
+#define PRINT_LOOP_LENGTH               false
+
 // perform a write check on everything that is written to EEPROM
 #define EEPROM_WRITE_CHECK              false
 
@@ -110,23 +111,27 @@ bool gain_adjust_active =                false;
 // how long the lux sensors need the LEDs to be 
 // turned off in order to get an accurate reading
 #define LUX_SHDN_LEN                    40
+
 bool front_lux_active =                 true;
-bool rear_lux_active =                  true;
+bool rear_lux_active  =                 true;
 
 #define LUX_CALIBRATION_TIME            3000
-// will the current lux reading be averaged with the past lux reading?
+
+// will the current lux reading be averaged with the past lux reading
+// This is generally a bad idea as the lux sensor has internal integration which
+// already takes the average of several readings
 #define SMOOTH_LUX_READINGS             false
 
 // this is the threshold in which anything below will just be treated as the lowest reading
-#define LOW_LUX_THRESHOLD               16.0
+#define LOW_LUX_THRESHOLD               50.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               300
-#define HIGH_LUX_THRESHOLD              1200.0
+#define HIGH_LUX_THRESHOLD              1000.0
 #define EXTREME_LUX_THRESHOLD           3000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.75
-#define BRIGHTNESS_SCALER_MAX           3.00
+#define BRIGHTNESS_SCALER_MIN           0.5
+#define BRIGHTNESS_SCALER_MAX           1.50
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -268,16 +273,18 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 //33 is 30 times a second
 #define FC_UPDATE_RATE                  0
 #define AUDIO_MEMORY                    40
-// for scaling the peak readings in the Audio Engine
-// to make it easier to debug things, etc.
+
+// the scaler values are applied to the raw readings read from the audio objects
+// TODO - in the future there needs to be a form of dynamic adjusting of these values according 
+// to some logic
 #if FIRMWARE_MODE == CICADA_MODE
-#define PEAK_SCALER                     5.0
-#define RMS_SCALER                      10.0
-#define FFT_SCALER                      100.0
+    double global_peak_scaler =              5.0 * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =              10.0 * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =              100.0 * ENC_ATTENUATION_FACTOR;
 #elif FIRMWARE_MODE == PITCH_MODE
-#define PEAK_SCALER                     100.0
-#define RMS_SCALER                      100.0
-#define FFT_SCALER                      1000.0
+    double global_peak_scaler =              100.0 * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =              100.0 * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =              1000.0 * ENC_ATTENUATION_FACTOR;
 #endif
 
 bool stereo_audio =                     true;
@@ -286,13 +293,13 @@ bool stereo_audio =                     true;
 #elif ENCLOSURE_TYPE == ORB_ENCLOSURE
  uint8_t num_channels =                  stereo_audio + 1;
 #endif
+
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
 // not working properly, then the variables will be switched to false
-#define FRONT_MICROPHONE_INSTALLED      true
-#define REAR_MICROPHONE_INSTALLED       true
 bool front_mic_active =                 FRONT_MICROPHONE_INSTALLED;
 bool rear_mic_active =                  REAR_MICROPHONE_INSTALLED;
+
 // audio usage loggings
 uint8_t audio_usage_max =               0;
 elapsedMillis last_usage_print =        0;// for keeping track of audio memory usage
@@ -312,6 +319,8 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 // minimum amount of time between peak-log resets  which is allowed.
 #define PEAK_LOG_RESET_MIN              2000
 #define RMS_LOG_RESET_MIN               2000
-// used the scaled FFT readings or the normal FFT readings...
-#define USE_SCALED_FFT                  1
+
+// used the scaled FFT readings or the normal FFT readings, the scaled readings will eensure that
+// all the bins of intrest will have their magnitudes add up to 1, thus is best used for determining the centroid within a sub frequency range (for instance 8k - 14k or something
+#define SCALE_FFT_BIN_RANGE                  1
 #endif // CONFIGURATION_H

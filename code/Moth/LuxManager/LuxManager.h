@@ -18,7 +18,7 @@ class LuxManager {
     };
     void startSensor(byte g, byte r);
     double forceLuxReading();
-    void forceLuxReading(double);
+    void setLuxValue(double);
     void calibrate(long len, bool first_time);
     bool update();
 
@@ -147,7 +147,7 @@ double LuxManager::checkForLuxOverValue() {
   return lux;
 }
 
-void LuxManager::forceLuxReading(double temp) {
+void LuxManager::setLuxValue(double temp) {
   dprintln(PRINT_LUX_DEBUG, "\nForce lux reading");
   dprint(PRINT_LUX_DEBUG, last_reading); dprint(PRINT_LUX_DEBUG, " readLux("); dprint(PRINT_LUX_DEBUG, id); dprint(PRINT_LUX_DEBUG, ")\t");
   if (temp > 10000) {

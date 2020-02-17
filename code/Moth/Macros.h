@@ -22,10 +22,17 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+///////////////////// ENCLOSURE_TYPES /////////////////////
+#define ORB_ENCLOSURE             1
+#define GROUND_ENCLOSURE          0
+
 ///////////////////// Audio Features //////////////////////
 // Some macros to make it easier to set some software settings
-#define RMS_DELTA             0
-#define PEAK_DELTA            1
+#define RMS_RAW               0
+#define RMS_DELTA             2
+#define PEAK_RAW              1
+#define PEAK_DELTA            3
+#define CENTROID              8
 #define ALL_FEATURES          10
 
 /////////////////////// colors ////////////////////////////
