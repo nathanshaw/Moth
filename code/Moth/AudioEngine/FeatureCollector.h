@@ -1,20 +1,21 @@
 #ifndef __FEATURE_COLLECTOR_H__
 #define __FEATURE_COLLECTOR_H__
 
+#include "audio_utils.h"
+
 class FeatureCollector {
     public:
         FeatureCollector(String _id);
-        double getPosDelta(double, double);
+
         /////////////////// Microphone Testing /////////////////
         bool testMicrophone();
-        bool testMicrophoneRMS();
-        bool testMicrophonePeak();
 
         /////////////////// Printing ///////////////////////////
         void printFeatures();
-        String getName() {
-            return id;
-        };
+
+        ////////////////// Getting Functions ///////////////////
+        String getName() {return name;};
+        bool isActive() {return microphone_active;};
 
         //////////////// Gain Tracking /////////////////////////
         double gain = 1.0;
@@ -22,43 +23,21 @@ class FeatureCollector {
         double max_gain = 1.0;
         void updateGain(double g);
         bool ampActive() {return amp_active;};
-
-        void linkAmplifier(AudioAmplifier * amp, double low, double high) { 
-            gain_lower_limit = low;
-            gain_upper_limit = high;
-            if (audio_amp_add_idx < 4) {
-                Serial.print("Linked an audio amplifier ");Serial.print(audio_amp_add_idx);printTab();
-                amp_ana[audio_amp_add_idx] = amp;
-                gain_tracking_active = true;
-                audio_amp_add_idx = audio_amp_add_idx + 1;
-                Serial.println(audio_amp_add_idx);
-            }
-            else {
-                Serial.println("ERROR, can't link audio amplifier, there are not enough available slots");
-            }
-        }
+        void linkAmplifier(AudioAmplifier * amp, double low, double high);
 
         //////////////// RMS /////////////////////////
-        void linkRMS(AudioAnalyzeRMS *r, double s) {
-            rms_ana = r;
-            rms_active = true;
-            rms_scaler = s;
-        };
-
+        void linkRMS(AudioAnalyzeRMS *r, double s, bool print);
         double getRMS();
         double getRMSPosDelta(){return rms_pos_delta;};
         double getRMSAvg();
+        bool   isRMSActive(){ return rms_active;};
         void   resetRMSAvgLog();
         void   resetRmsAvgLog();
         void   printRMSVals();
 
         //////////////// Peak /////////////////////////
-        void linkPeak(AudioAnalyzePeak *r, double s) {
-            peak_ana = r;
-            peak_active = true;
-            peak_scaler = s;
-        };
-
+        void linkPeak(AudioAnalyzePeak *r, double s, bool print);
+        bool   isPeakActive(){ return peak_active;};
         double getPeak();
         double getPeakPosDelta() {return peak_pos_delta;};
         double getPeakAvg();
@@ -67,35 +46,18 @@ class FeatureCollector {
         double peak_pos_delta;
 
         //////////////// Tone /////////////////////////
-        void linkTone(AudioAnalyzeToneDetect *r) {
-            tone_ana = r;
-            tone_active = true;
-        };
+        void linkTone(AudioAnalyzeToneDetect *r, bool print);
 
         double getToneLevel();
         void   printToneVals();
 
         //////////////// Freq /////////////////////////
-        void linkFreq(AudioAnalyzeNoteFrequency *r) {
-            freq_ana = r;
-            freq_active = true;
-        };
-
+        void linkFreq(AudioAnalyzeNoteFrequency *r, bool print);
         double getFreq();
         void   printFreqVals();
 
         //////////////// FFT /////////////////////////
-        void linkFFT(AudioAnalyzeFFT256*r, uint16_t l, uint16_t h, double s, bool scale_bin_v, bool c, bool f) {
-            fft_ana = r;
-            fft_active = true;
-            max_bin = h;
-            min_bin = l;
-            fft_num_bins = h - l;
-            fft_scaler = s;
-            scale_bin_values = scale_bin_v;
-            calculate_centroid = c;
-            calculate_flux = f;
-        };
+        void linkFFT(AudioAnalyzeFFT256*r, uint16_t l, uint16_t h, double s, bool scale_bin_v, bool c, bool f);
         // will the magnitudes within min-bin and max_bin sum to 1.0?
         bool scale_bin_values;
 
@@ -108,16 +70,43 @@ class FeatureCollector {
         double getRelativeEnergy(uint16_t);
         double getFFTTotalEnergy();
         double getRelativeBinPos() {return relative_bin_pos;};
+
+        void setCentroidActive(bool s) { calculate_centroid = s;}; 
         double getCentroid();
+        double getCentroid(uint16_t min, uint16_t max);
+        double getSmoothedCentroid();
+        double getSmoothedCentroid(uint16_t min, uint16_t max);
+
+        void setFluxActive(bool s) { calculate_flux = s;}; 
         double getSpectralFlux();
+        void calculateSpectralFlux();
 
         //////////////// General ///////////////////////
         void update();
-        bool isActive() {return microphone_active;};
         uint32_t getBinsMidFreq256(int bin);
 
+        //////////////// Printing ///////////////////////
+        void autoPrintRMS(bool p) {print_rms = p;};
+        void autoPrintPeak(bool p) {print_peak= p;};
+        void autoPrintCentroid(bool p) {print_centroid = p;};
+        void autoPrintFlux(bool p) {print_flux = p;};
+
     private:
-        String id = "";
+        ////////////////// Printing //////////////////////
+        bool print_rms      = false;
+        bool print_peak     = false;
+        bool print_centroid = false;
+        bool print_flux     = false;
+        bool print_tone     = false;
+        bool print_freq     = false;
+
+        /////////////// Testing Functions ////////////////
+        bool testMicrophoneRMS();
+        bool testMicrophonePeak();
+
+        /////////////// General //////////////////////////
+
+        String name = "";
         bool microphone_active = true;
         elapsedMillis last_update_timer;
 
@@ -169,9 +158,9 @@ class FeatureCollector {
         AudioAnalyzeFFT256*fft_ana;
         uint16_t fft_num_bins = 0;
         bool fft_active = false;
-        double fft_vals[127]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
-        double last_fft_vals[127]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
-        double scaled_fft_vals[127]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
+        double fft_vals[127];             // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
+        double last_fft_vals[127];        // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
+        double scaled_fft_vals[127];      // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
         double last_scaled_fft_vals[127]; // 511 is the largest possible size todo need to figure out how to make this array dynamically sizable
         double fft_scaler = 1.0;
         void calculateFFT();
@@ -186,11 +175,66 @@ class FeatureCollector {
         bool calculate_flux = false;
         double centroid;
         double flux;
+        elapsedMillis last_fft_reading;
 };
 
-FeatureCollector::FeatureCollector(String _id) {
-    id = _id;
+void FeatureCollector::linkFreq(AudioAnalyzeNoteFrequency *r, bool print) {
+    print_freq = print;
+    freq_ana = r;
+    freq_active = true;
+};
+
+void FeatureCollector::linkTone(AudioAnalyzeToneDetect *r, bool print) {
+    print_tone = print;
+    tone_ana = r;
+    tone_active = true;
+};
+
+void FeatureCollector::linkPeak(AudioAnalyzePeak *r, double s, bool print) {
+    print_peak = print;
+    peak_ana = r;
+    peak_active = true;
+    peak_scaler = s;
+};
+
+void FeatureCollector::linkRMS(AudioAnalyzeRMS *r, double s, bool print) {
+    print_rms = print;
+    rms_ana = r;
+    rms_active = true;
+    rms_scaler = s;
+};
+
+void FeatureCollector::linkFFT(AudioAnalyzeFFT256*r, uint16_t l, uint16_t h, double s, bool scale_bin_v, bool c, bool f) {
+    fft_ana = r;
+    fft_active = true;
+    max_bin = h;
+    min_bin = l;
+    fft_num_bins = h - l;
+    fft_scaler = s;
+    scale_bin_values = scale_bin_v;
+    calculate_centroid = c;
+    calculate_flux = f;
+};
+
+void FeatureCollector::linkAmplifier(AudioAmplifier * amp, double low, double high) { 
+    gain_lower_limit = low;
+    gain_upper_limit = high;
+    if (audio_amp_add_idx < 4) {
+        Serial.print("Linked an audio amplifier ");Serial.print(audio_amp_add_idx);printTab();
+        amp_ana[audio_amp_add_idx] = amp;
+        gain_tracking_active = true;
+        audio_amp_add_idx = audio_amp_add_idx + 1;
+        Serial.println(audio_amp_add_idx);
+    }
+    else {
+        Serial.println("ERROR, can't link audio amplifier, there are not enough available slots");
+    }
 }
+
+FeatureCollector::FeatureCollector(String _id) {
+    name = _id;
+}
+
 int FeatureCollector::getHighestEnergyBin(int start, int end) {
     int highest = -1;
     double h_val = 0.0;
@@ -227,7 +271,7 @@ bool FeatureCollector::testMicrophoneRMS() {
     uint8_t readings = 0;
     double values = 0.0;
     unsigned long a_time = millis();
-    Serial.print("Testing ");Serial.print(id);Serial.println(" Microphone using RMS");
+    Serial.print("Testing ");Serial.print(name);Serial.println(" Microphone using RMS");
     while (readings < 10 && millis() < a_time + MICROPHONE_TEST_DURATION) {
         if (rms_ana->available()) {
             values += rms_ana->read();
@@ -238,13 +282,13 @@ bool FeatureCollector::testMicrophoneRMS() {
     }
     if (values > 0) {
         Serial.println();
-        Serial.print(id);
+        Serial.print(name);
         Serial.println(" Microphone is good");
         microphone_active = true;
         return true;
     } 
     Serial.println("\nERROR, ");
-    Serial.print(id);Serial.println(" Microphone does not work");
+    Serial.print(name);Serial.println(" Microphone does not work");
     printDivideLn();
     microphone_active = false;
     return false;
@@ -256,7 +300,7 @@ bool FeatureCollector::testMicrophonePeak() {
     double values = 0.0;
     unsigned long a_time = millis();
     printDivide();
-    Serial.print("Testing ");Serial.print(id);Serial.println(" Microphone using Peak");
+    Serial.print("Testing ");Serial.print(name);Serial.println(" Microphone using Peak");
     while (readings < 10 && millis() < a_time + MICROPHONE_TEST_DURATION) {
         if (peak_ana->available()) {
             values += peak_ana->read();
@@ -267,13 +311,13 @@ bool FeatureCollector::testMicrophonePeak() {
     }
     if (values > 0) {
         Serial.println();
-        Serial.print(id);
+        Serial.print(name);
         Serial.println(" Microphone is good");
         microphone_active = true;
         return true;
     } 
     Serial.println("\nERROR, ");
-    Serial.print(id);Serial.println(" Microphone does not work");
+    Serial.print(name);Serial.println(" Microphone does not work");
     printMinorDivideLn();
     microphone_active = false;
     return false;
@@ -293,29 +337,88 @@ bool FeatureCollector::testMicrophone () {
 
 //////////////// Update Functions ///////////////////////////////
 
-double FeatureCollector::getSpectralFlux() {
+void FeatureCollector::calculateSpectralFlux() {
     double f = 0.0;
     for (int i = 0; i < 127; i++) {
-        f += pow((scaled_fft_vals[i] - last_scaled_fft_vals[i]), 2);
+        f += pow((fft_vals[i] - last_fft_vals[i]), 2);
     }
-    return f;
+    if (f != 0.0) {
+        flux = f;
+    }
 }
 
+double FeatureCollector::getSpectralFlux() {
+    dprint(print_flux, "flux: ");
+    dprintln(print_flux, flux);
+    return flux;
+}
+
+/////////////// Calculate Features //////////////////////////////
 double FeatureCollector::getCentroid() {
     double cent = 0.0;
     double mags = 0.0;
-    for (int i = min_bin; i < max_bin; i++) {
+    for (int i = 1; i < 127; i++) {
+        // take the magnitude of all the bins
+        // and multiply if by the mid frequency of the bin
+        // then all it to the total cent value
+        // we also have to remove the effect the FTT_SCALER has on the bins stored energy
+        mags += fft_vals[i] * getBinsMidFreq256(i) / fft_scaler;
+    }
+    dprint(print_centroid, "centroid : ");
+    dprintln(print_centroid, mags);
+    return mags;
+}
+
+double FeatureCollector::getCentroid(uint16_t min, uint16_t max) {
+    double cent = 0.0;
+    double mags = 0.0;
+    for (int i = min; i < max; i++) {
         // take the magnitude of all the bins
         // and multiply if by the mid frequency of the bin
         // then all it to the total cent value
         mags += fft_vals[i] * getBinsMidFreq256(i);
     }
+    dprint(print_centroid, "centroid : ");
+    dprintln(print_centroid, mags);
+    return mags;
+}
+
+double FeatureCollector::getSmoothedCentroid() {
+    double cent = 0.0;
+    double mags = 0.0;
+    for (int i = 0; i < 127; i++) {
+        // take the magnitude of all the bins
+        // and multiply if by the mid frequency of the bin
+        // then all it to the total cent value
+        // we also have to remove the effect the FTT_SCALER has on the bins stored energy
+        mags += fft_vals[i] * getBinsMidFreq256(i) / fft_scaler * 0.5;
+        mags += last_fft_vals[i] * getBinsMidFreq256(i) / fft_scaler * 0.5;
+    }
+    dprint(print_centroid, "smoothed centroid : ");
+    dprintln(print_centroid, mags);
+    return mags;
+}
+
+double FeatureCollector::getSmoothedCentroid(uint16_t min, uint16_t max) {
+    double cent = 0.0;
+    double mags = 0.0;
+    for (int i = min; i < max; i++) {
+        // take the magnitude of all the bins
+        // and multiply if by the mid frequency of the bin
+        // then all it to the total cent value
+        mags += fft_vals[i] * getBinsMidFreq256(i) / fft_scaler * 0.5;
+        mags += last_fft_vals[i] * getBinsMidFreq256(i) / fft_scaler * 0.5;
+    }
+    dprint(print_centroid, "centroid : ");
+    dprintln(print_centroid, mags);
     return mags;
 }
 
 void FeatureCollector::calculateFFT() {
     if (fft_active && fft_ana->available()) {
-        dprintln(PRINT_FFT_DEBUG, "FFT Available");
+        dprint(PRINT_FFT_DEBUG, "FFT Available - ");
+        dprint(PRINT_FFT_DEBUG, last_fft_reading);
+        last_fft_reading = 0;
         fft_tot_energy = 0.0;
         int highest = -1;
         double highest_val = -1.0;
@@ -323,17 +426,18 @@ void FeatureCollector::calculateFFT() {
             last_fft_vals[i] = fft_vals[i];
             fft_vals[i] = fft_ana->read(i) * fft_scaler;
             fft_tot_energy += fft_vals[i];
-            if (fft_vals[i] >= highest_val) {
+            if (fft_vals[i] >= highest_val && i > min_bin && i < max_bin) {
                 highest_val = fft_vals[i];
                 highest = i;
             }
         }
         if (scale_bin_values == true) {
+            double scaler = 1.0 / fft_tot_energy;
             for (int i = min_bin; i < max_bin; i++) {
                 dprintln(PRINT_FFT_DEBUG, "Scaling FFT Magnitudes to the sum of 1.0 over bin range");
                 if (fft_tot_energy > 0) {
                     last_scaled_fft_vals[i] = scaled_fft_vals[i];
-                    scaled_fft_vals[i] = fft_vals[i] / fft_tot_energy;
+                    scaled_fft_vals[i] = fft_vals[i] / fft_tot_energy * scaler;
                 }
             }
         }
@@ -343,9 +447,11 @@ void FeatureCollector::calculateFFT() {
         if (PRINT_FFT_DEBUG) {
           printFFTVals();
         }
-        relative_bin_pos = (double)(highest_energy_idx - min_bin) / (double)(max_bin - min_bin);
+        // the 10 is to try and get more dynamic range out of the colour mapping
+        relative_bin_pos = (double)(highest_energy_idx - min_bin + ((max_bin - min_bin)*0.25) ) / (double)(max_bin - min_bin - ((max_bin - min_bin)*0.25));
+        if (relative_bin_pos > 1.0) { relative_bin_pos = 1.0;};
         if (calculate_centroid == true) {centroid = getCentroid();};
-        if (calculate_flux == true) {flux = getSpectralFlux();};
+        if (calculate_flux == true) {calculateSpectralFlux();};
     }
 }
 
@@ -369,7 +475,7 @@ void FeatureCollector::calculatePeak() {
     if (peak_active && avail) {
         double last = peak_val;
         peak_val =  peak_ana->read();
-        dprint(PRINT_PEAK_DEBUG, id);
+        dprint(PRINT_PEAK_DEBUG, name);
         dprint(PRINT_PEAK_DEBUG, " Peaks (normal, scaled, pos_delta):\t");
         dprint(PRINT_PEAK_DEBUG, peak_val);
         peak_val *= peak_scaler;
@@ -393,12 +499,16 @@ void FeatureCollector::resetPeakAvgLog() {
 
 void FeatureCollector::calculateRMS() {
     if (rms_active  && (rms_ana->available())) {
-        double temp = rms_val;
-        rms_val = rms_ana->read();
-        rms_val *= rms_scaler;
-        rms_pos_delta = getPosDelta(temp, rms_val);
-        rms_totals += rms_val;
-        rms_readings++;
+        if (rms_ana->read() > 0.0) {
+            double temp = rms_val;
+            rms_val = rms_ana->read();
+            rms_val *= rms_scaler;
+            rms_pos_delta = getPosDelta(temp, rms_val);
+            rms_totals += rms_val;
+            rms_readings++;
+        } else {
+            Serial.println("WARNING RMS is equal to 0");
+        }
     }
 }
 
@@ -408,14 +518,6 @@ void FeatureCollector::resetRMSAvgLog() {
         rms_readings = 0;
         last_rms_reset = 0;
     }
-}
-
-double FeatureCollector::getPosDelta(double last, double current) {
-    double delta = 0;
-    if (current > last) {
-        delta = current - last;
-    }
-    return delta;
 }
 
 ///////////////////// Getter functions ///////////////////////////////
@@ -430,7 +532,7 @@ double FeatureCollector::getRMS() {
     if (rms_active) {
         return rms_val;
     }
-    Serial.println("ERROR  - RMS IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
+    Serial.println("ERROR  - RMS IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(name);
     return -1.0;
 }
 
@@ -438,7 +540,7 @@ double FeatureCollector::getPeak() {
     if (peak_active) {
         return peak_val;
     }
-    Serial.println("ERROR  - Peak IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
+    Serial.println("ERROR  - Peak IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(name);
     return -1.0;
 }
 
@@ -460,7 +562,7 @@ double FeatureCollector::getFreq() {
     if (freq_active) {
         return freq_val;
     }
-    Serial.println("ERROR  - Freq IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
+    Serial.println("ERROR  - Freq IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(name);
     return -1.0;
 }
 
@@ -468,7 +570,7 @@ double FeatureCollector::getToneLevel() {
     if (tone_active) {
         return tone_level;
     }
-    Serial.println("ERROR  - Peak IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
+    Serial.println("ERROR  - Peak IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(name);
     return -1;
 }
 
@@ -476,16 +578,16 @@ double FeatureCollector::getFFTTotalEnergy() {
     if (fft_active) {
         return fft_tot_energy;
     }
-    Serial.println("ERROR  - FFT IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(id);
+    Serial.println("ERROR  - FFT IS NOT AN ACTIVE AUDIO FEATURE : "); Serial.println(name);
     return -1.0;
 }
 
 //////////////////////////////// Print Functions /////////////////////////////////////////
 void FeatureCollector::printFeatures() {
-    if (rms_active && PRINT_RMS_VALS) {
+    if (rms_active && print_rms) {
         printRMSVals();
     };
-    if (peak_active && PRINT_PEAK_VALS) {
+    if (peak_active && print_peak) {
         printPeakVals();
     };
     if (freq_active && PRINT_FREQ_VALS) {
@@ -501,7 +603,7 @@ void FeatureCollector::printFeatures() {
 
 void FeatureCollector::printToneVals() {
     if (tone_active > 0) {
-        Serial.print(id);
+        Serial.print(name);
         Serial.print(" tone_level :\t");
         Serial.println(tone_level);
     }
@@ -510,12 +612,6 @@ void FeatureCollector::printToneVals() {
 double FeatureCollector::getRelativeEnergy(uint16_t idx) {
     if (fft_tot_energy > 0) {
         double val = 0.0;
-        /*
-        Serial.print(fft_vals[idx]);
-        Serial.print(" / ");
-        Serial.print(fft_tot_energy);
-        Serial.print("\t");
-        */
         val = fft_vals[idx] / fft_tot_energy;
         // Serial.println(val);
         return val;
@@ -539,7 +635,7 @@ void FeatureCollector::printFFTVals() {
         if (USE_SCALED_FFT) {
             Serial.print("Scaled ");
         }
-        Serial.print(id); Serial.print(" FFT vals");
+        Serial.print(name); Serial.print(" FFT vals");
         uint8_t w = 8;
         for (int l  = 0; l < w; l++) {
             Serial.println();
@@ -562,7 +658,7 @@ void FeatureCollector::printFFTVals() {
 
 void FeatureCollector::printFreqVals() {
     if (freq_active > 0) {
-        Serial.print(id); Serial.print("\tnote_freq prob/freq:\t");
+        Serial.print(name); Serial.print("\tnote_freq prob/freq:\t");
         Serial.print(freq_prob); printTab();
         Serial.println(freq_val);
     }
@@ -570,7 +666,7 @@ void FeatureCollector::printFreqVals() {
 
 void FeatureCollector::printRMSVals() {
     if (rms_active > 0) {
-        Serial.print(id); Serial.print(" RMS vals\t");
+        Serial.print(name); Serial.print(" RMS vals\t");
         Serial.print(rms_val);printTab();
         Serial.print("delta\t");Serial.print(rms_pos_delta);
         Serial.print(" average\t");Serial.println(getRMSAvg());
@@ -579,7 +675,7 @@ void FeatureCollector::printRMSVals() {
 
 void FeatureCollector::printPeakVals() {
     if (peak_active > 0) {
-        Serial.print(id); Serial.print(" Peak vals\t");
+        Serial.print(name); Serial.print(" Peak vals\t");
         Serial.print(peak_val);printTab();
         Serial.print("delta\t");Serial.print(peak_pos_delta);
         Serial.print(" average\t");Serial.println(getPeakAvg());
@@ -601,7 +697,7 @@ void FeatureCollector::update() {
     }
     else {
         if (last_update_timer > 3000){
-            Serial.print(id);
+            Serial.print(name);
             Serial.println(" sorry the microphone does not work, not updating the feature collector");
             last_update_timer = 0;
         }

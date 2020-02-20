@@ -7,14 +7,14 @@
 
 // TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
 // how long does the microphone test routine last for in the feature collector testMicrophone() function
-#define MICROPHONE_TEST_DURATION  2000
-#define LUX_TEST_DURATION         2000
+#define MICROPHONE_TEST_DURATION  1500
+#define LUX_TEST_DURATION         1000
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Hardware Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE;
+uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
@@ -83,45 +83,24 @@ uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE;
 ////////////////////////////////////////////////////////////////////////////
 #define S_VERSION_MAJOR           0
 #define S_VERSION_MINOR           0
-#define S_SUBVERSION              4
+#define S_SUBVERSION              5
+// version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
+// how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
+// and the addition of a flag to differentiate between adding the flash brightness of just displaying
+// the brightness
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Neopixel Managers  //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // how high the click flash timer will go up to
-#define MAX_FLASH_TIME            40
+#define MAX_FLASH_TIME            60
 // where the click flash timer will start
-#define MIN_FLASH_TIME            10
+#define MIN_FLASH_TIME            20
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
 #define FLASH_DEBOUNCE_TIME       80
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
 #define SERIAL_BAUD_RATE          115200
-
-void readJumpersByReference(bool &v1, bool &v2, bool &v3, bool &v4, bool &v5, bool &v6) {
-  printMajorDivide("reading jumpers");
-  pinMode(JMP1_PIN, INPUT);
-  pinMode(JMP2_PIN, INPUT);
-  pinMode(JMP3_PIN, INPUT);
-  pinMode(JMP4_PIN, INPUT);
-  pinMode(JMP5_PIN, INPUT);
-  pinMode(JMP6_PIN, INPUT);
-  delay(100);
-
-  v1 = digitalRead(JMP1_PIN);
-  Serial.print(v1); printTab();
-  v2 = digitalRead(JMP2_PIN);
-  Serial.print(v2); printTab();
-  v3 = digitalRead(JMP3_PIN);
-  Serial.print(v3); printTab();
-  v4 = digitalRead(JMP4_PIN);
-  Serial.print(v4); printTab();
-  v5 = digitalRead(JMP5_PIN);
-  Serial.print(v5); printTab();
-  v6 = digitalRead(JMP6_PIN);
-  Serial.print(v6); printTab();
-  printDivide();
-}
 
 // set to true if you want to print out data stored in EEPROM on boot
 #define PRINT_EEPROM_CONTENTS           true

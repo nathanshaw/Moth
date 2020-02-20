@@ -70,6 +70,7 @@ bool testJumpers() {
   values[3] = digitalRead(JMP4_PIN);
   values[4] = digitalRead(JMP5_PIN);
   values[5] = digitalRead(JMP6_PIN);
+  Serial.println("Testing the PCB for jumpers");
   for (int i = 0; i < 10; i++) {
     if (values[0] != digitalRead(JMP1_PIN)){
         populated = false;
@@ -95,6 +96,7 @@ bool testJumpers() {
         populated = false;
         Serial.println("JMP6_PIN returned multiple values");
     }
+    delay(10);
   }
   return populated;
 }
@@ -120,11 +122,13 @@ void readJumpers() {
     Serial.print("\t");
     Serial.println(digitalRead(JMP6_PIN));
 
+    //////////// Jumper 1 ///////////////////////
     bool temp_b;
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
     Serial.print("(pin1) Enclosure                      : ");
     Serial.println(ENCLOSURE_TYPE);
 
+    //////////// Jumper 4 ///////////////////////
     temp_b = digitalRead(JMP4_PIN);
     if (temp_b == 0) {
       SONG_FEATURE = RMS_RAW;
@@ -134,6 +138,7 @@ void readJumpers() {
     Serial.print("(pin4) Song Feature                  : ");
     Serial.println(SONG_FEATURE);
 
+    //////////// Jumper 5 ///////////////////////
     temp_b = digitalRead(JMP5_PIN);
     if (temp_b == 0) {
       CLICK_FEATURE = RMS_DELTA;
@@ -142,6 +147,14 @@ void readJumpers() {
     }
     Serial.print("(pin5) Click Feature                 : ");
     Serial.println(CLICK_FEATURE);
+
+    ///////////// Jumper 6 //////////////////////
+    temp_b = digitalRead(JMP6_PIN);
+    if (temp_b == 1) {
+      MASTER_GAIN_SCALER *= 1.5;
+    }
+    Serial.print("(pin6) MASTER_GAIN_SCALER increased by 50% : ");
+    Serial.println(MASTER_GAIN_SCALER);
   } else {
     Serial.println("ERROR - this PCB does not contain jumpers, or jumper pins are not populated");
   }
@@ -236,5 +249,4 @@ void loop() {
   updateDatalog();
   listenForSerialCommands();
   //updateLoopLength();
-
 }

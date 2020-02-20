@@ -22,8 +22,8 @@ uint32_t num_song_peaks[2];
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
 NeoGroup neos[2] = {
-  NeoGroup(&leds, 0, (NUM_LED/2)-1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, NUM_LED/2, NUM_LED-1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
+  NeoGroup(&leds, 0, (NUM_LED / 2) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
+  NeoGroup(&leds, NUM_LED / 2, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
 };
 
 // lux managers to keep track of the VEML readings
@@ -71,7 +71,7 @@ AudioAnalyzeRMS          click_rms2;     //xy=1630,840
 AudioAnalyzePeak         song_peak1;     //xy=1630,1080
 AudioAnalyzePeak         song_peak2;     //xy=1631,1112
 AudioAnalyzePeak         click_peak1;    //xy=1633,907
-AudioAnalyzeFFT256      song_fft1;       //xy=1632.5000457763672,1145.000036239624
+AudioAnalyzeFFT256       input_fft;       //xy=1632.5000457763672,1145.000036239624
 // AudioAnalyzeFFT1024      song_fft2;       //xy=1632.5000457763672,1177.5000343322754
 AudioAnalyzePeak         click_peak2;    //xy=1634,940
 AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
@@ -101,11 +101,10 @@ AudioConnection          patchCord24(click_post_amp1, click_peak1);
 AudioConnection          patchCord25(click_post_amp1, 0, usb1, 0);
 AudioConnection          patchCord26(song_post_amp2, song_rms2);
 AudioConnection          patchCord27(song_post_amp2, song_peak2);
-// AudioConnection          patchCord28(song_post_amp2, song_fft2);
 AudioConnection          patchCord29(song_post_amp1, song_rms1);
 AudioConnection          patchCord30(song_post_amp1, song_peak1);
 AudioConnection          patchCord31(song_post_amp1, 0, usb1, 1);
-AudioConnection          patchCord32(song_post_amp1, song_fft1);
+AudioConnection          patchCord32(click_input_amp1, input_fft);
 
 void initAutoGain() {
   auto_gain[0].setExternalThresholds((String)"Led ON Ratio", MIN_ON_RATIO_THRESH, LOW_ON_RATIO_THRESH,
@@ -119,40 +118,46 @@ void initAutoGain() {
 }
 
 void linkFeatureCollectors() {
-  fc[0].linkAmplifier(&song_input_amp1, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[0].linkAmplifier(&song_mid_amp1, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[0].linkAmplifier(&song_post_amp1, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[1].linkAmplifier(&song_input_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[1].linkAmplifier(&song_mid_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[1].linkAmplifier(&song_post_amp2, MIN_SONG_GAIN, MAX_SONG_GAIN);
-  fc[2].linkAmplifier(&click_input_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[2].linkAmplifier(&click_mid_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[2].linkAmplifier(&click_post_amp1, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
-  fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN, MAX_CLICK_GAIN);
+  fc[0].linkAmplifier(&song_input_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[0].linkAmplifier(&song_mid_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[0].linkAmplifier(&song_post_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[1].linkAmplifier(&song_input_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[1].linkAmplifier(&song_mid_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[1].linkAmplifier(&song_post_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[2].linkAmplifier(&click_input_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[2].linkAmplifier(&click_mid_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[2].linkAmplifier(&click_post_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
 
   if (RMS_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
-    fc[0].linkRMS(&song_rms1, global_rms_scaler);
-    fc[1].linkRMS(&song_rms2, global_rms_scaler);
+    fc[0].linkRMS(&song_rms1, global_rms_scaler, PRINT_RMS_VALS);
+    fc[1].linkRMS(&song_rms2, global_rms_scaler, PRINT_RMS_VALS);
     // fc 2-3 are for the click front/rear
-    fc[2].linkRMS(&click_rms1, global_rms_scaler);
-    fc[3].linkRMS(&click_rms2, global_rms_scaler);
+    fc[2].linkRMS(&click_rms1, global_rms_scaler, PRINT_RMS_VALS);
+    fc[3].linkRMS(&click_rms2, global_rms_scaler, PRINT_RMS_VALS);
   }
   if (PEAK_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
-    fc[0].linkPeak(&song_peak1, global_peak_scaler);
-    fc[1].linkPeak(&song_peak2, global_peak_scaler);
+    fc[0].linkPeak(&song_peak1, global_peak_scaler, PRINT_PEAK_VALS);
+    fc[1].linkPeak(&song_peak2, global_peak_scaler, PRINT_PEAK_VALS);
     // fc 2-3 are for the click front/rear
-    fc[2].linkPeak(&click_peak1, global_peak_scaler);
-    fc[3].linkPeak(&click_peak2, global_peak_scaler);
+    fc[2].linkPeak(&click_peak1, global_peak_scaler, PRINT_PEAK_VALS);
+    fc[3].linkPeak(&click_peak2, global_peak_scaler, PRINT_PEAK_VALS);
   }
   if (FFT_FEATURE_ACTIVE) {
     // fc 0-1 are for the song front/rear
     // this equates to about 4k - 16k, perhaps I shoul
-    fc[0].linkFFT(&song_fft1, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, true);
-    // fc[1].linkFFT(&song_fft2, 2, 127, (double)FFT_SCALER);
+    fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
+    fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
+    if (CALCULATE_FLUX == true) {
+      fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+      fc[2].setFluxActive(true);
+      fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+      fc[3].setFluxActive(true);
+    }
   }
 }
 
@@ -213,10 +218,10 @@ void setupAudio() {
   Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
   Serial.print(SONG_BQ2_Q); Serial.print("\tdB"); Serial.println(SONG_BQ2_DB);
 
-  fc[0].updateGain(STARTING_SONG_GAIN);
-  fc[1].updateGain(STARTING_SONG_GAIN);
-  fc[2].updateGain(STARTING_CLICK_GAIN);
-  fc[3].updateGain(STARTING_CLICK_GAIN);
+  fc[0].updateGain(STARTING_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[1].updateGain(STARTING_SONG_GAIN * MASTER_GAIN_SCALER);
+  fc[2].updateGain(STARTING_CLICK_GAIN * MASTER_GAIN_SCALER);
+  fc[3].updateGain(STARTING_CLICK_GAIN * MASTER_GAIN_SCALER);
 
   Serial.println("Testing Microphones");
   printTeensyDivide();
@@ -231,10 +236,10 @@ void setupAudio() {
 
 uint8_t calculateRMSWeighted(FeatureCollector *f) {
   double rms = 0;
-  rms = f->getRMS() * global_rms_scaler;
+  rms = f->getRMS() * global_rms_scaler - RMS_LOW_THRESH;
   if (rms > 1.0) {
     rms = 1.0;
-  } else if (rms < RMS_LOW_THRESH) {
+  } else if (rms < 0.0) {
     rms = 0.0;
   }
   uint8_t scaler = (uint8_t)(rms * (double)MAX_BRIGHTNESS);
@@ -243,10 +248,10 @@ uint8_t calculateRMSWeighted(FeatureCollector *f) {
 
 uint8_t calculatePeakWeighted(FeatureCollector *f) {
   double peak = 0;
-  peak = f->getPeak() * global_peak_scaler;
+  peak = f->getPeak() * global_peak_scaler - PEAK_LOW_THRESH;
   if (peak > 1.0) {
     peak = 1.0;
-  } else if (peak < PEAK_LOW_THRESH) {
+  } else if (peak < 0.0) {
     peak = 0.0;
   }
   uint8_t scaler = uint8_t(peak * (double)MAX_BRIGHTNESS);
@@ -431,126 +436,125 @@ void setupDLManager() {
   }
 }
 
+double feature_min = 9999999.99;
+double feature_max = 0.0000001;
+elapsedMillis feature_reset_tmr;
+const unsigned long feature_reset_time = (1000 * 60);// every minute?
+
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
     uint8_t brightness = 0;
     uint16_t red, green;
     if (SONG_FEATURE == PEAK_RAW) {
-        brightness = calculatePeakWeighted(&fc[i]);
+      brightness = calculatePeakWeighted(&fc[i]);
     } else if (SONG_FEATURE == RMS_RAW) {
-        brightness = calculateRMSWeighted(&fc[i]);
+      brightness = calculateRMSWeighted(&fc[i]);
     }
-    if (FFT_FEATURE_ACTIVE) {
-        double cent = fc[0].getRelativeBinPos()*1.5;
-        double flux = fc[2].getSpectralFlux();
-        if (cent > 1.0) {cent = 1.0;};
-        Serial.print("cent: ");
+    if (SONG_COLOR_FEATURE == SPECTRAL_CENTROID) {
+      double cent = fc[i].getSmoothedCentroid();
+      if (feature_reset_tmr > feature_reset_time) {
+        feature_min = 999999.999;
+        feature_max = 0.00000001;
+        Serial.println("reset feature min and max");
+        feature_reset_tmr = 0;
+      }
+      if (cent < feature_min) {
+        feature_min = cent;
+      };
+      if (cent > feature_max) {
+        feature_max = cent;
+      };
+      if (PRINT_SONG_DEBUG) {
+        Serial.print("bright: ");
+        Serial.print(brightness);
+        Serial.print("\tcent : ");
         Serial.print(cent);
-        Serial.print("\tflux: ");
-        Serial.println(flux);
-        red = brightness * cent;
-        green = brightness * (1.0 - cent);
-      } else {
-        red = brightness;
-        green = 0;
       }
-      if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
-        if (front_mic_active == true && i == 0) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        } else if (rear_mic_active == true && i == 1) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        }
-      } else {
-        neos[i].colorWipe(red, green, 0);
+      
+      cent = (cent - feature_min) / (feature_max - feature_min);
+      
+      if (PRINT_SONG_DEBUG) {
+        Serial.print("\tcent : ");
+        Serial.print(cent);
+        Serial.print("\tmin/max:\t");
+        Serial.print(feature_min);
+        Serial.print(" / ");
+        Serial.println(feature_max);
       }
+      red = brightness * cent ;
+      green = brightness * (1.0 - cent);
+    } else if (SONG_COLOR_FEATURE == MAX_ENERGY_BIN) {
+      double bin_pos = fc[i].getRelativeBinPos();
+      red = brightness * bin_pos;
+      green = brightness * (1.0 - bin_pos);
+    } else {
+      red = brightness;
+      green = 0;
     }
-}
-/*
-void updateSong() {
-  // TODO - double check that these are both pulling the correct feature collector
-  for (int i = 0; i < num_channels; i++) {
-    // if (flash_on[i] == false) {
-    if (SONG_FEATURE == PEAK_RAW) {
-      uint8_t song_peak_weighted = calculatePeakWeighted(&fc[i]);
-      uint16_t red, green;
-      if (FFT_FEATURE_ACTIVE) {
-        double cent = fc[0].getRelativeBinPos()*1.5;
-        double flux = fc[2].getSpectralFlux();
-        if (cent > 1.0) {cent = 1.0;};
-        // Serial.print("cent is : ");
-        // Serial.println(cent);
-        Serial.print("flux is : ");
-        Serial.println(flux);
-        red = song_peak_weighted * cent;
-        green = song_peak_weighted * (1.0 - cent);
-      } else {
-        red = song_peak_weighted;
-        green = 0;
-      }
-      if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
-        if (front_mic_active == true && i == 0) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        } else if (rear_mic_active == true && i == 1) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        }
-      } else {
-        neos[i].colorWipe(red, green, 0);
-      }
-    } else if (SONG_FEATURE == RMS_RAW) {
-      uint8_t song_rms_weighted = calculateRMSWeighted(&fc[i]);
-      uint16_t red, green;
-      if (SONG_COLOR_FEATURE == CENTROID) {
-        double cent = fc[0].getCentroid();
-        red = song_rms_weighted * cent;
-        green = song_rms_weighted * (1.0 - cent);
-      } else {
-        red = song_rms_weighted;
-        green = 0;
-      }
-      if (stereo_audio == false) {
-        if (front_mic_active == true && i == 0) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        } else if (rear_mic_active == true && i == 1) {
-          neos[0].colorWipe(red, green, 0);
-          neos[1].colorWipe(red, green, 0);
-        }
-      } else  {
-        neos[i].colorWipe(red, 0, 0);
+    // dprint(PRINT_SONG_DEBUG, "brightness - ");
+    // dprint(PRINT_SONG_DEBUG, brightness);
+    // dprint(PRINT_SONG_DEBUG, "\tr:");
+    // dprint(PRINT_SONG_DEBUG, red);
+    // dprint(PRINT_SONG_DEBUG, "\tg:");
+    // dprintln(PRINT_SONG_DEBUG, green);
+    // dprint(PRINT_SONG_DEBUG, "\tb:");
+    // dprintln(PRINT_SONG_DEBUG, blue);
+    if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
+      if (front_mic_active == true && i == 0) {
+        neos[0].colorWipe(red, green, 0);
+        neos[1].colorWipe(red, green, 0);
+      } else if (rear_mic_active == true && i == 1) {
+        neos[0].colorWipe(red, green, 0);
+        neos[1].colorWipe(red, green, 0);
       }
     } else {
-      Serial.print("ERROR: the SONG_FEATURE ");
-      Serial.print(SONG_FEATURE);
-      Serial.println(" is not a valid/implemented SONG_FEATURE");
+      neos[i].colorWipe(red, green, 0);
     }
   }
 }
-*/
+
 void updateClick() {
   for (int i = 0; i < num_channels; i++) {
+    /*
     double feature = 0.0;
     double threshold = 0.0;
     if (CLICK_FEATURE == PEAK_DELTA) {
-        feature = fc[i + 2].getPeakPosDelta();
-        threshold = CLICK_PEAK_DELTA_THRESH;
+      feature = fc[i + 2].getPeakPosDelta();
+      threshold = CLICK_PEAK_DELTA_THRESH;
     } else if (CLICK_FEATURE == RMS_DELTA) {
-        feature = fc[i + 2].getRMSPosDelta();
-        threshold = CLICK_RMS_DELTA_THRESH;
+      feature = fc[i + 2].getRMSPosDelta();
+      threshold = CLICK_RMS_DELTA_THRESH;
+    } else if (CLICK_FEATURE == SPECTRAL_FLUX) {
+      feature = fc[2].getSpectralFlux() * SPECTRAL_FLUX_SCALER;
+      threshold = CLICK_SPECTRAL_FLUX_THRESH;
+      // Serial.print("spectral flux: ");
+      // Serial.println(feature);
     }
+    */
+    double flux = fc[2].getSpectralFlux();
+    double rms = fc[i+2].getRMSPosDelta();
+    double feature = rms * flux;
+    double threshold = 0.0;
+    /*
+    if (i == 0) {
+      Serial.print("feature      : ");
+      Serial.println(feature, 12);
+      Serial.print("spectral flux: ");
+      Serial.println(flux, 12);
+      Serial.print("rms          : ");
+      Serial.println(rms, 12);
+    }
+    */
+    // Serial.print(rms_pos_delta 
     if (feature > threshold) {
-        Serial.print("click feature is above threshold: ");
-        Serial.print(feature);
-        Serial.print(" - ");
-        Serial.println(threshold);
+      dprint(PRINT_CLICK_DEBUG, "click feature is above threshold: ");
+      dprint(PRINT_CLICK_DEBUG, feature);
+      dprint(PRINT_CLICK_DEBUG, " - ");
+      dprint(PRINT_CLICK_DEBUG, threshold);
       if (neos[i].flashOn()) {
         num_flashes[i]++;
         total_flashes[i]++;
         fpm[i] = num_flashes[i] / fpm_timer;
-        // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
         if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
           if (neos[1].flashOn()) {
             num_flashes[1]++;
@@ -566,58 +570,12 @@ void updateClick() {
           }
         }
       }
+    }
+  }
       for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
         neos[i].update();
       }
-    }
-  }
 }
-/*
-void updateClick() {
-  for (int i = 0; i < num_channels; i++) {
-    if (fc[i + 2].getPeakPosDelta() > CLICK_PEAK_DELTA_THRESH) {
-      Serial.print("Peak pos delta is above threshold: ");
-      Serial.print(fc[i + 2].getPeakPosDelta());
-      Serial.print(" / ");
-      Serial.println(CLICK_PEAK_DELTA_THRESH);
-      if (neos[i].flashOn()) {
-        num_flashes[i]++;
-        total_flashes[i]++;
-        fpm[i] = num_flashes[i] / fpm_timer;
-        // Serial.print("num_flashes 0: "); Serial.println(num_flashes[0]);
-        if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
-          if (neos[1].flashOn()) {
-            num_flashes[1]++;
-            total_flashes[1]++;
-            fpm[1] = num_flashes[1] / fpm_timer;
-          }
-        }
-        if (INDEPENDENT_FLASHES == false && i == 1) {
-          if (neos[0].flashOn()) {
-            num_flashes[0]++;
-            total_flashes[0]++;
-            fpm[0] = num_flashes[0] / fpm_timer;
-          }
-        }
-      }
-      for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
-        neos[i].update();
-      }
-    }
-  }
-}
-*/
-
-/*
-  void printColors() {
-  if (print_color_timer > COLOR_PRINT_RATE) {
-    print_color_timer = 0;
-    for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
-      neos[i].printColors();
-    }
-  }
-  }
-*/
 
 void updateAutogain() {
 #if (AUTOGAIN_ACTIVE)

@@ -366,10 +366,18 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
 
   if (flash_on == true) {
       // if the flash is on then add the flash colors to the color wipe colors
-      dprintln(PRINT_COLOR_WIPE_DEBUG, " Flash blocked colorWipe");
-      red += flash_red;
-      green += flash_green;
-      blue += flash_blue;
+      if (FLASH_DOMINATES == false) {
+          dprintln(PRINT_COLOR_WIPE_DEBUG, " Flash blocked colorWipe");
+          red += flash_red;
+          green += flash_green;
+          blue += flash_blue;
+      }
+      else {
+          dprintln(PRINT_COLOR_WIPE_DEBUG, " Flash blocked colorWipe");
+          red += flash_red;
+          green += flash_green;
+          blue += flash_blue;
+      }
   }
 
   int colors = packColors(red, green, blue, bs);
@@ -436,7 +444,7 @@ void NeoGroup::flashOff() {
     leds_on = false;
     colorWipe(0, 0, 0);
     remaining_flash_delay = 0;
-    last_flash = 0;
+    // last_flash = 0;
   }
 }
 
@@ -468,7 +476,8 @@ bool NeoGroup::flashOn(uint8_t red, uint8_t green, uint8_t blue) {
       return true;
     }
   } else {
-    dprintln(PRINT_CLICK_DEBUG, "Flash skipped due to FLASH_DEBOUNCE_TIME");
+    dprint(PRINT_CLICK_DEBUG, "Flash skipped due to FLASH_DEBOUNCE_TIME : ");
+    dprintln(PRINT_CLICK_DEBUG, last_flash);
   }
   return false;
 }
@@ -513,7 +522,7 @@ void NeoGroup::update() {
   // if it has been running for less than one ms
   if (last_flash_update != 0) {
     last_flash_update = 0;
-    Serial.println("updated last_flash_upate to 0");
+    dprintln(PRINT_CLICK_DEBUG, "updated last_flash_upate to 0");
   }
 }
 

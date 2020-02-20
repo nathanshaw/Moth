@@ -9,26 +9,26 @@
 #define FFT_FEATURE_ACTIVE              1
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
+// if this is set to true the flashes will only contain the Flash color instea
+// if this is set to false then the flash color will be added to the normal color
+#define FLASH_DOMINATES                 false
 // TODO - add bin magnitude as a feature
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-int SONG_FEATURE =                      RMS_DELTA;
-int SONG_COLOR_FEATURE =                CENTROID;
+int SONG_FEATURE =                      PEAK_RAW;
+int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
-#define SONG_ACTIVATION_THRESH          0.25
+#define SONG_PEAK_THRESH          0.25
+#define SONG_RMS_THRESH           0.25
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG               0.002
 #define MAX_SONG_PEAK_AVG               0.2
 
-#if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define STARTING_SONG_GAIN              4.0
-#define STARTING_CLICK_GAIN             8.0
-#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
+// this is the gain that the input amps will be set at at the start of the installation
 #define STARTING_SONG_GAIN              6.0
-#define STARTING_CLICK_GAIN             10.0
-#endif//enclosure type
+#define STARTING_CLICK_GAIN             12.0
 
 #define SONG_BQ1_THRESH                 4000
 #define SONG_BQ1_Q                      0.85
@@ -45,15 +45,20 @@ int SONG_COLOR_FEATURE =                CENTROID;
 // "rms_delta" will use that feature along with CLICK_RMS_DELTA_THRESH
 // "peak_delta" will use that feature along with CLICK_PEAK_DELTA_THRESH
 // "all" will use all available features with their corresponding thresholds
+#define CALCULATE_FLUX                  true
+#define CALCULATE_CENTROID              true
+#define CALCULATE_ROFF                  true
 
 int CLICK_FEATURE =                     PEAK_DELTA;
 #define CLICK_RMS_DELTA_THRESH          0.05
-#define CLICK_PEAK_DELTA_THRESH         0.15
+#define CLICK_PEAK_DELTA_THRESH         0.20
+#define CLICK_SPECTRAL_FLUX_THRESH      100.0
+#define SPECTRAL_FLUX_SCALER            1
 
 // these values are used to ensure that the light do not turn on when there are low 
 // amplitudes in the sonic environment
 #define RMS_LOW_THRESH                  0.1
-#define PEAK_LOW_THRESH                 0.15
+#define PEAK_LOW_THRESH                 0.1
 
 // One click per ten minutes
 #define MIN_FPM_THRESH                  0.1

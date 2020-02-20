@@ -1,8 +1,13 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H 
+
+
 /* This is the main configuration file for the Moth Framework
  * Using this file, along with the other configuration files you
  * Can cistomise how the firmware performs.
+ * 
+ * ----------------------- JUMPER PINS --------------------------
+ * 
  */
 #include "Configuration_adv.h"
 #include <Audio.h>
@@ -12,11 +17,9 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       2
+#define SERIAL_ID                       11
 
-// will there be a USB audio output object created?
-#define USB_INPUT                       1
-#define USB_OUTPUT                      1
+double MASTER_GAIN_SCALER =             1.0;
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side
@@ -67,10 +70,10 @@ bool gain_adjust_active =                false;
 #define PRINT_LUX_READINGS              false
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
-#define PRINT_SONG_DATA                 false
+#define PRINT_SONG_DEBUG                false
 
 #define PRINT_CLICK_FEATURES            false
-#define PRINT_CLICK_DEBUG               true
+#define PRINT_CLICK_DEBUG               false
 
 #define PRINT_LED_VALUES                false
 #define PRINT_LED_DEBUG                 false
@@ -125,13 +128,13 @@ bool rear_lux_active  =                 true;
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               50.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               300
-#define HIGH_LUX_THRESHOLD              1000.0
-#define EXTREME_LUX_THRESHOLD           3000.0
+#define MID_LUX_THRESHOLD               1000.0
+#define HIGH_LUX_THRESHOLD              2000.0
+#define EXTREME_LUX_THRESHOLD           4000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.5
-#define BRIGHTNESS_SCALER_MAX           1.50
+#define BRIGHTNESS_SCALER_MIN           0.75
+#define BRIGHTNESS_SCALER_MAX           1.750
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -145,15 +148,21 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
-#define FLASH_RED                       0
-#define FLASH_GREEN                     55
-#define FLASH_BLUE                      200
+#define FLASH_RED                       150
+#define FLASH_GREEN                     100
+#define FLASH_BLUE                      255
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 double runtime;
 bool data_logging_active =              true;
+
+// TODO
+// if this is set to true the hardware settings in the Configuration_hardawre.h file will be writtent o EEPROM
+// if this is set to false then those settings will be read from the EEPROM 
+// this should include things like the number of lux sensors, number of neopixels, etc
+#define WRITE_HARDWARE_SETTINGS         true
 
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS           0
@@ -173,9 +182,9 @@ bool data_logging_active =              true;
 
 // how long the program runs for before the datalog starts logging
 #define DATALOG_START_DELAY_1           (1000*60*60*1)
-#define DATALOG_START_DELAY_2           (1000*60*15)
+#define DATALOG_START_DELAY_2           (1000*60*60*0.25)
 #define DATALOG_START_DELAY_3           (1000*60*60*1)
-#define DATALOG_START_DELAY_4           (1000*60*15)
+#define DATALOG_START_DELAY_4           (1000*60*60*0.25)
 
 // how long the data logging  will last for
 #define DATALOG_TIME_FRAME_1            (1000*60*60*0.1)
@@ -191,14 +200,14 @@ bool data_logging_active =              true;
 /////////////////////////// auto logging ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // will the lux readings be logged?
-#define AUTOLOG_LUX_F                   1
-#define AUTOLOG_LUX_R                   1
-#define AUTOLOG_LUX_TIMER               1
+#define AUTOLOG_LUX_F                   0
+#define AUTOLOG_LUX_R                   0
+#define AUTOLOG_LUX_TIMER               0
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            1
-#define AUTOLOG_LED_ON_OFF_R            1
-#define AUTOLOG_LED_ON_OFF_TIMER        1
+#define AUTOLOG_LED_ON_OFF_F            0
+#define AUTOLOG_LED_ON_OFF_R            0
+#define AUTOLOG_LED_ON_OFF_TIMER        0
 
 // the number of values to store in the logging process
 #define AUTOLOG_FLASHES_F               0
@@ -206,37 +215,37 @@ bool data_logging_active =              true;
 #define AUTOLOG_FLASHES_TIMER           0
 
 // the number of values to store in the logging process
-#define AUTOLOG_FPM_F                   1
-#define AUTOLOG_FPM_R                   1
-#define AUTOLOG_FPM_TIMER               1
+#define AUTOLOG_FPM_F                   0
+#define AUTOLOG_FPM_R                   0
+#define AUTOLOG_FPM_TIMER               0
 
 // the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     1
-#define AUTOLOG_BRIGHTNESS_SCALER_R     1
-#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 1
+#define AUTOLOG_BRIGHTNESS_SCALER_F     0
+#define AUTOLOG_BRIGHTNESS_SCALER_R     0
+#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// static logging /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define STATICLOG_CLICK_GAIN            1
-#define STATICLOG_SONG_GAIN             1
-#define STATICLOG_LUX_VALUES            1
-#define STATICLOG_FLASHES               1
-#define STATICLOG_RUNTIME               1
-#define STATICLOG_RGB_AVG_VALS          1
+#define STATICLOG_CLICK_GAIN            0
+#define STATICLOG_SONG_GAIN             0
+#define STATICLOG_LUX_VALUES            0
+#define STATICLOG_FLASHES               0
+#define STATICLOG_RUNTIME               0
+#define STATICLOG_RGB_AVG_VALS          0
 
-#define STATICLOG_LUX_MIN_MAX_TIMER     2
-#define STATICLOG_CLICK_GAIN_TIMER      2
-#define STATICLOG_SONG_GAIN_TIMER       2
-#define STATICLOG_FLASHES_TIMER         2
-#define STATICLOG_RUNTIME_TIMER         2
-#define STATICLOG_RGB_AVG_VALS_TIMER    2
+#define STATICLOG_LUX_MIN_MAX_TIMER     0
+#define STATICLOG_CLICK_GAIN_TIMER      0
+#define STATICLOG_SONG_GAIN_TIMER       0
+#define STATICLOG_FLASHES_TIMER         0
+#define STATICLOG_RUNTIME_TIMER         0
+#define STATICLOG_RGB_AVG_VALS_TIMER    0
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED               1
+#define JUMPERS_POPULATED               0
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////
@@ -262,9 +271,9 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 #define MIN_LED_ON_RATIO                (0.01)
 #define MAX_LED_ON_RATIO                (0.5)
 
-#define AUTOGAIN_START_DELAY            (1000 * 30)
+#define AUTOGAIN_START_DELAY            (1000 * 60)
 // how often to calculate auto-gain (in ms)
-#define AUTOGAIN_FREQUENCY              (1000 * 60 * 5) 
+#define AUTOGAIN_FREQUENCY              (1000 * 60 * 5)
 
 /////////////////////////////////////////////////////////////////////////
 //////////////////////// Audio Settings /////////////////////////////////
@@ -278,8 +287,8 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
 // to some logic
 #if FIRMWARE_MODE == CICADA_MODE
-    double global_peak_scaler =              5.0 * ENC_ATTENUATION_FACTOR;
-    double global_rms_scaler  =              10.0 * ENC_ATTENUATION_FACTOR;
+    double global_peak_scaler =              2.0 * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =              3.5 * ENC_ATTENUATION_FACTOR;
     double global_fft_scaler  =              100.0 * ENC_ATTENUATION_FACTOR;
 #elif FIRMWARE_MODE == PITCH_MODE
     double global_peak_scaler =              100.0 * ENC_ATTENUATION_FACTOR;

@@ -32,7 +32,9 @@
 #define RMS_DELTA             2
 #define PEAK_RAW              1
 #define PEAK_DELTA            3
-#define CENTROID              8
+#define MAX_ENERGY_BIN        7
+#define SPECTRAL_CENTROID     8
+#define SPECTRAL_FLUX         9
 #define ALL_FEATURES          10
 
 /////////////////////// colors ////////////////////////////
