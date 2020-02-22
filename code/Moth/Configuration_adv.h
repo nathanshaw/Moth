@@ -45,7 +45,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define NUM_LED                   12
 #endif
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
-#define NUM_LED                   20
+#define NUM_LED                   10
 #endif 
 
 #define FRONT_MICROPHONE_INSTALLED      true

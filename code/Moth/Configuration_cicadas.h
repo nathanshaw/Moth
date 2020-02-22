@@ -4,9 +4,17 @@
 #include "Configuration.h"
 
 // include RMS and/or PEAK in the feature collectors?
-#define PEAK_FEATURE_ACTIVE             1
-#define RMS_FEATURE_ACTIVE              1
-#define FFT_FEATURE_ACTIVE              1
+#define PEAK_ACTIVE_SONG                false
+#define RMS_ACTIVE_SONG                 true
+#define FFT_ACTIVE_SONG                 true
+#define CENTROID_ACTIVE_SONG            true
+#define FLUX_ACTIVE_SONG                false
+
+#define PEAK_ACTIVE_CLICK               false
+#define RMS_ACTIVE_CLICK                true
+#define FFT_ACTIVE_CLICK                true
+#define CENTROID_ACTIVE_CLICK           false
+#define FLUX_ACTIVE_CLICK               true
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
 // if this is set to true the flashes will only contain the Flash color instea
@@ -16,11 +24,11 @@
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-int SONG_FEATURE =                      PEAK_RAW;
+int SONG_FEATURE =                      RMS_RAW;
 int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
-#define SONG_PEAK_THRESH          0.25
-#define SONG_RMS_THRESH           0.25
+#define SONG_PEAK_THRESH                0.25
+#define SONG_RMS_THRESH                 0.25
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG               0.002
@@ -49,7 +57,7 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 #define CALCULATE_CENTROID              true
 #define CALCULATE_ROFF                  true
 
-int CLICK_FEATURE =                     PEAK_DELTA;
+int CLICK_FEATURE =                     RMS_RAW;
 #define CLICK_RMS_DELTA_THRESH          0.05
 #define CLICK_PEAK_DELTA_THRESH         0.20
 #define CLICK_SPECTRAL_FLUX_THRESH      100.0

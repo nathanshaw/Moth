@@ -12,6 +12,18 @@
 #include "ModeTest.h"
 #endif
 
+//////////////// For handeling the bootup sleep routine ///////////////////////
+#include <Snooze.h>
+// Load drivers
+// SnoozeDigital digital;
+// SnoozeCompare compare;
+SnoozeTimer timer;
+// SnoozeTouch touch;
+SnoozeAlarm  alarm;
+
+//SnoozeBlock config_teensy32(touch, digital, timer, compare);
+SnoozeBlock config_teensy32(timer);
+
 void updateFeatureCollectors() {
   // update the feature collectors
 #if NUM_FEATURE_COLLECTORS == 1
@@ -125,9 +137,19 @@ void readJumpers() {
     //////////// Jumper 1 ///////////////////////
     bool temp_b;
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
+    num_channels = ENCLOSURE_TYPE + 1;
     Serial.print("(pin1) Enclosure                      : ");
     Serial.println(ENCLOSURE_TYPE);
+    Serial.print("num_channels is now                   : ");
+    Serial.println(num_channels);
 
+    //////////// Jumper 3 ///////////////////////
+    temp_b = digitalRead(JMP3_PIN);
+    if (temp_b == 1) {
+      sleep_on_boot = true;
+    } else {
+      sleep_on_boot = false;
+    }
     //////////// Jumper 4 ///////////////////////
     temp_b = digitalRead(JMP4_PIN);
     if (temp_b == 0) {
@@ -166,7 +188,7 @@ void setup() {
   Serial.println("Serial begun");
   delay(1000);
   leds.begin();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 12, 12, 0);
     leds.show();
   }
@@ -196,14 +218,13 @@ void setup() {
     lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
-
-#if FIRMWARE_MODE == TEST_MODE
-  for (int i = 0; i < 10; i++) {
-    leds.setPixel(i, 64, 64, 64);
-    leds.show();
-  }
-#endif
   printMajorDivide("Setup Loop Finished");
+  if (sleep_on_boot == true) {
+    printMajorDivide("Going to sleep for 20 minutes will begin main loop when I awake");
+    timer.setTimer(1000 * 60 * 15);// in ms
+    Snooze.deepSleep( config_teensy32 );
+    printMajorDivide("Sleep Finished, entering into main loop now...");
+  }
 }
 
 void listenForSerialCommands() {
@@ -247,6 +268,6 @@ void loop() {
   updateMode();
   updateAutogain();
   updateDatalog();
-  listenForSerialCommands();
+  // listenForSerialCommands();
   //updateLoopLength();
 }

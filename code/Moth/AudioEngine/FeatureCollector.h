@@ -355,7 +355,6 @@ double FeatureCollector::getSpectralFlux() {
 
 /////////////// Calculate Features //////////////////////////////
 double FeatureCollector::getCentroid() {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = 1; i < 127; i++) {
         // take the magnitude of all the bins
@@ -370,7 +369,6 @@ double FeatureCollector::getCentroid() {
 }
 
 double FeatureCollector::getCentroid(uint16_t min, uint16_t max) {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = min; i < max; i++) {
         // take the magnitude of all the bins
@@ -384,7 +382,6 @@ double FeatureCollector::getCentroid(uint16_t min, uint16_t max) {
 }
 
 double FeatureCollector::getSmoothedCentroid() {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = 0; i < 127; i++) {
         // take the magnitude of all the bins
@@ -400,7 +397,6 @@ double FeatureCollector::getSmoothedCentroid() {
 }
 
 double FeatureCollector::getSmoothedCentroid(uint16_t min, uint16_t max) {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = min; i < max; i++) {
         // take the magnitude of all the bins
@@ -498,16 +494,17 @@ void FeatureCollector::resetPeakAvgLog() {
 }
 
 void FeatureCollector::calculateRMS() {
-    if (rms_active  && (rms_ana->available())) {
-        if (rms_ana->read() > 0.0) {
+    if (rms_active  && rms_ana->available()) {
+        double _rms = rms_ana->read();
+        if (_rms > 0.0) {
             double temp = rms_val;
-            rms_val = rms_ana->read();
+            rms_val = _rms;
             rms_val *= rms_scaler;
             rms_pos_delta = getPosDelta(temp, rms_val);
             rms_totals += rms_val;
             rms_readings++;
         } else {
-            Serial.println("WARNING RMS is equal to 0");
+            // Serial.println("WARNING RMS is equal to 0");
         }
     }
 }

@@ -64,16 +64,41 @@ AudioAmplifier           click_post_amp1; //xy=1360,1005
 AudioAmplifier           song_post_amp2; //xy=1360,1073
 AudioAmplifier           song_post_amp1; //xy=1361,1041
 AudioOutputUSB           usb1;           //xy=1623.5000457763672,975.500036239624
+
+#if RMS_ACTIVE_SONG == true
 AudioAnalyzeRMS          song_rms1;      //xy=1626,1048
 AudioAnalyzeRMS          song_rms2;      //xy=1627,1013
+AudioConnection          patchCord29(song_post_amp1, song_rms1);
+AudioConnection          patchCord26(song_post_amp2, song_rms2);
+#endif// song == true
+
+#if RMS_ACTIVE_CLICK == true
 AudioAnalyzeRMS          click_rms1;     //xy=1629,875
 AudioAnalyzeRMS          click_rms2;     //xy=1630,840
+AudioConnection          patchCord23(click_post_amp1, click_rms1);
+AudioConnection          patchCord21(click_post_amp2, click_rms2);
+#endif // click == true
+
+#if PEAK_ACTIVE_CLICK == true
+AudioAnalyzePeak         click_peak1;    //xy=1633,907
+AudioAnalyzePeak         click_peak2;    //xy=1634,940
+AudioConnection          patchCord24(click_post_amp1, click_peak1);
+AudioConnection          patchCord22(click_post_amp2, click_peak2);
+#endif // peak_active_click == true
+
+#if PEAK_ACTIVE_SONG  == true
 AudioAnalyzePeak         song_peak1;     //xy=1630,1080
 AudioAnalyzePeak         song_peak2;     //xy=1631,1112
-AudioAnalyzePeak         click_peak1;    //xy=1633,907
+AudioConnection          patchCord30(song_post_amp1, song_peak1);
+AudioConnection          patchCord27(song_post_amp2, song_peak2);
+#endif // peak_active_song == true
+
+#if RMS_ACTIVE_SONG == true || RMS_ACTIVE_CLICK == true
 AudioAnalyzeFFT256       input_fft;       //xy=1632.5000457763672,1145.000036239624
+AudioConnection          patchCord32(click_input_amp1, input_fft);
+#endif // fft?
+
 // AudioAnalyzeFFT1024      song_fft2;       //xy=1632.5000457763672,1177.5000343322754
-AudioAnalyzePeak         click_peak2;    //xy=1634,940
 AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
 AudioConnection          patchCord2(i2s1, 0, click_input_amp2, 0);
 AudioConnection          patchCord3(i2s1, 1, song_input_amp1, 0);
@@ -94,17 +119,8 @@ AudioConnection          patchCord17(song_biquad11, song_post_amp1);
 AudioConnection          patchCord18(click_biquad21, click_post_amp2);
 AudioConnection          patchCord19(song_biquad21, song_post_amp2);
 AudioConnection          patchCord20(click_biquad11, click_post_amp1);
-AudioConnection          patchCord21(click_post_amp2, click_rms2);
-AudioConnection          patchCord22(click_post_amp2, click_peak2);
-AudioConnection          patchCord23(click_post_amp1, click_rms1);
-AudioConnection          patchCord24(click_post_amp1, click_peak1);
 AudioConnection          patchCord25(click_post_amp1, 0, usb1, 0);
-AudioConnection          patchCord26(song_post_amp2, song_rms2);
-AudioConnection          patchCord27(song_post_amp2, song_peak2);
-AudioConnection          patchCord29(song_post_amp1, song_rms1);
-AudioConnection          patchCord30(song_post_amp1, song_peak1);
 AudioConnection          patchCord31(song_post_amp1, 0, usb1, 1);
-AudioConnection          patchCord32(click_input_amp1, input_fft);
 
 void initAutoGain() {
   auto_gain[0].setExternalThresholds((String)"Led ON Ratio", MIN_ON_RATIO_THRESH, LOW_ON_RATIO_THRESH,
@@ -131,34 +147,69 @@ void linkFeatureCollectors() {
   fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
   fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
 
-  if (RMS_FEATURE_ACTIVE) {
+#if RMS_ACTIVE_SONG
     // fc 0-1 are for the song front/rear
     fc[0].linkRMS(&song_rms1, global_rms_scaler, PRINT_RMS_VALS);
     fc[1].linkRMS(&song_rms2, global_rms_scaler, PRINT_RMS_VALS);
+    Serial.println("Feature collectors 0 and 1 have been linked to RMS");
+#endif//rms_active_song
+
+#if RMS_ACTIVE_CLICK
     // fc 2-3 are for the click front/rear
     fc[2].linkRMS(&click_rms1, global_rms_scaler, PRINT_RMS_VALS);
     fc[3].linkRMS(&click_rms2, global_rms_scaler, PRINT_RMS_VALS);
-  }
-  if (PEAK_FEATURE_ACTIVE) {
+    Serial.println("Feature collectors 2 and 3 have been linked to RMS");
+#endif // rms_active_click
+
+#if PEAK_ACTIVE_SONG
     // fc 0-1 are for the song front/rear
     fc[0].linkPeak(&song_peak1, global_peak_scaler, PRINT_PEAK_VALS);
     fc[1].linkPeak(&song_peak2, global_peak_scaler, PRINT_PEAK_VALS);
+    Serial.println("Feature collectors 0 and 1 have been linked to Peak");
+#endif // peak_active_song
+
+#if PEAK_ACTIVE_CLICK
     // fc 2-3 are for the click front/rear
     fc[2].linkPeak(&click_peak1, global_peak_scaler, PRINT_PEAK_VALS);
     fc[3].linkPeak(&click_peak2, global_peak_scaler, PRINT_PEAK_VALS);
-  }
-  if (FFT_FEATURE_ACTIVE) {
-    // fc 0-1 are for the song front/rear
-    // this equates to about 4k - 16k, perhaps I shoul
+    Serial.println("Feature collectors 2 and 3 have been linked to Peak");
+#endif
+
+#if FFT_ACTIVE_SONG
     fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
     fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
-    if (CALCULATE_FLUX == true) {
-      fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
-      fc[2].setFluxActive(true);
-      fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
-      fc[3].setFluxActive(true);
-    }
-  }
+    Serial.println("Feature collectors 0 and 1 have been linked to FFT");
+#endif // is fft active?
+
+#if FFT_ACTIVE_CLICK
+    fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+    fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+    Serial.println("Feature collectors 2 and 3 have been linked to FFT");
+#endif
+
+#if CENTROID_ACTIVE_SONG
+    fc[0].setCentroidActive(true);
+    fc[1].setCentroidActive(true);
+    Serial.println("Feature collectors 0 and 1 have Centroid active now");
+#endif
+
+#if CENTROID_ACTIVE_CLICK
+    fc[2].setCentroidActive(true);
+    fc[3].setCentroidActive(true);
+    Serial.println("Feature collectors 2 and 3 have Centroid active now");
+#endif
+
+#if FLUX_ACTIVE_SONG
+    fc[0].setFluxActive(true);
+    fc[1].setFluxActive(true);
+    Serial.println("Feature collectors 0 and 1 have Flux active now");
+#endif
+
+#if FLUX_ACTIVE_CLICK
+    fc[2].setFluxActive(true);
+    fc[3].setFluxActive(true);
+    Serial.println("Feature collectors 2 and 3 have Flux active now");
+#endif
 }
 
 void setupAudio() {
@@ -443,6 +494,7 @@ const unsigned long feature_reset_time = (1000 * 60);// every minute?
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
+    // Serial.print("num leds : ");Serial.println(NUM_LED);
     uint8_t brightness = 0;
     uint16_t red, green;
     if (SONG_FEATURE == PEAK_RAW) {
@@ -499,7 +551,7 @@ void updateSong() {
     // dprintln(PRINT_SONG_DEBUG, green);
     // dprint(PRINT_SONG_DEBUG, "\tb:");
     // dprintln(PRINT_SONG_DEBUG, blue);
-    if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
+    if ((front_mic_active == false || rear_mic_active == false) && num_channels == 2) {
       if (front_mic_active == true && i == 0) {
         neos[0].colorWipe(red, green, 0);
         neos[1].colorWipe(red, green, 0);
@@ -531,20 +583,18 @@ void updateClick() {
       // Serial.println(feature);
     }
     */
-    double flux = fc[2].getSpectralFlux();
-    double rms = fc[i+2].getRMSPosDelta();
+    double flux = fc[i + 2].getSpectralFlux();
+    double rms = fc[i+2].getRMS();
     double feature = rms * flux;
-    double threshold = 0.0;
-    /*
-    if (i == 0) {
-      Serial.print("feature      : ");
-      Serial.println(feature, 12);
-      Serial.print("spectral flux: ");
-      Serial.println(flux, 12);
-      Serial.print("rms          : ");
+    double threshold = 1.0;
+
+      Serial.print("feature:\t");
+      Serial.print(feature, 12);
+      Serial.print("\tspectral flux:\t");
+      Serial.print(flux, 12);
+      Serial.print("\trms:\t");
       Serial.println(rms, 12);
-    }
-    */
+      
     // Serial.print(rms_pos_delta 
     if (feature > threshold) {
       dprint(PRINT_CLICK_DEBUG, "click feature is above threshold: ");
@@ -581,12 +631,11 @@ void updateAutogain() {
 #if (AUTOGAIN_ACTIVE)
   auto_gain[0].updateExternal((neos[0].getOnRatio() + neos[1].getOnRatio()) * 0.5);
   auto_gain[1].updateExternal((neos[0].fpm + neos[1].fpm) * 0.5);
-  return;
 #endif
 }
 
 void updateMode() {
-  updateClick();
+  // updateClick();
   updateSong();
 }
 
