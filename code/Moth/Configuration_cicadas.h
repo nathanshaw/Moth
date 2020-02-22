@@ -24,7 +24,7 @@
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
 // "rms" will look at the audio "rms" value
-int SONG_FEATURE =                      RMS_RAW;
+int SONG_FEATURE =                      PEAK_RAW;
 int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
 #define SONG_PEAK_THRESH                0.25
@@ -57,7 +57,7 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 #define CALCULATE_CENTROID              true
 #define CALCULATE_ROFF                  true
 
-int CLICK_FEATURE =                     RMS_RAW;
+int CLICK_FEATURE =                     PEAK_DELTA;
 #define CLICK_RMS_DELTA_THRESH          0.05
 #define CLICK_PEAK_DELTA_THRESH         0.20
 #define CLICK_SPECTRAL_FLUX_THRESH      100.0

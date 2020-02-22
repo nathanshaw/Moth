@@ -108,6 +108,7 @@ void tcaselect(uint8_t i) {
 void LuxManager::startSensor(byte g, byte r) {
   Serial.print("attempting to start lux sensor...");
   Wire.begin();
+  Serial.print("Wire has been started");
   if (tca_addr > -1) {
     tcaselect(tca_addr);
   }

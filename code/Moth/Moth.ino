@@ -12,18 +12,6 @@
 #include "ModeTest.h"
 #endif
 
-//////////////// For handeling the bootup sleep routine ///////////////////////
-#include <Snooze.h>
-// Load drivers
-// SnoozeDigital digital;
-// SnoozeCompare compare;
-SnoozeTimer timer;
-// SnoozeTouch touch;
-SnoozeAlarm  alarm;
-
-//SnoozeBlock config_teensy32(touch, digital, timer, compare);
-SnoozeBlock config_teensy32(timer);
-
 void updateFeatureCollectors() {
   // update the feature collectors
 #if NUM_FEATURE_COLLECTORS == 1
@@ -219,12 +207,6 @@ void setup() {
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
   printMajorDivide("Setup Loop Finished");
-  if (sleep_on_boot == true) {
-    printMajorDivide("Going to sleep for 20 minutes will begin main loop when I awake");
-    timer.setTimer(1000 * 60 * 15);// in ms
-    Snooze.deepSleep( config_teensy32 );
-    printMajorDivide("Sleep Finished, entering into main loop now...");
-  }
 }
 
 void listenForSerialCommands() {

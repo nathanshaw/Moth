@@ -65,38 +65,38 @@ AudioAmplifier           song_post_amp2; //xy=1360,1073
 AudioAmplifier           song_post_amp1; //xy=1361,1041
 AudioOutputUSB           usb1;           //xy=1623.5000457763672,975.500036239624
 
-#if RMS_ACTIVE_SONG == true
+// #if RMS_ACTIVE_SONG == true
 AudioAnalyzeRMS          song_rms1;      //xy=1626,1048
 AudioAnalyzeRMS          song_rms2;      //xy=1627,1013
 AudioConnection          patchCord29(song_post_amp1, song_rms1);
 AudioConnection          patchCord26(song_post_amp2, song_rms2);
-#endif// song == true
+// #endif// song == true
 
-#if RMS_ACTIVE_CLICK == true
+// #if RMS_ACTIVE_CLICK == true
 AudioAnalyzeRMS          click_rms1;     //xy=1629,875
 AudioAnalyzeRMS          click_rms2;     //xy=1630,840
 AudioConnection          patchCord23(click_post_amp1, click_rms1);
 AudioConnection          patchCord21(click_post_amp2, click_rms2);
-#endif // click == true
+// #endif // click == true
 
-#if PEAK_ACTIVE_CLICK == true
+// #if PEAK_ACTIVE_CLICK == true
 AudioAnalyzePeak         click_peak1;    //xy=1633,907
 AudioAnalyzePeak         click_peak2;    //xy=1634,940
 AudioConnection          patchCord24(click_post_amp1, click_peak1);
 AudioConnection          patchCord22(click_post_amp2, click_peak2);
-#endif // peak_active_click == true
+// #endif // peak_active_click == true
 
-#if PEAK_ACTIVE_SONG  == true
+// #if PEAK_ACTIVE_SONG  == true
 AudioAnalyzePeak         song_peak1;     //xy=1630,1080
 AudioAnalyzePeak         song_peak2;     //xy=1631,1112
 AudioConnection          patchCord30(song_post_amp1, song_peak1);
 AudioConnection          patchCord27(song_post_amp2, song_peak2);
-#endif // peak_active_song == true
+// #endif // peak_active_song == true
 
-#if RMS_ACTIVE_SONG == true || RMS_ACTIVE_CLICK == true
+// #if RMS_ACTIVE_SONG == true || RMS_ACTIVE_CLICK == true
 AudioAnalyzeFFT256       input_fft;       //xy=1632.5000457763672,1145.000036239624
 AudioConnection          patchCord32(click_input_amp1, input_fft);
-#endif // fft?
+// #endif // fft?
 
 // AudioAnalyzeFFT1024      song_fft2;       //xy=1632.5000457763672,1177.5000343322754
 AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
@@ -635,7 +635,7 @@ void updateAutogain() {
 }
 
 void updateMode() {
-  // updateClick();
+  updateClick();
   updateSong();
 }
 

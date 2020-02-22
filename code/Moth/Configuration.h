@@ -281,7 +281,7 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // how often does the feature collector update
 //33 is 30 times a second
 #define FC_UPDATE_RATE                  0
-#define AUDIO_MEMORY                    60
+#define AUDIO_MEMORY                    32
 
 // the scaler values are applied to the raw readings read from the audio objects
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
@@ -296,6 +296,7 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
     double global_fft_scaler  =              1000.0 * ENC_ATTENUATION_FACTOR;
 #endif
 
+bool stereo_audio =                     true;
 #if ENCLOSURE_TYPE == GROUND_ENCLOSURE
  uint8_t num_channels =                   1;
 #elif ENCLOSURE_TYPE == ORB_ENCLOSURE
