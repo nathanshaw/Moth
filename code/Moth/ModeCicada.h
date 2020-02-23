@@ -152,7 +152,7 @@ void linkFeatureCollectors() {
     // this equates to about 4k - 16k, perhaps I shoul
     fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
     // fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
-    
+
     if (CALCULATE_FLUX == true) {
       fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, false, true);
       fc[2].setFluxActive(true);
@@ -441,66 +441,111 @@ void setupDLManager() {
   }
 }
 
-double feature_min = 9999999.99;
-double feature_max = 0.0000001;
+double color_feature_min[2] = {9999999.99, 999999999.99};
+double color_feature_max[2] = {0.0, 0.0};
+
 elapsedMillis feature_reset_tmr;
 const unsigned long feature_reset_time = (1000 * 150);// every 2.5 minute?
 
+uint8_t b_feature_min[2] = {255, 255};
+uint8_t b_feature_max[2] = {0, 0};
+uint8_t current_brightness[2] = {0, 0};
+uint8_t last_brightness[2] = {0, 0};
+
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
-    uint8_t brightness = 0;
+    uint8_t target_brightness = 0;
     uint16_t red, green;
-    if (SONG_FEATURE == PEAK_RAW) {
-      brightness = calculatePeakWeighted(&fc[i]);
-    } else if (SONG_FEATURE == RMS_RAW) {
-      brightness = calculateRMSWeighted(&fc[i]);
+    
+    /////////////////// LOCAL SCALER RESET //////////////////////////
+    if (feature_reset_tmr > feature_reset_time) {
+      for (int t = 0; t < num_channels; t++) {
+        color_feature_min[i] = 999999.999;
+        color_feature_max[i] = 0.00000001;
+        b_feature_min[i] = 0;
+        b_feature_max[i] = 255;
+      }
+      dprintln(PRINT_SONG_DEBUG, "reset song feature min and max for cent and brightness ");
+      feature_reset_tmr = 0;
     }
+    
+    /////////////////// SONG BRIGHTNESS FEATURE /////////////////////
+    dprint(PRINT_SONG_DEBUG, "ch ");
+    dprint(PRINT_SONG_DEBUG, i);
+    dprint(PRINT_SONG_DEBUG, " brightness:\t");
+    if (SONG_FEATURE == PEAK_RAW) {
+      target_brightness = calculatePeakWeighted(&fc[i]);
+    } else if (SONG_FEATURE == RMS_RAW) {
+      target_brightness = calculateRMSWeighted(&fc[i]);
+    }
+    dprint(PRINT_SONG_DEBUG, target_brightness);
+    if (target_brightness < b_feature_min[i]) {
+      b_feature_min[i] = target_brightness;
+    } else if (target_brightness > b_feature_max[i]) {
+      b_feature_max[i] = target_brightness;
+    }
+    dprint(PRINT_SONG_DEBUG, "\t");
+    dprint(PRINT_SONG_DEBUG, b_feature_min[i]);
+    dprint(PRINT_SONG_DEBUG, "/");
+    dprint(PRINT_SONG_DEBUG, b_feature_max[i]);
+    dprint(PRINT_SONG_DEBUG, "\t");
+    // only update to the new scaler after a second has passed so some values exist
+    if (feature_reset_tmr > 200) {
+      target_brightness = map(target_brightness, b_feature_min[i], b_feature_max[i], 0, 255);
+      // target_brightness = target_brightness - b_feature_min[i];
+      // target_brightness = ((uint8_t)(double)target_brightness / (double)(b_feature_max[i] - b_feature_min[i]) * (double)MAX_BRIGHTNESS);
+      // (uint8_t)((double)(current_brightness[i] - b_feature_min[i]) / (double)(b_feature_max[i] - b_feature_min[i]) * (double)MAX_BRIGHTNESS);
+    }
+    dprint(PRINT_SONG_DEBUG, "\t");
+    dprint(PRINT_SONG_DEBUG, target_brightness);
+    dprint(PRINT_SONG_DEBUG, "/");
+    dprint(PRINT_SONG_DEBUG, current_brightness[i]);
+    last_brightness[i] = current_brightness[i];
+    current_brightness[i] = (uint8_t)((double)(target_brightness + current_brightness[i]) * 0.5);
+    dprint(PRINT_SONG_DEBUG, " => ");
+    dprintln(PRINT_SONG_DEBUG, current_brightness[i]);
 
     ///////////////// SONG_COLOR_FEATURE ////////////////////////////
     if (SONG_COLOR_FEATURE == SPECTRAL_CENTROID) {
       double cent = fc[0].centroid;
-      if (feature_reset_tmr > feature_reset_time) {
-        feature_min = 999999.999;
-        feature_max = 0.00000001;
-        Serial.println("reset feature min and max");
-        feature_reset_tmr = 0;
+
+      if (cent < color_feature_min[i]) {
+        color_feature_min[i] = cent;
       }
-      if (cent < feature_min) {
-        feature_min = cent;
-      };
-      if (cent > feature_max) {
-        feature_max = cent;
-      };
+      if (cent > color_feature_max[i]) {
+        color_feature_max[i] = cent;
+      }
       if (PRINT_SONG_DEBUG) {
         Serial.print("bright: ");
-        Serial.print(brightness);
+        Serial.print(current_brightness[i]);
         Serial.print("\tcent : ");
         Serial.print(cent);
       }
-
-      cent = (cent - feature_min) / (feature_max - feature_min);
-
+      // only update to the new scaler after a second has passed so some values exist
+      if (feature_reset_tmr > 1000) {
+        cent = (cent - color_feature_min[i]) / (color_feature_max[i] - color_feature_min[i]);
+      }
       if (PRINT_SONG_DEBUG) {
         Serial.print("\tcent : ");
         Serial.print(cent);
         Serial.print("\tmin/max:\t");
-        Serial.print(feature_min);
+        Serial.print(color_feature_min[i]);
         Serial.print(" / ");
-        Serial.println(feature_max);
+        Serial.println(color_feature_max[i]);
       }
-      red = brightness * cent ;
-      green = brightness * (1.0 - cent);
+      red = current_brightness[i] * cent ;
+      green = current_brightness[i] * (1.0 - cent);
     } else if (SONG_COLOR_FEATURE == MAX_ENERGY_BIN) {
       double bin_pos = fc[i].getRelativeBinPos();
-      red = brightness * bin_pos;
-      green = brightness * (1.0 - bin_pos);
+      red = current_brightness[i] * bin_pos;
+      green = current_brightness[i] * (1.0 - bin_pos);
     } else {
-      red = brightness;
+      red = current_brightness[i];
       green = 0;
     }
 
-    dprint(PRINT_SONG_DEBUG, "brightness - ");
-    dprint(PRINT_SONG_DEBUG, brightness);
+    dprint(PRINT_SONG_DEBUG, "current_brightness[i] - ");
+    dprint(PRINT_SONG_DEBUG, current_brightness[i]);
     dprint(PRINT_SONG_DEBUG, "\tr:");
     dprint(PRINT_SONG_DEBUG, red);
     dprint(PRINT_SONG_DEBUG, "\tg:");
@@ -605,7 +650,7 @@ void updateAutogain() {
 }
 
 void updateMode() {
-  updateClick();
+  // updateClick();
   updateSong();
 }
 

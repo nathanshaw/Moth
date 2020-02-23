@@ -267,7 +267,7 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-#define AUTOGAIN_ACTIVE                 1
+#define AUTOGAIN_ACTIVE                 0
 #define MAX_GAIN_ADJUSTMENT             0.125
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
@@ -294,7 +294,7 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
 // to some logic
 #if FIRMWARE_MODE == CICADA_MODE
-    double global_peak_scaler =         2.0   * ENC_ATTENUATION_FACTOR;
+    double global_peak_scaler =         1.0   * ENC_ATTENUATION_FACTOR;
     double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
     double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
 #elif FIRMWARE_MODE == PITCH_MODE
