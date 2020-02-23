@@ -9,6 +9,7 @@
 #define FFT_FEATURE_ACTIVE              1
 
 double CLICK_THRESH =                   0.40;
+#define SMOOTH_CENTROID                 true
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
 // if this is set to true the flashes will only contain the Flash color instea

@@ -127,6 +127,11 @@ void readJumpers() {
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
     Serial.print("(pin1) Enclosure                      : ");
     Serial.println(ENCLOSURE_TYPE);
+    if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
+      num_channels = 2;
+    } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE){
+      num_channels = 1;
+    }
     /*
     //////////// Jumper 4 ///////////////////////
     temp_b = digitalRead(JMP4_PIN);

@@ -1,0 +1,577 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/cores/teensy3"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "PrintUtils.h",
+    "Includepath": "/Users/nathan/Documents/Arduino/libraries/PrintUtils"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "Audio.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "SPI.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SPI"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "SD.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "SerialFlash.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SerialFlash"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "WS2812Serial.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/WS2812Serial"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "EEPROM.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/EEPROM"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "Adafruit_VEML7700.h",
+    "Includepath": "/Users/nathan/Documents/Arduino/libraries/Adafruit_VEML7700_Library"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "Wire.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Wire"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "Adafruit_I2CDevice.h",
+    "Includepath": "/Users/nathan/Documents/Arduino/libraries/Adafruit_BusIO"
+  },
+  {
+    "Sourcefile": "/Users/nathan/workspace/Victoria/Moth/code/Moth/build/sketch/Moth.ino.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_fft1024.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_fft256.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_notefreq.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_peak.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_print.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_rms.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/analyze_tonedetect.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_ak4558.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_cs42448.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_cs4272.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_sgtl5000.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_tlv320aic3206.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/control_wm8731.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/data_spdif.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/data_ulaw.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/data_waveforms.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/data_windows.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_bitcrusher.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_chorus.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_combine.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_delay.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_delay_ext.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_envelope.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_fade.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_flange.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_freeverb.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_granular.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_midside.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_multiply.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_reverb.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/effect_waveshaper.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/filter_biquad.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/filter_fir.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/filter_variable.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_adc.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_adcs.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_i2s.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_i2s2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_i2s_quad.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_pdm.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_tdm.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/input_tdm2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/memcpy_audio.S",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/mixer.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_adat.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_dac.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_dacs.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_i2s.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_i2s2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_i2s_quad.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_mqs.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_pt8211.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_pt8211_2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_pwm.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_spdif.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_spdif2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_spdif3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_tdm.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/output_tdm2.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/play_memory.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/play_queue.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/play_sd_raw.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/play_sd_wav.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/play_serialflash_raw.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/record_queue.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/spi_interrupt.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_dc.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_karplusstrong.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_pinknoise.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_pwm.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_simple_drum.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_sine.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_tonesweep.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_waveform.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_wavetable.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/synth_whitenoise.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/utility/imxrt_hw.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Audio/utility/sqrt_integer.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SPI/SPI.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/File.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/SD.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/cache_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/card_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/dir_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/fat_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/file_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/init_t3.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/utility/NXP_SDHC.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/utility/Sd2Card.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/utility/SdFile.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SD/utility/SdVolume.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SerialFlash/SerialFlashChip.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/SerialFlash/SerialFlashDirectory.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/WS2812Serial/WS2812Serial.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/EEPROM/EEPROM.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/nathan/Documents/Arduino/libraries/Adafruit_VEML7700_Library/Adafruit_VEML7700.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Wire/Wire.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Wire/WireIMXRT.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Wire/WireKinetis.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/teensy/avr/libraries/Wire/utility/twi.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/nathan/Documents/Arduino/libraries/Adafruit_BusIO/Adafruit_BusIO_Register.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/nathan/Documents/Arduino/libraries/Adafruit_BusIO/Adafruit_I2CDevice.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/nathan/Documents/Arduino/libraries/Adafruit_BusIO/Adafruit_SPIDevice.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]

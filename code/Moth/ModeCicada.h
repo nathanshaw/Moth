@@ -33,7 +33,6 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
-
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
 FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
@@ -153,8 +152,9 @@ void linkFeatureCollectors() {
     // this equates to about 4k - 16k, perhaps I shoul
     fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
     // fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
+    
     if (CALCULATE_FLUX == true) {
-      fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+      fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, false, true);
       fc[2].setFluxActive(true);
       // fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
       // fc[3].setFluxActive(true);
@@ -444,7 +444,7 @@ void setupDLManager() {
 double feature_min = 9999999.99;
 double feature_max = 0.0000001;
 elapsedMillis feature_reset_tmr;
-const unsigned long feature_reset_time = (1000 * 300);// every minute?
+const unsigned long feature_reset_time = (1000 * 150);// every 2.5 minute?
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
@@ -455,8 +455,10 @@ void updateSong() {
     } else if (SONG_FEATURE == RMS_RAW) {
       brightness = calculateRMSWeighted(&fc[i]);
     }
+
+    ///////////////// SONG_COLOR_FEATURE ////////////////////////////
     if (SONG_COLOR_FEATURE == SPECTRAL_CENTROID) {
-      double cent = fc[i].getSmoothedCentroid();
+      double cent = fc[0].centroid;
       if (feature_reset_tmr > feature_reset_time) {
         feature_min = 999999.999;
         feature_max = 0.00000001;

@@ -76,6 +76,7 @@ class FeatureCollector {
         double getCentroid(uint16_t min, uint16_t max);
         double getSmoothedCentroid();
         double getSmoothedCentroid(uint16_t min, uint16_t max);
+        double centroid;
 
         void setFluxActive(bool s) { calculate_flux = s;}; 
         double getSpectralFlux();
@@ -173,7 +174,6 @@ class FeatureCollector {
         void setCalculateCentroid(bool v) {calculate_centroid = v;};
         void setCalculateFlux(bool v) {calculate_flux= v;};
         bool calculate_flux = false;
-        double centroid;
         double flux;
         elapsedMillis last_fft_reading;
 };
@@ -454,7 +454,8 @@ void FeatureCollector::calculateFFT() {
         // the 10 is to try and get more dynamic range out of the colour mapping
         //relative_bin_pos = (double)(highest_energy_idx - min_bin + ((max_bin - min_bin)*0.25) ) / (double)(max_bin - min_bin - ((max_bin - min_bin)*0.25));
         // if (relative_bin_pos > 1.0) { relative_bin_pos = 1.0;};
-        if (calculate_centroid == true) {centroid = getCentroid();};
+        if (calculate_centroid == true && SMOOTH_CENTROID == true) {centroid = getSmoothedCentroid();};
+        if (calculate_centroid == true && SMOOTH_CENTROID == false) {centroid = getCentroid();};
         if (calculate_flux == true) {calculateSpectralFlux();};
     }
 }
@@ -511,7 +512,7 @@ void FeatureCollector::calculateRMS() {
             rms_totals += rms_val;
             rms_readings++;
         } else {
-            Serial.println("WARNING RMS is equal to 0");
+            dprintln(PRINT_RMS_DEBUG, "WARNING RMS is equal to 0");
         }
     }
 }

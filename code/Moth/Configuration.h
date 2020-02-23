@@ -109,7 +109,7 @@ bool gain_adjust_active =                false;
 // will print spectral flux if flux_active
 #define PRINT_FLUX_VALS                 true
 // will print centroid if centroid_active
-#define PRINT_CENTROID_VALS             false
+#define PRINT_CENTROID_VALS             true
 // will print highest energy bin in FFT
  
 #define PRINT_FFT_DEBUG                 false

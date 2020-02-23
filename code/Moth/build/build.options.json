@@ -1,0 +1,11 @@
+{
+  "additionalFiles": "/AudioEngine/AudioEngine.h,/AudioEngine/FeatureCollector.h,/AudioEngine/audio_utils.h,/ColorConverter/ColorConverter.cpp,/ColorConverter/ColorConverter.h,/Configuration.h,/Configuration_adv.h,/Configuration_cicadas.h,/Configuration_pitch.h,/DLManager/DLManager.h,/DLManager/Datalog.h,/LuxManager/LuxManager.h,/Macros.h,/ModeCicada.h,/ModePitch.h,/ModeTemplate.h,/ModeTest.h,/NeopixelManager/NeopixelManager.h",
+  "builtInLibrariesFolders": "/Applications/Arduino.app/Contents/Java/libraries",
+  "customBuildProperties": "programmer=arduino:usbtinyisp,build.path=/Users/nathan/workspace/Victoria/Moth/code/Moth/build",
+  "fqbn": "teensy:avr:teensy31:usb=serialmidiaudio,speed=120,opt=o2std,keys=en-us",
+  "hardwareFolders": "/Applications/Arduino.app/Contents/Java/hardware,/Users/nathan/Library/Arduino15/packages",
+  "otherLibrariesFolders": "/Users/nathan/Documents/Arduino/libraries",
+  "runtime.ide.version": "10809",
+  "sketchLocation": "/Users/nathan/workspace/Victoria/Moth/code/Moth/Moth.ino",
+  "toolsFolders": "/Applications/Arduino.app/Contents/Java/tools-builder,/Applications/Arduino.app/Contents/Java/hardware/tools/avr,/Users/nathan/Library/Arduino15/packages"
+}
