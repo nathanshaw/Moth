@@ -127,7 +127,7 @@ void readJumpers() {
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
     Serial.print("(pin1) Enclosure                      : ");
     Serial.println(ENCLOSURE_TYPE);
-
+    /*
     //////////// Jumper 4 ///////////////////////
     temp_b = digitalRead(JMP4_PIN);
     if (temp_b == 0) {
@@ -147,7 +147,7 @@ void readJumpers() {
     }
     Serial.print("(pin5) Click Feature                 : ");
     Serial.println(CLICK_FEATURE);
-
+    */
     ///////////// Jumper 6 //////////////////////
     temp_b = digitalRead(JMP6_PIN);
     if (temp_b == 1) {
@@ -161,10 +161,9 @@ void readJumpers() {
 }
 
 void setup() {
+  delay(2000); // to avoid booting to the bootloader
   Serial.begin(SERIAL_BAUD_RATE);
-  delay(1000);
   Serial.println("Serial begun");
-  delay(1000);
   leds.begin();
   for (int i = 0; i < 10; i++) {
     leds.setPixel(i, 12, 12, 0);
@@ -183,7 +182,7 @@ void setup() {
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
     neos[i].setFlashColors(FLASH_RED, FLASH_GREEN, FLASH_BLUE);
   }
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 0, 0, 0);
     leds.show();
   }

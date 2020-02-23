@@ -336,14 +336,18 @@ bool FeatureCollector::testMicrophone () {
 
 
 //////////////// Update Functions ///////////////////////////////
-
 void FeatureCollector::calculateSpectralFlux() {
     double f = 0.0;
-    for (int i = 0; i < 127; i++) {
-        f += pow((fft_vals[i] - last_fft_vals[i]), 2);
+    if (last_fft_vals[0] != 0) {
+        for (int i = 0; i < 127; i++) {
+            f += pow((fft_vals[i] - last_fft_vals[i]), 2);
+        }
+        if (f != 0.0) {
+            flux = f;
+        }
     }
-    if (f != 0.0) {
-        flux = f;
+    else {
+        Serial.print("last_fft_vals[0] is equal to zero");
     }
 }
 
@@ -355,7 +359,6 @@ double FeatureCollector::getSpectralFlux() {
 
 /////////////// Calculate Features //////////////////////////////
 double FeatureCollector::getCentroid() {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = 1; i < 127; i++) {
         // take the magnitude of all the bins
@@ -370,7 +373,6 @@ double FeatureCollector::getCentroid() {
 }
 
 double FeatureCollector::getCentroid(uint16_t min, uint16_t max) {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = min; i < max; i++) {
         // take the magnitude of all the bins
@@ -384,7 +386,6 @@ double FeatureCollector::getCentroid(uint16_t min, uint16_t max) {
 }
 
 double FeatureCollector::getSmoothedCentroid() {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = 0; i < 127; i++) {
         // take the magnitude of all the bins
@@ -400,7 +401,6 @@ double FeatureCollector::getSmoothedCentroid() {
 }
 
 double FeatureCollector::getSmoothedCentroid(uint16_t min, uint16_t max) {
-    double cent = 0.0;
     double mags = 0.0;
     for (int i = min; i < max; i++) {
         // take the magnitude of all the bins
@@ -420,16 +420,18 @@ void FeatureCollector::calculateFFT() {
         dprint(PRINT_FFT_DEBUG, last_fft_reading);
         last_fft_reading = 0;
         fft_tot_energy = 0.0;
-        int highest = -1;
-        double highest_val = -1.0;
+        // int highest = -1;
+        // double highest_val = -1.0;
         for (int i = 0; i < 127; i++) {
             last_fft_vals[i] = fft_vals[i];
             fft_vals[i] = fft_ana->read(i) * fft_scaler;
             fft_tot_energy += fft_vals[i];
+            /*
             if (fft_vals[i] >= highest_val && i > min_bin && i < max_bin) {
                 highest_val = fft_vals[i];
                 highest = i;
             }
+            */
         }
         if (scale_bin_values == true) {
             double scaler = 1.0 / fft_tot_energy;
@@ -441,15 +443,17 @@ void FeatureCollector::calculateFFT() {
                 }
             }
         }
+        /*
         if (highest != -1) {
             highest_energy_idx = highest;
         }
+        */
         if (PRINT_FFT_DEBUG) {
           printFFTVals();
         }
         // the 10 is to try and get more dynamic range out of the colour mapping
-        relative_bin_pos = (double)(highest_energy_idx - min_bin + ((max_bin - min_bin)*0.25) ) / (double)(max_bin - min_bin - ((max_bin - min_bin)*0.25));
-        if (relative_bin_pos > 1.0) { relative_bin_pos = 1.0;};
+        //relative_bin_pos = (double)(highest_energy_idx - min_bin + ((max_bin - min_bin)*0.25) ) / (double)(max_bin - min_bin - ((max_bin - min_bin)*0.25));
+        // if (relative_bin_pos > 1.0) { relative_bin_pos = 1.0;};
         if (calculate_centroid == true) {centroid = getCentroid();};
         if (calculate_flux == true) {calculateSpectralFlux();};
     }
@@ -499,10 +503,10 @@ void FeatureCollector::resetPeakAvgLog() {
 
 void FeatureCollector::calculateRMS() {
     if (rms_active  && (rms_ana->available())) {
-        if (rms_ana->read() > 0.0) {
+            double _rms = rms_ana->read() * rms_scaler;
+        if (_rms > 0.0) {
             double temp = rms_val;
-            rms_val = rms_ana->read();
-            rms_val *= rms_scaler;
+            rms_val = _rms;
             rms_pos_delta = getPosDelta(temp, rms_val);
             rms_totals += rms_val;
             rms_readings++;
@@ -630,29 +634,37 @@ uint32_t FeatureCollector::getBinsMidFreq256(int bin) {
 }
 
 void FeatureCollector::printFFTVals() {
-    if (fft_active) {
-        /*
-        if (USE_SCALED_FFT) {
-            Serial.print("Scaled ");
-        }
-        Serial.print(name); Serial.print(" FFT vals");
-        uint8_t w = 8;
-        for (int l  = 0; l < w; l++) {
-            Serial.println();
-            Serial.print(l+min_bin); Serial.print("\t");
-            for (int i = l + min_bin; i < max_bin; i = i + w) {
-                if (i != l) {
-                    Serial.print(", ");
-                    Serial.print(i);
-                    Serial.print(":");
-                };
-                Serial.print(fft_vals[i]);
+    if (fft_active && (PRINT_FFT_VALS || PRINT_FLUX_VALS || PRINT_CENTROID_VALS)) {
+        Serial.print(name); Serial.print(" FFT vals\t");
+        if (PRINT_FFT_VALS) {
+            // if (USE_SCALED_FFT) {Serial.print("Scaled ");}
+            uint8_t w = 8;
+            for (int l  = 0; l < w; l++) {
+                Serial.println();
+                Serial.print(l+min_bin); Serial.print("\t");
+                for (int i = l + min_bin; i < max_bin; i = i + w) {
+                    if (i != l) {
+                        Serial.print(", ");
+                        Serial.print(i);
+                        Serial.print(":");
+                    };
+                    Serial.print(fft_vals[i]);
+                }
             }
         }
-        */
-        Serial.println();
-        Serial.print("Bin with highest energy: "); Serial.print(highest_energy_idx);Serial.print(" = ");Serial.println(fft_vals[highest_energy_idx]);
+    }
+    /*
+    if (PRINT_HIGHEST_ENERGY_BIN) {
+        Serial.print("Bin with highest energy: "); Serial.print(highest_energy_idx);Serial.print(" = ");
+        Serial.print(fft_vals[highest_energy_idx]);
         printFreqRangeOfBin(highest_energy_idx, max_bin);
+    }
+    */
+    if (calculate_flux == true && PRINT_FLUX_VALS) {
+        Serial.print("flux: ");Serial.print(flux);Serial.println();
+    }
+    if (calculate_centroid == true && PRINT_CENTROID_VALS) {
+        Serial.print("centroid: ");Serial.println(centroid);
     }
 }
 

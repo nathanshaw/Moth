@@ -18,9 +18,9 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR          1.0
+#define ENC_ATTENUATION_FACTOR         1.2
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         1.5
+#define ENC_ATTENUATION_FACTOR         2.0
 #else 
 #define ENC_ATTENUATION_FACTOR         1.0
 #endif
@@ -45,7 +45,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define NUM_LED                   12
 #endif
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
-#define NUM_LED                   20
+#define NUM_LED                   10
 #endif 
 
 #define FRONT_MICROPHONE_INSTALLED      true
@@ -95,7 +95,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 // how high the click flash timer will go up to
 #define MAX_FLASH_TIME            60
 // where the click flash timer will start
-#define MIN_FLASH_TIME            20
+#define MIN_FLASH_TIME            40
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
 #define FLASH_DEBOUNCE_TIME       80
 

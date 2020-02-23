@@ -104,7 +104,14 @@ bool gain_adjust_active =                false;
 
 #define PRINT_FREQ_VALS                 false
 
+// for printing raw FFT values
 #define PRINT_FFT_VALS                  false
+// will print spectral flux if flux_active
+#define PRINT_FLUX_VALS                 true
+// will print centroid if centroid_active
+#define PRINT_CENTROID_VALS             false
+// will print highest energy bin in FFT
+ 
 #define PRINT_FFT_DEBUG                 false
 
 ////////////////////////////////////////////////////////////////////////////
@@ -245,7 +252,7 @@ bool data_logging_active =              true;
 ///////////////////////// Jumper Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED               0
+#define JUMPERS_POPULATED               1
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Datalog Manager ////////////////////////////////
@@ -280,20 +287,20 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                  0
+#define FC_UPDATE_RATE                  33
 #define AUDIO_MEMORY                    40
 
 // the scaler values are applied to the raw readings read from the audio objects
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
 // to some logic
 #if FIRMWARE_MODE == CICADA_MODE
-    double global_peak_scaler =              2.0 * ENC_ATTENUATION_FACTOR;
-    double global_rms_scaler  =              3.5 * ENC_ATTENUATION_FACTOR;
-    double global_fft_scaler  =              100.0 * ENC_ATTENUATION_FACTOR;
+    double global_peak_scaler =         2.0   * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
 #elif FIRMWARE_MODE == PITCH_MODE
-    double global_peak_scaler =              100.0 * ENC_ATTENUATION_FACTOR;
-    double global_rms_scaler  =              100.0 * ENC_ATTENUATION_FACTOR;
-    double global_fft_scaler  =              1000.0 * ENC_ATTENUATION_FACTOR;
+    double global_peak_scaler =         100.0  * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =         100.0  * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =         1000.0 * ENC_ATTENUATION_FACTOR;
 #endif
 
 bool stereo_audio =                     true;
@@ -331,5 +338,5 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 
 // used the scaled FFT readings or the normal FFT readings, the scaled readings will eensure that
 // all the bins of intrest will have their magnitudes add up to 1, thus is best used for determining the centroid within a sub frequency range (for instance 8k - 14k or something
-#define SCALE_FFT_BIN_RANGE                  1
+#define SCALE_FFT_BIN_RANGE             false
 #endif // CONFIGURATION_H

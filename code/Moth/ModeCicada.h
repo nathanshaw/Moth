@@ -10,14 +10,15 @@
 #include <Audio.h>
 
 // for some reason the datalog manager had trouble tracking this data?
-elapsedMillis fpm_timer;
-uint32_t num_flashes[2];
-double total_flashes[2];
-double fpm[2];
-// for tracking the peak something or another?
-double total_song_peaks[2];
-uint32_t num_song_peaks[2];
-
+/*
+  elapsedMillis fpm_timer;
+  uint32_t num_flashes[2];
+  double total_flashes[2];
+  double fpm[2];
+  // for tracking the peak something or another?
+  double total_song_peaks[2];
+  uint32_t num_song_peaks[2];
+*/
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
@@ -151,12 +152,12 @@ void linkFeatureCollectors() {
     // fc 0-1 are for the song front/rear
     // this equates to about 4k - 16k, perhaps I shoul
     fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
-    fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
+    // fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
     if (CALCULATE_FLUX == true) {
       fc[2].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
       fc[2].setFluxActive(true);
-      fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
-      fc[3].setFluxActive(true);
+      // fc[3].linkFFT(&input_fft, 12, 20, (double)global_fft_scaler,  SCALE_FFT_BIN_RANGE, true, true);
+      // fc[3].setFluxActive(true);
     }
   }
 }
@@ -348,10 +349,12 @@ void setupDLManager() {
     }
 
     if (STATICLOG_FLASHES) {
-      datalog_manager.addStaticLog("Front Total Flashes Detected  : ",
+      /*
+        datalog_manager.addStaticLog("Front Total Flashes Detected  : ",
                                    STATICLOG_FLASHES_TIMER, &total_flashes[0]);
-      datalog_manager.addStaticLog("Rear Total Flashes Detected   : ",
+        datalog_manager.addStaticLog("Rear Total Flashes Detected   : ",
                                    STATICLOG_FLASHES_TIMER, &total_flashes[1]);
+      */
     }
 
     if (STATICLOG_RGB_AVG_VALS) {
@@ -409,12 +412,14 @@ void setupDLManager() {
       datalog_manager.addAutolog("Rear Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
     }
 
-    if (AUTOLOG_FLASHES_F > 0) {
+    /*
+      if (AUTOLOG_FLASHES_F > 0) {
       datalog_manager.addAutolog("Front Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, &total_flashes[0]);
-    }
-    if (AUTOLOG_FLASHES_R > 0) {
+      }
+      if (AUTOLOG_FLASHES_R > 0) {
       datalog_manager.addAutolog("Rear Led Flash Number Log ", AUTOLOG_FLASHES_TIMER, &total_flashes[1]);
-    }
+      }
+    */
 
     // printing needs to be at the end so that everything actually displays
     if (PRINT_EEPROM_CONTENTS > 0) {
@@ -439,7 +444,7 @@ void setupDLManager() {
 double feature_min = 9999999.99;
 double feature_max = 0.0000001;
 elapsedMillis feature_reset_tmr;
-const unsigned long feature_reset_time = (1000 * 60);// every minute?
+const unsigned long feature_reset_time = (1000 * 300);// every minute?
 
 void updateSong() {
   for (int i = 0; i < num_channels; i++) {
@@ -470,9 +475,9 @@ void updateSong() {
         Serial.print("\tcent : ");
         Serial.print(cent);
       }
-      
+
       cent = (cent - feature_min) / (feature_max - feature_min);
-      
+
       if (PRINT_SONG_DEBUG) {
         Serial.print("\tcent : ");
         Serial.print(cent);
@@ -491,14 +496,16 @@ void updateSong() {
       red = brightness;
       green = 0;
     }
-    // dprint(PRINT_SONG_DEBUG, "brightness - ");
-    // dprint(PRINT_SONG_DEBUG, brightness);
-    // dprint(PRINT_SONG_DEBUG, "\tr:");
-    // dprint(PRINT_SONG_DEBUG, red);
-    // dprint(PRINT_SONG_DEBUG, "\tg:");
-    // dprintln(PRINT_SONG_DEBUG, green);
+
+    dprint(PRINT_SONG_DEBUG, "brightness - ");
+    dprint(PRINT_SONG_DEBUG, brightness);
+    dprint(PRINT_SONG_DEBUG, "\tr:");
+    dprint(PRINT_SONG_DEBUG, red);
+    dprint(PRINT_SONG_DEBUG, "\tg:");
+    dprintln(PRINT_SONG_DEBUG, green);
     // dprint(PRINT_SONG_DEBUG, "\tb:");
     // dprintln(PRINT_SONG_DEBUG, blue);
+
     if (stereo_audio == false || front_mic_active == false || rear_mic_active == false) {
       if (front_mic_active == true && i == 0) {
         neos[0].colorWipe(red, green, 0);
@@ -512,70 +519,80 @@ void updateSong() {
     }
   }
 }
+double last_feature[2];
+double current_feature[2];
 
 void updateClick() {
+  double flux = fc[2].getSpectralFlux();
   for (int i = 0; i < num_channels; i++) {
     /*
-    double feature = 0.0;
-    double threshold = 0.0;
-    if (CLICK_FEATURE == PEAK_DELTA) {
+      double feature = 0.0;
+      double threshold = 0.0;
+      if (CLICK_FEATURE == PEAK_DELTA) {
       feature = fc[i + 2].getPeakPosDelta();
       threshold = CLICK_PEAK_DELTA_THRESH;
-    } else if (CLICK_FEATURE == RMS_DELTA) {
+      } else if (CLICK_FEATURE == RMS_DELTA) {
       feature = fc[i + 2].getRMSPosDelta();
       threshold = CLICK_RMS_DELTA_THRESH;
-    } else if (CLICK_FEATURE == SPECTRAL_FLUX) {
+      } else if (CLICK_FEATURE == SPECTRAL_FLUX) {
       feature = fc[2].getSpectralFlux() * SPECTRAL_FLUX_SCALER;
       threshold = CLICK_SPECTRAL_FLUX_THRESH;
       // Serial.print("spectral flux: ");
       // Serial.println(feature);
-    }
+      }
     */
-    double flux = fc[2].getSpectralFlux();
-    double rms = fc[i+2].getRMSPosDelta();
-    double feature = rms * flux;
-    double threshold = 0.0;
-    /*
-    if (i == 0) {
-      Serial.print("feature      : ");
-      Serial.println(feature, 12);
-      Serial.print("spectral flux: ");
-      Serial.println(flux, 12);
-      Serial.print("rms          : ");
-      Serial.println(rms, 12);
-    }
-    */
-    // Serial.print(rms_pos_delta 
-    if (feature > threshold) {
-      dprint(PRINT_CLICK_DEBUG, "click feature is above threshold: ");
-      dprint(PRINT_CLICK_DEBUG, feature);
-      dprint(PRINT_CLICK_DEBUG, " - ");
-      dprint(PRINT_CLICK_DEBUG, threshold);
-      if (neos[i].flashOn()) {
-        num_flashes[i]++;
-        total_flashes[i]++;
-        fpm[i] = num_flashes[i] / fpm_timer;
-        if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
-          if (neos[1].flashOn()) {
-            num_flashes[1]++;
-            total_flashes[1]++;
-            fpm[1] = num_flashes[1] / fpm_timer;
+    // past_rms[i] = rms[i];
+    double peak = fc[i + 2].getPeak();
+    current_feature[i] = peak * flux;
+    if (current_feature[i] != last_feature[i]) {
+      last_feature[i] = current_feature[i];
+      // Serial.print("last feature : ");
+      // Serial.println(last_feature);
+      // last_feature = 0;
+      double threshold = CLICK_THRESH;
+      if (i == 0) {
+        Serial.print("feature      : ");
+        Serial.println(current_feature[i], 12);
+        Serial.print("flux         : ");
+        Serial.println(flux * 2, 12);
+        Serial.print("peak         : ");
+        Serial.println(peak, 12);
+        Serial.println("----------------------");
+      }
+      // Serial.print(rms_pos_delta
+      if (current_feature[i] > threshold) {
+        Serial.println("____________________ CLICK ________________________ 3.0");
+        dprint(PRINT_CLICK_DEBUG, "click feature is above threshold: ");
+        dprint(PRINT_CLICK_DEBUG, current_feature[i]);
+        dprint(PRINT_CLICK_DEBUG, " - ");
+        dprint(PRINT_CLICK_DEBUG, threshold);
+        if (neos[i].flashOn()) {
+          // num_flashes[i]++;
+          // total_flashes[i]++;
+          // fpm[i] = num_flashes[i] / fpm_timer;
+          if (INDEPENDENT_FLASHES == false && i == 0 && ENCLOSURE_TYPE != GROUND_ENCLOSURE) {
+            if (neos[1].flashOn()) {
+              // num_flashes[1]++;
+              // total_flashes[1]++;
+              // fpm[1] = num_flashes[1] / fpm_timer;
+            }
           }
-        }
-        if (INDEPENDENT_FLASHES == false && i == 1) {
-          if (neos[0].flashOn()) {
-            num_flashes[0]++;
-            total_flashes[0]++;
-            fpm[0] = num_flashes[0] / fpm_timer;
+          if (INDEPENDENT_FLASHES == false && i == 1) {
+            if (neos[0].flashOn()) {
+              // num_flashes[0]++;
+              // total_flashes[0]++;
+              // fpm[0] = num_flashes[0] / fpm_timer;
+            }
           }
         }
       }
+    }
+    for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
+      neos[i].update();
     }
   }
-      for (unsigned int i = 0; i < sizeof(neos) / sizeof(neos[0]); i++) {
-        neos[i].update();
-      }
 }
+
 
 void updateAutogain() {
 #if (AUTOGAIN_ACTIVE)

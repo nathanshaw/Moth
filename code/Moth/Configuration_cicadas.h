@@ -8,6 +8,8 @@
 #define RMS_FEATURE_ACTIVE              1
 #define FFT_FEATURE_ACTIVE              1
 
+double CLICK_THRESH =                   0.40;
+
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
 // if this is set to true the flashes will only contain the Flash color instea
 // if this is set to false then the flash color will be added to the normal color
@@ -28,7 +30,7 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
 // this is the gain that the input amps will be set at at the start of the installation
 #define STARTING_SONG_GAIN              6.0
-#define STARTING_CLICK_GAIN             12.0
+#define STARTING_CLICK_GAIN             15.0
 
 #define SONG_BQ1_THRESH                 4000
 #define SONG_BQ1_Q                      0.85
@@ -75,11 +77,11 @@ int CLICK_FEATURE =                     PEAK_DELTA;
 #define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.5)
 
 #define CLICK_BQ1_THRESH                1200
-#define CLICK_BQ1_Q                     0.95
-#define CLICK_BQ1_DB                    -24
-#define CLICK_BQ2_THRESH                3500
-#define CLICK_BQ2_Q                     0.95
-#define CLICK_BQ2_DB                    -24
+#define CLICK_BQ1_Q                     0.85
+#define CLICK_BQ1_DB                    -12
+#define CLICK_BQ2_THRESH                3000
+#define CLICK_BQ2_Q                     0.85
+#define CLICK_BQ2_DB                    -12
 
 // keeping track of clicks //////
 long total_clicks_detected[2] =         {0, 0}; // number of clicks which has occurred since boot
