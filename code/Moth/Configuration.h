@@ -17,7 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       11
+#define SERIAL_ID                       13
 
 double MASTER_GAIN_SCALER =             1.0;
 
@@ -66,9 +66,9 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LUX_DEBUG                 false
-#define PRINT_LUX_READINGS              false
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
+#define PRINT_LUX_DEBUG                 true
+#define PRINT_LUX_READINGS              true
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
 #define PRINT_SONG_DEBUG                false
 
@@ -92,7 +92,7 @@ bool gain_adjust_active =                false;
 #define EEPROM_WRITE_CHECK              false
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// Feature Collector ///////////////////////////////
+///////////////////////// Feature Collector ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 #define PRINT_RMS_VALS                  false
 #define PRINT_RMS_DEBUG                 false
@@ -104,15 +104,16 @@ bool gain_adjust_active =                false;
 
 #define PRINT_FREQ_VALS                 false
 
+//////////////////////////// FFT Printing ///////////////////////////////////
+#define PRINT_FFT_DEBUG                 false
 // for printing raw FFT values
 #define PRINT_FFT_VALS                  false
 // will print spectral flux if flux_active
-#define PRINT_FLUX_VALS                 true
+#define PRINT_FLUX_VALS                 false
 // will print centroid if centroid_active
-#define PRINT_CENTROID_VALS             true
+#define PRINT_CENTROID_VALS             false
 // will print highest energy bin in FFT
- 
-#define PRINT_FFT_DEBUG                 false
+
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
@@ -287,8 +288,8 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                  33
-#define AUDIO_MEMORY                    40
+#define FC_UPDATE_RATE                  20
+#define AUDIO_MEMORY                    16
 
 // the scaler values are applied to the raw readings read from the audio objects
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 

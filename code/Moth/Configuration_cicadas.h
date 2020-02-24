@@ -50,7 +50,7 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 // "all" will use all available features with their corresponding thresholds
 #define CALCULATE_FLUX                  true
 #define CALCULATE_CENTROID              true
-#define CALCULATE_ROFF                  true
+#define CALCULATE_ROFF                  false
 
 int CLICK_FEATURE =                     PEAK_DELTA;
 #define CLICK_RMS_DELTA_THRESH          0.05

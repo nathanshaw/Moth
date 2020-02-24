@@ -72,29 +72,29 @@ bool testJumpers() {
   values[5] = digitalRead(JMP6_PIN);
   Serial.println("Testing the PCB for jumpers");
   for (int i = 0; i < 10; i++) {
-    if (values[0] != digitalRead(JMP1_PIN)){
-        populated = false;
-        Serial.println("JMP1_PIN returned multiple values");
+    if (values[0] != digitalRead(JMP1_PIN)) {
+      populated = false;
+      Serial.println("JMP1_PIN returned multiple values");
     }
-        if (values[1] != digitalRead(JMP2_PIN)){
-        populated = false;
-        Serial.println("JMP2_PIN returned multiple values");
+    if (values[1] != digitalRead(JMP2_PIN)) {
+      populated = false;
+      Serial.println("JMP2_PIN returned multiple values");
     }
-        if (values[2] != digitalRead(JMP3_PIN)){
-        populated = false;
-        Serial.println("JMP3_PIN returned multiple values");
+    if (values[2] != digitalRead(JMP3_PIN)) {
+      populated = false;
+      Serial.println("JMP3_PIN returned multiple values");
     }
-        if (values[3] != digitalRead(JMP4_PIN)){
-        populated = false;
-        Serial.println("JMP4_PIN returned multiple values");
+    if (values[3] != digitalRead(JMP4_PIN)) {
+      populated = false;
+      Serial.println("JMP4_PIN returned multiple values");
     }
-        if (values[4] != digitalRead(JMP5_PIN)){
-        populated = false;
-        Serial.println("JMP5_PIN returned multiple values");
+    if (values[4] != digitalRead(JMP5_PIN)) {
+      populated = false;
+      Serial.println("JMP5_PIN returned multiple values");
     }
-        if (values[5] != digitalRead(JMP6_PIN)){
-        populated = false;
-        Serial.println("JMP6_PIN returned multiple values");
+    if (values[5] != digitalRead(JMP6_PIN)) {
+      populated = false;
+      Serial.println("JMP6_PIN returned multiple values");
     }
     delay(10);
   }
@@ -129,29 +129,29 @@ void readJumpers() {
     Serial.println(ENCLOSURE_TYPE);
     if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
       num_channels = 2;
-    } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE){
+    } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE) {
       num_channels = 1;
     }
     /*
-    //////////// Jumper 4 ///////////////////////
-    temp_b = digitalRead(JMP4_PIN);
-    if (temp_b == 0) {
+      //////////// Jumper 4 ///////////////////////
+      temp_b = digitalRead(JMP4_PIN);
+      if (temp_b == 0) {
       SONG_FEATURE = RMS_RAW;
-    } else {
+      } else {
       SONG_FEATURE = PEAK_RAW;
-    }
-    Serial.print("(pin4) Song Feature                  : ");
-    Serial.println(SONG_FEATURE);
+      }
+      Serial.print("(pin4) Song Feature                  : ");
+      Serial.println(SONG_FEATURE);
 
-    //////////// Jumper 5 ///////////////////////
-    temp_b = digitalRead(JMP5_PIN);
-    if (temp_b == 0) {
+      //////////// Jumper 5 ///////////////////////
+      temp_b = digitalRead(JMP5_PIN);
+      if (temp_b == 0) {
       CLICK_FEATURE = RMS_DELTA;
-    } else {
+      } else {
       CLICK_FEATURE = PEAK_DELTA;
-    }
-    Serial.print("(pin5) Click Feature                 : ");
-    Serial.println(CLICK_FEATURE);
+      }
+      Serial.print("(pin5) Click Feature                 : ");
+      Serial.println(CLICK_FEATURE);
     */
     ///////////// Jumper 6 //////////////////////
     temp_b = digitalRead(JMP6_PIN);
@@ -170,7 +170,7 @@ void setup() {
   Serial.begin(SERIAL_BAUD_RATE);
   Serial.println("Serial begun");
   leds.begin();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 12, 12, 0);
     leds.show();
   }
@@ -202,7 +202,7 @@ void setup() {
   }
 
 #if FIRMWARE_MODE == TEST_MODE
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 64, 64, 64);
     leds.show();
   }
