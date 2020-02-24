@@ -18,9 +18,9 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         1.2
+#define ENC_ATTENUATION_FACTOR         1.5
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         2.0
+#define ENC_ATTENUATION_FACTOR         2.5
 #else 
 #define ENC_ATTENUATION_FACTOR         1.0
 #endif
@@ -82,8 +82,8 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 #define S_VERSION_MAJOR           0
-#define S_VERSION_MINOR           0
-#define S_SUBVERSION              5
+#define S_VERSION_MINOR           1
+#define S_SUBVERSION              0
 // version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
 // how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
 // and the addition of a flag to differentiate between adding the flash brightness of just displaying

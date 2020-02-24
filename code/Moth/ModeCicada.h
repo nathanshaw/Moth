@@ -252,6 +252,7 @@ uint8_t calculatePeakWeighted(FeatureCollector *f) {
     peak = 0.0;
   }
   uint8_t scaler = uint8_t(peak * (double)MAX_BRIGHTNESS);
+  scaler = applyLBS(scaler);
   return scaler;
 }
 
@@ -591,7 +592,7 @@ void updateClick() {
     */
     // past_rms[i] = rms[i];
     double peak = fc[i + 2].getPeakPosDelta();
-    current_feature[i] = peak * flux * 200;
+    current_feature[i] = peak * flux * 500;
     if (current_feature[i] != last_feature[i]) {
       last_feature[i] = current_feature[i];
       // Serial.print("last feature : ");

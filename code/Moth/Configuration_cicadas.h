@@ -8,7 +8,7 @@
 #define RMS_FEATURE_ACTIVE              1
 #define FFT_FEATURE_ACTIVE              1
 
-double CLICK_THRESH =                   0.40;
+double CLICK_THRESH =                   0.325;
 #define SMOOTH_CENTROID                 true
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
@@ -22,16 +22,17 @@ double CLICK_THRESH =                   0.40;
 int SONG_FEATURE =                      PEAK_RAW;
 int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
-#define SONG_PEAK_THRESH          0.25
-#define SONG_RMS_THRESH           0.25
+// these were 0.25
+#define SONG_PEAK_THRESH                0.15
+#define SONG_RMS_THRESH                 0.15
 
 // TODO need to determine what are good values for these
 #define MIN_SONG_PEAK_AVG               0.002
 #define MAX_SONG_PEAK_AVG               0.2
 
 // this is the gain that the input amps will be set at at the start of the installation
-#define STARTING_SONG_GAIN              6.0
-#define STARTING_CLICK_GAIN             15.0
+#define STARTING_SONG_GAIN              8.0
+#define STARTING_CLICK_GAIN             16.0
 
 #define SONG_BQ1_THRESH                 4000
 #define SONG_BQ1_Q                      0.85

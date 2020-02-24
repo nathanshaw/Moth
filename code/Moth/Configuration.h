@@ -15,9 +15,37 @@
 #include <PrintUtils.h>
 
 ////////////////////////////////////////////////////////////////////////////
+/////////////////////////// Local Brightness Scalers////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// the local brightness scaler will adjust the brightness that would normally be displayed
+// to utalise the entire dynamic range available
+#define LBS_ACTIVE                     true
+// how often should the LBS be recalculated?
+#define LBS_TIME_FRAME                 (1000 * 60 * 5)
+// once the local min and max have been overwritten how long to collect readings for
+// a new min and max before using the new values?
+#define LBS_OVERLAP_TIME               (1000 * 30)
+elapsedMillis lbs_timer;
+uint8_t lbs_min = 255;
+uint8_t lbs_max = 0;
+// to keep track of 
+double lbs_min_temp = 999999999.9; 
+double lbs_max_temp = 0.0;
+// this is what the LBS will map the lowest feature results and highest feature results 
+// TODO will perhaps need to make a 16bit version of this?, or change all my brightnesses to be stored using 16 bits instead of 8?
+uint8_t lbs_brightness_low = 0;
+uint8_t lbs_brightness_high = 255;
+
+// what percent from the low and high will be truncated to the lowest and highest value
+#define LBS_LOW_TRUNCATE_THRESH       0.2
+#define LBS_HIGH_TRUNCATE_THRESH      0.8
+uint8_t lbs_scaler_min_thresh = 255;
+uint8_t lbs_scaler_max_thresh = 0;
+
+////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       13
+#define SERIAL_ID                       11
 
 double MASTER_GAIN_SCALER =             1.0;
 
@@ -66,6 +94,8 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
+#define PRINT_LBS                       true
+//
 #define PRINT_LUX_DEBUG                 true
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
@@ -340,4 +370,50 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 // used the scaled FFT readings or the normal FFT readings, the scaled readings will eensure that
 // all the bins of intrest will have their magnitudes add up to 1, thus is best used for determining the centroid within a sub frequency range (for instance 8k - 14k or something
 #define SCALE_FFT_BIN_RANGE             false
+
+void updateLBS(uint8_t feature) {
+    if (lbs_timer > LBS_TIME_FRAME) {
+        lbs_timer = 0;
+        lbs_min = (uint8_t)((double)lbs_min * 2.0);
+        lbs_max = (uint8_t)((double)lbs_max * 0.5);
+        Serial.print("Reset the lbs timers");
+    }
+    if (feature > lbs_max) {
+        lbs_max = feature;
+    } else if (feature < lbs_min) {
+        lbs_min = feature;
+    } else {
+        return;
+    }
+    // if we do not return then it means we updated the min or max and now
+    // need to update the lbs_scaler_min_thresh and max thresb
+    // double range  = lbs_max - lbs_min;
+    // double lbs_scaler_min_thresh = lbs_min
+    // double lbs_scaler_max_thresh =
+
+    lbs_scaler_min_thresh = lbs_min + ((lbs_max - lbs_min) * LBS_LOW_TRUNCATE_THRESH);
+    lbs_scaler_max_thresh = lbs_max + ((lbs_max - lbs_min) * LBS_HIGH_TRUNCATE_THRESH);
+    dprint(PRINT_LBS, "lbs min/max thresholds: ");
+    dprint(PRINT_LBS, lbs_scaler_min_thresh);
+    dprint(PRINT_LBS, " / ");
+    dprintln(PRINT_LBS, lbs_scaler_max_thresh);
+}
+
+uint8_t applyLBS(uint8_t brightness) {
+    updateLBS(brightness);
+    // constrain the brightness to the low and high thresholds
+    dprint(PRINT_LBS, "brightness (Before/After) lbs: ");
+    dprint(PRINT_LBS, brightness);
+    dprint(PRINT_LBS, " / ");
+    brightness = constrain(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
+    brightness = map(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    dprint(PRINT_LBS, " = ");
+    dprint(PRINT_LBS, brightness);
+    dprint(PRINT_LBS, "\tmin/max thresh: ");
+    dprint(PRINT_LBS, lbs_scaler_min_thresh);    
+    dprint(PRINT_LBS, " / ");    
+    dprintln(PRINT_LBS, lbs_scaler_max_thresh);    
+    return brightness;
+}
+
 #endif // CONFIGURATION_H
