@@ -21,33 +21,35 @@
 // to utalise the entire dynamic range available
 #define LBS_ACTIVE                     true
 // how often should the LBS be recalculated?
-#define LBS_TIME_FRAME                 (1000 * 60 * 5)
+#define LBS_TIME_FRAME                 (1000 * 60 * 3)
 // once the local min and max have been overwritten how long to collect readings for
 // a new min and max before using the new values?
 #define LBS_OVERLAP_TIME               (1000 * 30)
 elapsedMillis lbs_timer;
-uint8_t lbs_min = 255;
-uint8_t lbs_max = 0;
+uint8_t lbs_min =                      255;
+uint8_t lbs_max =                     0;
 // to keep track of 
-double lbs_min_temp = 999999999.9; 
-double lbs_max_temp = 0.0;
+double lbs_min_temp =                 999999999.9; 
+double lbs_max_temp =                 0.0;
 // this is what the LBS will map the lowest feature results and highest feature results 
 // TODO will perhaps need to make a 16bit version of this?, or change all my brightnesses to be stored using 16 bits instead of 8?
-uint8_t lbs_brightness_low = 0;
-uint8_t lbs_brightness_high = 255;
+uint8_t lbs_brightness_low =          0;
+uint8_t lbs_brightness_high =         255;
 
 // what percent from the low and high will be truncated to the lowest and highest value
 #define LBS_LOW_TRUNCATE_THRESH       0.2
 #define LBS_HIGH_TRUNCATE_THRESH      0.8
-uint8_t lbs_scaler_min_thresh = 255;
-uint8_t lbs_scaler_max_thresh = 0;
+uint8_t lbs_scaler_min_thresh =       255;
+uint8_t lbs_scaler_max_thresh =       0;
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                       11
+#define SERIAL_ID                     4
 
-double MASTER_GAIN_SCALER =             1.0;
+uint32_t  BOOT_DELAY      =           (1000 * 60 * 2);
+
+double MASTER_GAIN_SCALER =           1.0;
 
 // if false, a click detected on either side results in a LED flash on both sides
 // if true, a click detected on one side will only result in a flash on that side
@@ -166,8 +168,8 @@ bool rear_lux_active  =                 true;
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               50.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               1000.0
-#define HIGH_LUX_THRESHOLD              2000.0
+#define MID_LUX_THRESHOLD               1200.0
+#define HIGH_LUX_THRESHOLD              3000.0
 #define EXTREME_LUX_THRESHOLD           4000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
@@ -186,7 +188,7 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
-#define FLASH_RED                       150
+#define FLASH_RED                       100
 #define FLASH_GREEN                     100
 #define FLASH_BLUE                      255
 
@@ -203,7 +205,7 @@ bool data_logging_active =              true;
 #define WRITE_HARDWARE_SETTINGS         true
 
 // does the autolog get written over each time?
-#define CLEAR_EEPROM_CONTENTS           0
+#define CLEAR_EEPROM_CONTENTS           1
 
 // how long will each of the four different auto-log options be? 
 // // a -1 means that the log will keep updating forever
@@ -219,14 +221,14 @@ bool data_logging_active =              true;
 #define DATALOG_TIMER_4                 (1000*60*10)
 
 // how long the program runs for before the datalog starts logging
-#define DATALOG_START_DELAY_1           (1000*60*60*1)
-#define DATALOG_START_DELAY_2           (1000*60*60*0.25)
-#define DATALOG_START_DELAY_3           (1000*60*60*1)
-#define DATALOG_START_DELAY_4           (1000*60*60*0.25)
+#define DATALOG_START_DELAY_1           (1000*60*60*0.125)
+#define DATALOG_START_DELAY_2           (1000*60*60*0.125)
+#define DATALOG_START_DELAY_3           (1000*60*60*0.125)
+#define DATALOG_START_DELAY_4           (1000*60*60*0.125)
 
 // how long the data logging  will last for
-#define DATALOG_TIME_FRAME_1            (1000*60*60*0.1)
-#define DATALOG_TIME_FRAME_2            (1000*60*60*1)
+#define DATALOG_TIME_FRAME_1            (1000*60*60*2)
+#define DATALOG_TIME_FRAME_2            (1000*60*60*2)
 // #define DATALOG_TIME_FRAME_3            (1000*60*60*0.1)
 // #define DATALOG_TIME_FRAME_4            (1000*60*60*1)
 
@@ -243,9 +245,9 @@ bool data_logging_active =              true;
 #define AUTOLOG_LUX_TIMER               0
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            0
-#define AUTOLOG_LED_ON_OFF_R            0
-#define AUTOLOG_LED_ON_OFF_TIMER        0
+#define AUTOLOG_LED_ON_OFF_F            1
+#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF_TIMER        1
 
 // the number of values to store in the logging process
 #define AUTOLOG_FLASHES_F               0
@@ -258,26 +260,26 @@ bool data_logging_active =              true;
 #define AUTOLOG_FPM_TIMER               0
 
 // the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     0
-#define AUTOLOG_BRIGHTNESS_SCALER_R     0
+#define AUTOLOG_BRIGHTNESS_SCALER_F     1
+#define AUTOLOG_BRIGHTNESS_SCALER_R     1
 #define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// static logging /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define STATICLOG_CLICK_GAIN            0
-#define STATICLOG_SONG_GAIN             0
-#define STATICLOG_LUX_VALUES            0
-#define STATICLOG_FLASHES               0
-#define STATICLOG_RUNTIME               0
-#define STATICLOG_RGB_AVG_VALS          0
+#define STATICLOG_CLICK_GAIN            1
+#define STATICLOG_SONG_GAIN             1
+#define STATICLOG_LUX_VALUES            1
+#define STATICLOG_FLASHES               1
+#define STATICLOG_RUNTIME               1
+#define STATICLOG_RGB_AVG_VALS          1
 
-#define STATICLOG_LUX_MIN_MAX_TIMER     0
-#define STATICLOG_CLICK_GAIN_TIMER      0
-#define STATICLOG_SONG_GAIN_TIMER       0
-#define STATICLOG_FLASHES_TIMER         0
-#define STATICLOG_RUNTIME_TIMER         0
-#define STATICLOG_RGB_AVG_VALS_TIMER    0
+#define STATICLOG_LUX_MIN_MAX_TIMER     1
+#define STATICLOG_CLICK_GAIN_TIMER      1
+#define STATICLOG_SONG_GAIN_TIMER       1
+#define STATICLOG_FLASHES_TIMER         1
+#define STATICLOG_RUNTIME_TIMER         1
+#define STATICLOG_RGB_AVG_VALS_TIMER    1
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
@@ -374,8 +376,8 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 void updateLBS(uint8_t feature) {
     if (lbs_timer > LBS_TIME_FRAME) {
         lbs_timer = 0;
-        lbs_min = (uint8_t)((double)lbs_min * 2.0);
-        lbs_max = (uint8_t)((double)lbs_max * 0.5);
+        lbs_min = (uint8_t)((double)lbs_min * 1.1);
+        lbs_max = (uint8_t)((double)lbs_max * 0.9);
         Serial.print("Reset the lbs timers");
     }
     if (feature > lbs_max) {
@@ -390,10 +392,13 @@ void updateLBS(uint8_t feature) {
     // double range  = lbs_max - lbs_min;
     // double lbs_scaler_min_thresh = lbs_min
     // double lbs_scaler_max_thresh =
-
+    dprint(PRINT_LBS, "old lbs min/max : ");
+    dprint(PRINT_LBS, lbs_scaler_min_thresh);
+    dprint(PRINT_LBS, " / ");
+    dprintln(PRINT_LBS, lbs_scaler_max_thresh);
     lbs_scaler_min_thresh = lbs_min + ((lbs_max - lbs_min) * LBS_LOW_TRUNCATE_THRESH);
     lbs_scaler_max_thresh = lbs_max + ((lbs_max - lbs_min) * LBS_HIGH_TRUNCATE_THRESH);
-    dprint(PRINT_LBS, "lbs min/max thresholds: ");
+    dprint(PRINT_LBS, "\tnew min/max : ");
     dprint(PRINT_LBS, lbs_scaler_min_thresh);
     dprint(PRINT_LBS, " / ");
     dprintln(PRINT_LBS, lbs_scaler_max_thresh);

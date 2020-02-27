@@ -126,6 +126,19 @@ void readJumpers() {
     bool temp_b;
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
     Serial.print("(pin1) Enclosure                      : ");
+ 
+    if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
+      num_channels = 2;
+      Serial.println("Orb Enclosure");
+    } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE) {
+      num_channels = 1;
+      Serial.println("Ground Enclosure");
+    }
+    //////////// Jumper 2 ///////////////////////
+    /////////// Boot Delay //////////////////////
+    temp_b = digitalRead(JMP2_PIN);
+    BOOT_DELAY *= temp_b;
+    Serial.print("(pin1) Boot Delay               : ");
     Serial.println(ENCLOSURE_TYPE);
     if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
       num_channels = 2;
@@ -143,23 +156,24 @@ void readJumpers() {
       Serial.print("(pin4) Song Feature                  : ");
       Serial.println(SONG_FEATURE);
 
-      //////////// Jumper 5 ///////////////////////
-      temp_b = digitalRead(JMP5_PIN);
-      if (temp_b == 0) {
-      CLICK_FEATURE = RMS_DELTA;
-      } else {
-      CLICK_FEATURE = PEAK_DELTA;
-      }
-      Serial.print("(pin5) Click Feature                 : ");
-      Serial.println(CLICK_FEATURE);
     */
     ///////////// Jumper 6 //////////////////////
+    //////////// Minor Gain Boost ///////////////
+    temp_b = digitalRead(JMP6_PIN);
+    if (temp_b == 1) {
+      MASTER_GAIN_SCALER *= 1.25;
+      Serial.print("(pin5) MASTER_GAIN_SCALER increased by 25% : ");
+    }
+
+    ///////////// Jumper 6 //////////////////////
+    //////////// Major Gain Boost ////////////////
     temp_b = digitalRead(JMP6_PIN);
     if (temp_b == 1) {
       MASTER_GAIN_SCALER *= 1.5;
+      Serial.print("(pin6) MASTER_GAIN_SCALER increased by 50% : ");
     }
-    Serial.print("(pin6) MASTER_GAIN_SCALER increased by 50% : ");
     Serial.println(MASTER_GAIN_SCALER);
+
   } else {
     Serial.println("ERROR - this PCB does not contain jumpers, or jumper pins are not populated");
   }

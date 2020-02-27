@@ -14,14 +14,16 @@
 ////////////////////// Hardware Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
+// Currently there are three options for the enclosure : GROUND_ENCLOSURE, ORB_ENCLOSURE, and NO_ENCLOSURE
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
+uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
+
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         1.5
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         2.5
-#else 
+#define ENC_ATTENUATION_FACTOR         3.0
+#else ENCLOSURE_TYPE == NO_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         1.0
 #endif
 
@@ -83,7 +85,10 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 ////////////////////////////////////////////////////////////////////////////
 #define S_VERSION_MAJOR           0
 #define S_VERSION_MINOR           1
-#define S_SUBVERSION              0
+#define S_SUBVERSION              1
+// version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
+// as well as the autobrightness calibration routine being very visible and disruptive when resetting
+// version 0.1.0 was created on 24.02.20 as it served as the first viable working song implementation
 // version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
 // how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
 // and the addition of a flag to differentiate between adding the flash brightness of just displaying
