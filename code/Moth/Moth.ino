@@ -6,6 +6,8 @@
 #include "Configuration.h"
 #if FIRMWARE_MODE == CICADA_MODE
 #include "ModeCicada.h"
+#elif FIRMWARE_MODE == CICADA_MODE_NEW
+#include "ModeCicadaNew.h"
 #elif FIRMWARE_MODE == PITCH_MODE
 #include "ModePitch.h"
 #elif FIRMWARE_MODE == TEST_MODE
@@ -33,7 +35,6 @@ void updateLuxManagers() {
         updated++;
       }
     }
-#if COMBINE_LUX_READINGS > 0
     if (updated) {
       // calculate what the combined lux is
       double combined_lux = 0;
@@ -52,7 +53,6 @@ void updateLuxManagers() {
           dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());
         }
       }
-#endif
     }
   }
 }
@@ -103,7 +103,8 @@ bool testJumpers() {
 
 void readJumpers() {
   if (testJumpers() == true) {
-    Serial.println("Jumpers passed continuity test...");
+    Serial.print("Jumpers passed continuity test...");
+    printMinorDivide();
     pinMode(JMP1_PIN, INPUT);
     pinMode(JMP2_PIN, INPUT);
     pinMode(JMP3_PIN, INPUT);
@@ -125,58 +126,60 @@ void readJumpers() {
     //////////// Jumper 1 ///////////////////////
     bool temp_b;
     ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
-    Serial.print("(pin1) Enclosure                      : ");
- 
+    Serial.print("(pin1) Enclosure                              : ");
+
     if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
       num_channels = 2;
-      Serial.println("Orb Enclosure");
+      Serial.print("Orb Enclosure: ");
+      Serial.println("num_channels set to 2");
     } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE) {
       num_channels = 1;
-      Serial.println("Ground Enclosure");
+      Serial.print("Ground Enclosure: ");
+      Serial.println("num_channels set to 1");
     }
     //////////// Jumper 2 ///////////////////////
     /////////// Boot Delay //////////////////////
     temp_b = digitalRead(JMP2_PIN);
     BOOT_DELAY *= temp_b;
-    Serial.print("(pin1) Boot Delay               : ");
-    Serial.println(ENCLOSURE_TYPE);
-    if (ENCLOSURE_TYPE == ORB_ENCLOSURE) {
-      num_channels = 2;
-    } else if (ENCLOSURE_TYPE == GROUND_ENCLOSURE) {
-      num_channels = 1;
-    }
-    /*
-      //////////// Jumper 4 ///////////////////////
-      temp_b = digitalRead(JMP4_PIN);
-      if (temp_b == 0) {
-      SONG_FEATURE = RMS_RAW;
-      } else {
-      SONG_FEATURE = PEAK_RAW;
-      }
-      Serial.print("(pin4) Song Feature                  : ");
-      Serial.println(SONG_FEATURE);
+    Serial.print("(pin2) Boot Delay (in seconds)                : ");
+    Serial.println(BOOT_DELAY / 1000);
 
-    */
-    ///////////// Jumper 6 //////////////////////
+    //////////// Jumper 3 ///////////////////////
+    ////////////
+    Serial.println("(pin3) UNMAPPED");
+
+    //////////// Jumper 4 ///////////////////////
+    ////////////
+    Serial.println("(pin3) UNMAPPED");
+
+    ///////////// Jumper 5 //////////////////////
     //////////// Minor Gain Boost ///////////////
-    temp_b = digitalRead(JMP6_PIN);
+    temp_b = digitalRead(JMP5_PIN);
+    double total_scaler = 0.0;
     if (temp_b == 1) {
-      MASTER_GAIN_SCALER *= 1.25;
-      Serial.print("(pin5) MASTER_GAIN_SCALER increased by 25% : ");
+      total_scaler += 0.25;
+      Serial.println("(pin5) MASTER_GAIN_SCALER increased by 25% : ");
+    } else {
+      Serial.println("(pin5) MASTER_GAIN_SCALER decreased by 25% : ");
+      total_scaler -= 0.25;
     }
-
+    
     ///////////// Jumper 6 //////////////////////
     //////////// Major Gain Boost ////////////////
     temp_b = digitalRead(JMP6_PIN);
     if (temp_b == 1) {
-      MASTER_GAIN_SCALER *= 1.5;
+      total_scaler += 0.5;
       Serial.print("(pin6) MASTER_GAIN_SCALER increased by 50% : ");
+    } else {
+      Serial.print("(pin6) MASTER_GAIN_SCALER not increased by 50% : ");
     }
+    MASTER_GAIN_SCALER += total_scaler;
     Serial.println(MASTER_GAIN_SCALER);
 
   } else {
     Serial.println("ERROR - this PCB does not contain jumpers, or jumper pins are not populated");
   }
+  printMinorDivide();
 }
 
 void setup() {
@@ -222,6 +225,7 @@ void setup() {
   }
 #endif
   printMajorDivide("Setup Loop Finished");
+  delay(BOOT_DELAY);
 }
 
 void listenForSerialCommands() {

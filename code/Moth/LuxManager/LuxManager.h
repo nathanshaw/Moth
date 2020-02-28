@@ -249,21 +249,23 @@ double LuxManager::calculateBrightnessScaler() {
         }
     }
     else if (lux >= MID_LUX_THRESHOLD) {
-        bs = map(lux, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, 1.0, BRIGHTNESS_SCALER_MAX);
-        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MID_LUX_THRESHOLD, setting brightness scaler to a value > 1.0");
+        bs = 1.0;
+        // bs = 1.0 + (BRIGHTNESS_SCALER_MAX - 1.0) * ((lux - MID_LUX_THRESHOLD) / (HIGH_LUX_THRESHOLD - MID_LUX_THRESHOLD));
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MID_LUX_THRESHOLD, setting brightness scaler to 1.0");
         if (neo->getLuxShdn() == true) {
             neo->setExtremeLuxShdn(false);
         }
     }
     else if (lux >= LOW_LUX_THRESHOLD)  {
-        bs = map(lux, LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, BRIGHTNESS_SCALER_MIN, 1.0);
-        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the MIN_LUX_THRESHOLD, setting brightness scaler to a value < 1.0");
+        bs = (lux - LOW_LUX_THRESHOLD) / (MID_LUX_THRESHOLD - LOW_LUX_THRESHOLD) * (1.0 - BRIGHTNESS_SCALER_MIN);
+        bs += BRIGHTNESS_SCALER_MIN;
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is greater than the LOW_LUX_THRESHOLD, setting brightness scaler to a value < 1.0");
         if (neo->getLuxShdn() == true) {
             neo->setExtremeLuxShdn(false);
         }
     } else {
         bs = BRIGHTNESS_SCALER_MIN;
-        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is lower than the MIN_LUX_THRESHOLD, setting brightness scaler to BRIGHTNESS_SCALER_MIN");
+        dprintln(PRINT_BRIGHTNESS_SCALER_DEBUG, " is lower than the LOW_LUX_THRESHOLD, setting brightness scaler to BRIGHTNESS_SCALER_MIN");
         if (neo->getLuxShdn() == true) {
             neo->setExtremeLuxShdn(false);
         }

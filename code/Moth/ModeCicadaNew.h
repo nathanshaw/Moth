@@ -3,23 +3,29 @@
 #include <WS2812Serial.h>
 #include "DLManager/DLManager.h"
 #include "Configuration.h"
-#include "Configuration_cicadas.h"
+#include "Configuration_cicada_new.h"
 #include "NeopixelManager/NeopixelManager.h"
 #include "LuxManager/LuxManager.h"
 #include "AudioEngine/AudioEngine.h"
-#include "AudioEngine/FFTManager.h"
+#include "AudioEngine/FFTManager1024.h"
 #include <Audio.h>
 
-// for some reason the datalog manager had trouble tracking this data?
-/*
-  elapsedMillis fpm_timer;
-  uint32_t num_flashes[2];
-  double total_flashes[2];
-  double fpm[2];
-  // for tracking the peak something or another?
-  double total_song_peaks[2];
-  uint32_t num_song_peaks[2];
-*/
+//////////////////////////////// Global Variables /////////////////////////
+double color_feature_min[2] = {9999999.99, 999999999.99};
+double color_feature_max[2] = {0.0, 0.0};
+
+elapsedMillis feature_reset_tmr;
+const unsigned long feature_reset_time = (1000 * 150);// every 2.5 minute?
+
+double brightness_feature_min[2] = {99.99, 99.99};
+double brightness_feature_max[2] = {0.0, 0.0};
+
+double current_brightness[2] = {1.0, 1.0};
+double last_brightness[2] = {1.0, 1.0};
+
+double current_color[2] = {1.0, 1.0};
+double last_color[2] = {1.0, 1.0};
+
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
@@ -29,232 +35,97 @@ NeoGroup neos[2] = {
 };
 
 // lux managers to keep track of the VEML readings
-LuxManager lux_managers[NUM_LUX_SENSORS] = {
+LuxManager lux_managers[NUM_LUX_MANAGERS] = {
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
   LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
 };
 
+FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
+
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
-
-FeatureCollector fc[4] = {FeatureCollector("front song"), FeatureCollector("rear song"), FeatureCollector("front click"), FeatureCollector("rear click")};
-
-AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], STARTING_SONG_GAIN, STARTING_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
-                         AutoGain("Click", &fc[2], &fc[3], STARTING_CLICK_GAIN, STARTING_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
-                        };
-
-FFTManager fft_features = FFTManager("Input FFT");
+FFTManager1024 fft_features = FFTManager1024("Input FFT");
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
-AudioInputI2S            i2s1;           //xy=123.42857360839844,288.85714626312256
-AudioAmplifier           click_input_amp1; //xy=344.42857360839844,278.85714626312256
-AudioAmplifier           song_input_amp1; //xy=344.42857360839844,311.85714626312256
-AudioAmplifier           song_input_amp2; //xy=344.42857360839844,344.85714626312256
-AudioAmplifier           click_input_amp2; //xy=348.42857360839844,245.85714626312256
-AudioAnalyzeFFT256       input_fft;      //xy=508.28570556640625,393.57147693634033
-AudioFilterBiquad        click_biquad2;  //xy=522.4285736083984,248.85714626312256
-AudioFilterBiquad        song_biquad2;   //xy=524.4285736083984,343.85714626312256
-AudioFilterBiquad        click_biquad1;  //xy=526.4285736083984,280.85714626312256
-AudioFilterBiquad        song_biquad1;   //xy=526.4285736083984,310.85714626312256
-AudioFilterBiquad        song_biquad11;  //xy=701.0000228881836,313.8571548461914
-AudioFilterBiquad        click_biquad21; //xy=702.0000228881836,246.8571548461914
-AudioFilterBiquad        song_biquad21;  //xy=703.0000228881836,345.8571548461914
-AudioFilterBiquad        click_biquad11; //xy=704.0000228881836,277.8571548461914
-AudioAmplifier           click_post_amp2; //xy=882.0000228881836,246.8571548461914
-AudioAmplifier           click_post_amp1; //xy=882.0000228881836,277.8571548461914
-AudioAmplifier           song_post_amp2; //xy=882.0000228881836,345.8571548461914
-AudioAmplifier           song_post_amp1; //xy=883.0000228881836,313.8571548461914
-AudioOutputUSB           usb1;           //xy=1137.8571014404297,282.142879486084
-AudioAnalyzePeak         click_peak1;    //xy=1147.8571014404297,214.14287948608398
-AudioAnalyzePeak         click_peak2;    //xy=1148.8571014404297,247.14287948608398
-AudioAnalyzePeak         song_peak1;     //xy=1150.5714416503906,314.2857418060303
-AudioAnalyzePeak         song_peak2;     //xy=1151.5714416503906,346.2857418060303
-AudioConnection          patchCord1(i2s1, 0, click_input_amp1, 0);
-AudioConnection          patchCord2(i2s1, 0, click_input_amp2, 0);
-AudioConnection          patchCord3(i2s1, 1, song_input_amp1, 0);
-AudioConnection          patchCord4(i2s1, 1, song_input_amp2, 0);
-AudioConnection          patchCord5(click_input_amp1, click_biquad1);
-AudioConnection          patchCord6(song_input_amp1, song_biquad1);
-AudioConnection          patchCord7(song_input_amp1, input_fft);
-AudioConnection          patchCord8(song_input_amp2, song_biquad2);
-AudioConnection          patchCord9(click_input_amp2, click_biquad2);
-AudioConnection          patchCord10(click_biquad2, click_biquad21);
-AudioConnection          patchCord11(song_biquad2, song_biquad21);
-AudioConnection          patchCord12(click_biquad1, click_biquad11);
-AudioConnection          patchCord13(song_biquad1, song_biquad11);
-AudioConnection          patchCord14(song_biquad11, song_post_amp1);
-AudioConnection          patchCord15(click_biquad21, click_post_amp2);
-AudioConnection          patchCord16(song_biquad21, song_post_amp2);
-AudioConnection          patchCord17(click_biquad11, click_post_amp1);
-AudioConnection          patchCord18(click_post_amp2, click_peak2);
-AudioConnection          patchCord19(click_post_amp1, click_peak1);
-AudioConnection          patchCord20(click_post_amp1, 0, usb1, 0);
-AudioConnection          patchCord21(song_post_amp2, song_peak2);
-AudioConnection          patchCord22(song_post_amp1, song_peak1);
-AudioConnection          patchCord23(song_post_amp1, 0, usb1, 1);
-// GUItool: end automatically generated code
-
-
-void initAutoGain() {
-  auto_gain[0].setExternalThresholds((String)"Led ON Ratio", MIN_ON_RATIO_THRESH, LOW_ON_RATIO_THRESH,
-                                     HIGH_ON_RATIO_THRESH, MAX_ON_RATIO_THRESH);
-  auto_gain[1].setExternalThresholds((String)"FPM", MIN_FPM_THRESH, LOW_FPM_THRESH,
-                                     HIGH_FPM_THRESH, MAX_FPM_THRESH);
-  auto_gain[0].setUpdateRate(AUTOGAIN_FREQUENCY);
-  auto_gain[1].setUpdateRate(AUTOGAIN_FREQUENCY);
-  auto_gain[0].setStartDelay(AUTOGAIN_START_DELAY);
-  auto_gain[1].setStartDelay(AUTOGAIN_START_DELAY);
-}
+AudioInputI2S            i2s1;           //xy=55,291.8571424484253
+AudioFilterBiquad        biquad2;        //xy=217.00389099121094,302.0039281845093
+AudioFilterBiquad        biquad1;        //xy=219.00390625,270.00391578674316
+AudioAmplifier           amp2;           //xy=378.79129791259766,302.57704162597656
+AudioAmplifier           amp1;           //xy=380.2198715209961,264.0055875778198
+AudioAnalyzePeak         peak2;          //xy=517.0039100646973,316.003924369812
+AudioOutputUSB           usb1;           //xy=519.142822265625,284.71433544158936
+AudioAnalyzePeak         peak1;          //xy=521.00390625,221.0039176940918
+AudioAnalyzeFFT1024      input_fft;      //xy=521.3627586364746,251.71987438201904
+AudioConnection          patchCord1(i2s1, 0, biquad1, 0);
+AudioConnection          patchCord2(i2s1, 1, biquad2, 0);
+AudioConnection          patchCord3(biquad2, amp2);
+AudioConnection          patchCord4(biquad1, amp1);
+AudioConnection          patchCord5(amp2, 0, usb1, 1);
+AudioConnection          patchCord6(amp2, peak2);
+AudioConnection          patchCord7(amp1, 0, usb1, 0);
+AudioConnection          patchCord8(amp1, input_fft);
+AudioConnection          patchCord9(amp1, peak1);
+////////////////////////////////////////////////////////////////////////////////////
 
 void linkFeatureCollectors() {
-  fc[0].linkAmplifier(&song_input_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  // fc[0].linkAmplifier(&song_mid_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[0].linkAmplifier(&song_post_amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[1].linkAmplifier(&song_input_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  // fc[1].linkAmplifier(&song_mid_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[1].linkAmplifier(&song_post_amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[2].linkAmplifier(&click_input_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  // fc[2].linkAmplifier(&click_mid_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  fc[2].linkAmplifier(&click_post_amp1, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  fc[3].linkAmplifier(&click_input_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  // fc[3].linkAmplifier(&click_mid_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  fc[3].linkAmplifier(&click_post_amp2, MIN_CLICK_GAIN * MASTER_GAIN_SCALER, MAX_CLICK_GAIN * MASTER_GAIN_SCALER);
-  /*
-    if (RMS_FEATURE_ACTIVE) {
-    // fc 0-1 are for the song front/rear
-    fc[0].linkRMS(&song_rms1, global_rms_scaler, PRINT_RMS_VALS);
-    fc[1].linkRMS(&song_rms2, global_rms_scaler, PRINT_RMS_VALS);
-    // fc 2-3 are for the click front/rear
-    fc[2].linkRMS(&click_rms1, global_rms_scaler, PRINT_RMS_VALS);
-    fc[3].linkRMS(&click_rms2, global_rms_scaler, PRINT_RMS_VALS);
-    }
-  */
-  if (PEAK_FEATURE_ACTIVE) {
-    // fc 0-1 are for the song front/rear
-    fc[0].linkPeak(&song_peak1, global_peak_scaler, PRINT_PEAK_VALS);
-    fc[1].linkPeak(&song_peak2, global_peak_scaler, PRINT_PEAK_VALS);
-    // fc 2-3 are for the click front/rear
-    fc[2].linkPeak(&click_peak1, global_peak_scaler, PRINT_PEAK_VALS);
-    fc[3].linkPeak(&click_peak2, global_peak_scaler, PRINT_PEAK_VALS);
-  }
-  if (FFT_FEATURE_ACTIVE) {
-    fft_features.linkFFT(&input_fft);
-    Serial.println("Linked FFT to FFTManager");
-    fft_features.setFFTScaler(global_fft_scaler);
-    if (CALCULATE_CENTROID) {
-      fft_features.setCentroidActive(true);
-      Serial.println("Started calculating Centroid in the FFTManager");
-    }
-    if (CALCULATE_FLUX) {
-      fft_features.setFluxActive(true);
-      Serial.println("Started calculating FLUX in the FFTManager");
-    }
-    // fc 0-1 are for the song front/rear
-    // this equates to about 4k - 16k, perhaps I shoul
-    // the last bool is for flux
-    // the second to last bool is for centroid
-    // fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
-    // fc[0].autoPrintCentroid(PRINT_CENTROID_VALS);
-    // fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
-  }
+  // fc[0].linkAmplifier(&amp1, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  // fc[1].linkAmplifier(&amp2, MIN_SONG_GAIN * MASTER_GAIN_SCALER, MAX_SONG_GAIN * MASTER_GAIN_SCALER);
+  // fc 0-1 are for the song front/rear
+  fc[0].linkPeak(&peak1, global_peak_scaler, PRINT_PEAK_VALS);
+  fc[1].linkPeak(&peak2, global_peak_scaler, PRINT_PEAK_VALS);
+
+  fft_features.linkFFT(&input_fft);
+  Serial.println("Linked FFT to FFTManager");
+  fft_features.setFFTScaler(global_fft_scaler);
+  fft_features.setCentroidActive(true);
+  Serial.println("Started calculating Centroid in the FFTManager");
+  fft_features.setFluxActive(true);
+  Serial.println("Started calculating FLUX in the FFTManager");
+  // fc 0-1 are for the song front/rear
+  // this equates to about 4k - 16k, perhaps I shoul
+  // the last bool is for flux
+  // the second to last bool is for centroid
+  // fc[0].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
+  // fc[0].autoPrintCentroid(PRINT_CENTROID_VALS);
+  // fc[1].linkFFT(&input_fft, 23, 93, (double)global_fft_scaler, SCALE_FFT_BIN_RANGE, true, false);
 }
 
 void setupAudio() {
   ////////////// Audio ////////////
   AudioMemory(AUDIO_MEMORY);
   linkFeatureCollectors();
-  // Audio for the click channel...
-  Serial.println("- - - - - - - - - - - - - - - - - - - -");
-  Serial.print("Setting up the audio channel settings : \n");// Serial.println(i);
-  click_biquad1.setHighpass(0, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad1.setHighpass(1, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad1.setHighpass(2, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad1.setLowShelf(3, CLICK_BQ1_THRESH, CLICK_BQ1_DB);
-  click_biquad2.setHighpass(0, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad2.setHighpass(1, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad2.setHighpass(2, CLICK_BQ1_THRESH, CLICK_BQ1_Q);
-  click_biquad2.setLowShelf(3, CLICK_BQ1_THRESH, CLICK_BQ1_DB);
-  Serial.print("First Click BiQuads HP-HP-HP-LS       :\t");
-  Serial.print("thresh:\t"); Serial.print(CLICK_BQ1_THRESH); Serial.print("\tQ\t");
-  Serial.print(CLICK_BQ1_Q); Serial.print("\tdB"); Serial.println(CLICK_BQ1_DB);
-
-  click_biquad21.setLowpass(0,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad21.setLowpass(1,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad21.setLowpass(2,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad21.setHighShelf(3, CLICK_BQ2_THRESH, CLICK_BQ2_DB);
-  click_biquad11.setLowpass(0,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad11.setLowpass(1,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad11.setLowpass(2,   CLICK_BQ2_THRESH, CLICK_BQ2_Q);
-  click_biquad11.setHighShelf(3, CLICK_BQ2_THRESH, CLICK_BQ2_DB);
-  Serial.print("Second Click BiQuads HP-HP-HP-LS      :\t");
-  Serial.print("thresh:\t"); Serial.print(CLICK_BQ2_THRESH); Serial.print("\tQ\t");
-  Serial.print(CLICK_BQ2_Q); Serial.print("\tdB"); Serial.println(CLICK_BQ2_DB);
-
-  // Audio for the song channel...n
-  song_biquad1.setHighpass(0, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad1.setHighpass(1, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad1.setHighpass(2, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad1.setLowShelf(3, SONG_BQ1_THRESH, SONG_BQ1_DB);
-  song_biquad2.setHighpass(0, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad2.setHighpass(1, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad2.setHighpass(2, SONG_BQ1_THRESH, SONG_BQ1_Q);
-  song_biquad2.setLowShelf(3, SONG_BQ1_THRESH, SONG_BQ1_DB);
-  Serial.print("\nFirst Song BiQuads HP-HP-HP-LS        :\t");
-  Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
-  Serial.print(SONG_BQ1_Q); Serial.print("\tdB"); Serial.println(SONG_BQ1_DB);
-
-  song_biquad11.setLowpass(0,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad11.setLowpass(1,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad11.setLowpass(2,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad11.setHighShelf(3, SONG_BQ2_THRESH, SONG_BQ2_DB);
-  song_biquad21.setLowpass(0,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad21.setLowpass(1,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad21.setLowpass(2,   SONG_BQ2_THRESH, SONG_BQ2_Q);
-  song_biquad21.setHighShelf(3, SONG_BQ2_THRESH, SONG_BQ2_DB);
-
-  Serial.print("Second Song BiQuads HP-HP-HP-LS       :\t");
-  Serial.print("thresh:\t"); Serial.print(SONG_BQ1_THRESH); Serial.print("\tQ\t");
-  Serial.print(SONG_BQ2_Q); Serial.print("\tdB"); Serial.println(SONG_BQ2_DB);
-
-  fc[0].updateGain(STARTING_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[1].updateGain(STARTING_SONG_GAIN * MASTER_GAIN_SCALER);
-  fc[2].updateGain(STARTING_CLICK_GAIN * MASTER_GAIN_SCALER);
-  fc[3].updateGain(STARTING_CLICK_GAIN * MASTER_GAIN_SCALER);
-
-  Serial.println("Testing Microphones");
-  printTeensyDivide();
-
+  biquad1.setHighpass(0, 80, 0.85);
+  biquad1.setHighpass(1, 80, 0.85);
+  biquad1.setHighpass(2, 80, 0.85);
+  biquad1.setLowShelf(3, 80, CLICK_BQ1_DB);
+  biquad2.setHighpass(0, 80, 0.85);
+  biquad2.setHighpass(1, 80, 0.85);
+  biquad2.setHighpass(2, 80, 0.85);
+  biquad2.setLowShelf(3, 80, CLICK_BQ1_DB);
+  amp1.gain(STARTING_GAIN * MASTER_GAIN_SCALER);
+  amp2.gain(STARTING_GAIN * MASTER_GAIN_SCALER);
+  // set gain level? automatically?
   // todo make this adapt to when microphones are broken on one or more side...
-  for (int i = 0; i < num_channels; i++) {
-    fc[i].testMicrophone();
-  }
-  initAutoGain();
   printDivide();
 }
 
-uint8_t calculateRMSWeighted(FeatureCollector *f) {
-  double rms = 0;
-  rms = f->getRMS() * global_rms_scaler - RMS_LOW_THRESH;
-  if (rms > 1.0) {
-    rms = 1.0;
-  } else if (rms < 0.0) {
-    rms = 0.0;
-  }
-  uint8_t scaler = (uint8_t)(rms * (double)MAX_BRIGHTNESS);
-  return scaler;
+double calculateSongBrightness() {
+  double b = fft_features.getFFTRangeByFreq(4000, 16000);
+  return b;
 }
 
-uint8_t calculatePeakWeighted(FeatureCollector *f) {
-  double peak = 0;
-  peak = f->getPeak() * global_peak_scaler;// - PEAK_LOW_THRESH;
-  if (peak > 1.0) {
-    peak = 1.0;
-  } else if (peak < 0.0) {
-    peak = 0.0;
+
+double calculateSongColor(int i) {
+  double cent = fft_features.getCentroid();       // right now we are only polling the first FC for its centroid to use to color both sides
+  if (cent < color_feature_min[i]) {
+    color_feature_min[i] = cent;
   }
-  uint8_t scaler = uint8_t(peak * (double)MAX_BRIGHTNESS);
-  scaler = applyLBS(scaler);
-  return scaler;
+  if (cent > color_feature_max[i]) {
+    color_feature_max[i] = cent;
+  }
+  cent = (cent - color_feature_min[i]) / (color_feature_max[i] - color_feature_min[i]);
+  return cent;
 }
+
 
 void setupDLManager() {
   // log data to EEPROM if datalogging is active
@@ -438,54 +309,102 @@ void setupDLManager() {
   }
 }
 
-double color_feature_min[2] = {9999999.99, 999999999.99};
-double color_feature_max[2] = {0.0, 0.0};
-
-elapsedMillis feature_reset_tmr;
-const unsigned long feature_reset_time = (1000 * 150);// every 2.5 minute?
-
-uint8_t brightness_feature_min[2] = {255, 255};
-uint8_t brightness_feature_max[2] = {0, 0};
-
-uint8_t current_brightness[2] = {0, 0};
-uint8_t last_brightness[2] = {0, 0};
-
 void updateGoertzel() {
   // TODO right now just get it calculating and printing the value for the two ranges I have already
   // calculate the magnitude of each range we are interested in
   // subtract the ranges we are not interested from the value in the range we are interested in
   // check to see if the remaining value is greater than the threshold we set
-
 }
 
-void updateSongNew() {
-  for (int i = 0; i < num_channels; i++) {
-    uint8_t target_brightness = 0;
-    uint16_t red = 0;
-    uint16_t green = 0;
-    uint16_t blue = 0;
 
-    /////////////////// LOCAL SCALER RESET //////////////////////////
-    if (feature_reset_tmr > feature_reset_time) {
-      for (int t = 0; t < num_channels; t++) {
-        color_feature_min[t] = color_feature_min[t] * 1.05;
-        color_feature_max[t] = color_feature_max[t] * 0.95;
-        brightness_feature_min[t] = brightness_feature_min[t] + 5;
-        brightness_feature_max[t] = brightness_feature_max[t] - 5;
-      }
-      dprintln(PRINT_SONG_DEBUG, "reset song feature min and max for cent and brightness ");
-      feature_reset_tmr = 0;
+void updateSongNew() {
+  /////////////////// LOCAL SCALER RESET //////////////////////////
+  if (feature_reset_tmr > feature_reset_time) {
+    for (int t = 0; t < num_channels; t++) {
+      color_feature_min[t] = color_feature_min[t] * 1.05;
+      color_feature_max[t] = color_feature_max[t] * 0.95;
+      brightness_feature_min[t] = brightness_feature_min[t] * 1.05;
+      brightness_feature_max[t] = brightness_feature_max[t] * 0.95;
     }
+    dprintln(PRINT_SONG_DEBUG, "reset song feature min and max for cent and brightness ");
+    feature_reset_tmr = 0;
+  }
+
+  for (int i = 0; i < num_channels; i++) {
+    /////////////////////////////////////////////////////////////////
+    double target_brightness = 0.0;   // 0.0 - 1.0
+    double target_color = 0.0;        // 0.0 - 1.0
+    uint8_t red, green, blue;
+    Serial.println();
+    Serial.print("channel ");
+    Serial.print(i);
+    /////////////////// Brightness ///////////////////////////////////
+    target_brightness = calculateSongBrightness();
+    Serial.print("target_brightness(1): ");
+    Serial.print(target_brightness);
+    Serial.print(" ");
+    if (target_brightness < brightness_feature_min[i]) {
+      brightness_feature_min[i] = target_brightness;
+    }
+    if (target_brightness > brightness_feature_max[i]) {
+      brightness_feature_max[i] = target_brightness;
+    }
+    Serial.print(" brightness_feature_min/max: ");
+    Serial.print(brightness_feature_min[i]);
+    Serial.print(" / ");
+    Serial.println(brightness_feature_max[i]);
+    if (target_brightness != 0.0) {
+      target_brightness = (target_brightness - brightness_feature_min[i]) / (brightness_feature_max[i] - brightness_feature_min[i]);
+    }
+    Serial.print("target_brightness(2): ");
+    Serial.print(target_brightness);
+    Serial.print(" ");
+    // target_brightness *= (MAX_BRIGHTNESS - MIN_BRIGHTNESS);
+    // target_brightness += MIN_BRIGHTNESS;
+    last_brightness[i] = current_brightness[i];
+    
+    dprint(PRINT_SONG_DEBUG, "current_brightness[");
+    dprint(PRINT_SONG_DEBUG, i);
+    dprint(PRINT_SONG_DEBUG, "]: ");
+    dprint(PRINT_SONG_DEBUG, current_brightness[i]);
+    current_brightness[i] = target_brightness;
+    // current_brightness[i] = current_brightness[i] + (last_brightness[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
+    dprint(PRINT_SONG_DEBUG, " => ");
+    dprint(PRINT_SONG_DEBUG, current_brightness[i]);
+    
+    /////////////////// Color ////////////////////////////////////////
+    target_color = calculateSongColor(i);
+    last_color[i] = current_color[i];
+    current_color[i] = (target_color * COLOR_LP_LEVEL) + (last_color[i] * (1.0 - COLOR_LP_LEVEL));
+
+    ////////////////// Calculate Actual Values ///////////////////////
+    red = ((1.0 - target_color) * SONG_RED_LOW) + (target_color * SONG_RED_HIGH);
+    green = ((1.0 - target_color) * SONG_GREEN_LOW) + (target_color * SONG_GREEN_HIGH);
+    blue = ((1.0 - target_color) * SONG_BLUE_LOW) + (target_color * SONG_BLUE_HIGH);
+
+    red *= current_brightness[i];
+    green *= current_brightness[i];
+    blue *= current_brightness[i];
+
+
+    dprint(PRINT_SONG_DEBUG, " r: ");
+    dprint(PRINT_SONG_DEBUG, red);
+    dprint(PRINT_SONG_DEBUG, " g: ");
+    dprint(PRINT_SONG_DEBUG, green);
+    dprint(PRINT_SONG_DEBUG, " b: ");
+    dprintln(PRINT_SONG_DEBUG, blue);
+
+    neos[i].colorWipe(red, green, blue, lux_managers[i].getBrightnessScaler());
   }
 }
 
-void updateSong() {
+/*
+  void updateSong() {
   for (int i = 0; i < num_channels; i++) {
     uint8_t target_brightness = 0;
     uint16_t red = 0;
     uint16_t green = 0;
     uint16_t blue = 0;
-
     /////////////////// LOCAL SCALER RESET //////////////////////////
     if (feature_reset_tmr > feature_reset_time) {
       for (int t = 0; t < num_channels; t++) {
@@ -582,7 +501,8 @@ void updateSong() {
       neos[i].colorWipe(red, green, 0);
     }
   }
-}
+  }
+*/
 
 double last_feature[2];
 double current_feature[2];
@@ -694,10 +614,9 @@ void updateAutogain() {
 }
 
 void updateMode() {
-  // updateClickNew();
-  updateSong();
-  // Serial.print("audio memory max: ");
-  // Serial.print(AudioMemoryUsageMax());
+  updateSongNew();
+  Serial.print("audio memory max: ");
+  Serial.print(AudioMemoryUsageMax());
 }
 
 #endif // __MODE_CICADA_H__

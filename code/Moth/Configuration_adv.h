@@ -23,7 +23,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define ENC_ATTENUATION_FACTOR         1.5
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         3.0
-#else ENCLOSURE_TYPE == NO_ENCLOSURE
+#elif ENCLOSURE_TYPE == NO_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         1.0
 #endif
 
@@ -70,15 +70,6 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define JMP4_PIN                  15
 #define JMP5_PIN                  16
 #define JMP6_PIN                  17
-
-////////////////////////////////////////////////////////////////////////////
-///////////////////////// Operating Modes //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// the current modes, or software driven functionality in which 
-// the firmware should use.
-#define TEST_MODE                       0
-#define CICADA_MODE                     1
-#define PITCH_MODE                      2
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Software Configurations /////////////////////////////

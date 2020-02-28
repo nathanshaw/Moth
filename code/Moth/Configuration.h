@@ -45,9 +45,9 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                     4
+#define SERIAL_ID                     8
 
-uint32_t  BOOT_DELAY      =           (1000 * 60 * 2);
+uint32_t  BOOT_DELAY      =           (1000 * 60 * 2 * 0);
 
 double MASTER_GAIN_SCALER =           1.0;
 
@@ -69,7 +69,7 @@ bool gain_adjust_active =                false;
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE                    CICADA_MODE
+#define FIRMWARE_MODE                    CICADA_MODE_NEW
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -84,6 +84,12 @@ bool gain_adjust_active =                false;
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2
   #include "Configuration_cicadas.h"
+#elif FIRMWARE_MODE == CICADA_MODE_NEW
+  #define NUM_AUTOGAINS                 0
+  #define NUM_FEATURE_COLLECTORS        2
+  #define NUM_NEO_GROUPS                2
+  #define NUM_LUX_MANAGERS              2
+  #include "Configuration_cicada_new.h"
 #elif FIRMWARE_MODE == TEST_MODE
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        0
@@ -102,7 +108,7 @@ bool gain_adjust_active =                false;
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
-#define PRINT_SONG_DEBUG                false
+#define PRINT_SONG_DEBUG                true
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
@@ -129,7 +135,7 @@ bool gain_adjust_active =                false;
 #define PRINT_RMS_VALS                  false
 #define PRINT_RMS_DEBUG                 false
 
-#define PRINT_PEAK_VALS                 false
+#define PRINT_PEAK_VALS                 true
 #define PRINT_PEAK_DEBUG                false
 
 #define PRINT_TONE_VALS                 false
@@ -137,7 +143,7 @@ bool gain_adjust_active =                false;
 #define PRINT_FREQ_VALS                 false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
-#define PRINT_FFT_DEBUG                 false
+#define PRINT_FFT_DEBUG                 true
 // for printing raw FFT values
 #define PRINT_FFT_VALS                  false
 // will print spectral flux if flux_active
@@ -166,15 +172,15 @@ bool rear_lux_active  =                 true;
 #define SMOOTH_LUX_READINGS             false
 
 // this is the threshold in which anything below will just be treated as the lowest reading
-#define LOW_LUX_THRESHOLD               50.0
+#define LOW_LUX_THRESHOLD               1.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               1200.0
-#define HIGH_LUX_THRESHOLD              3000.0
+#define MID_LUX_THRESHOLD               100.0
+#define HIGH_LUX_THRESHOLD              1200.0
 #define EXTREME_LUX_THRESHOLD           4000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
 #define BRIGHTNESS_SCALER_MIN           0.75
-#define BRIGHTNESS_SCALER_MAX           1.750
+#define BRIGHTNESS_SCALER_MAX           1.50
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -182,8 +188,9 @@ uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// NeoPixel Settings ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define MIN_BRIGHTNESS                  0
-#define MAX_BRIGHTNESS                  255
+uint16_t  MIN_BRIGHTNESS =              0;
+uint16_t  MAX_BRIGHTNESS =              255;
+
 #define UPDATE_ON_OFF_RATIOS            true
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
@@ -191,6 +198,13 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 #define FLASH_RED                       100
 #define FLASH_GREEN                     100
 #define FLASH_BLUE                      255
+
+#define SONG_RED_LOW                    0
+#define SONG_RED_HIGH                   255
+#define SONG_GREEN_LOW                  255
+#define SONG_GREEN_HIGH                 0
+#define SONG_BLUE_LOW                   0
+#define SONG_BLUE_HIGH                  0
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////
@@ -229,8 +243,8 @@ bool data_logging_active =              true;
 // how long the data logging  will last for
 #define DATALOG_TIME_FRAME_1            (1000*60*60*2)
 #define DATALOG_TIME_FRAME_2            (1000*60*60*2)
-// #define DATALOG_TIME_FRAME_3            (1000*60*60*0.1)
-// #define DATALOG_TIME_FRAME_4            (1000*60*60*1)
+// #define DATALOG_TIME_FRAME_3         (1000*60*60*0.1)
+// #define DATALOG_TIME_FRAME_4         (1000*60*60*1)
 
 // refresh rates for the static logs
 #define STATICLOG_RATE_FAST             (1000*60*3)
@@ -326,7 +340,11 @@ uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATAL
 // the scaler values are applied to the raw readings read from the audio objects
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
 // to some logic
-#if FIRMWARE_MODE == CICADA_MODE
+#if FIRMWARE_MODE == CICADA_MODE 
+    double global_peak_scaler =         1.0   * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
+#elif FIRMWARE_MODE == CICADA_MODE_NEW 
     double global_peak_scaler =         1.0   * ENC_ATTENUATION_FACTOR;
     double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
     double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
@@ -405,10 +423,10 @@ void updateLBS(uint8_t feature) {
 }
 
 uint8_t applyLBS(uint8_t brightness) {
-    updateLBS(brightness);
-    // constrain the brightness to the low and high thresholds
     dprint(PRINT_LBS, "brightness (Before/After) lbs: ");
     dprint(PRINT_LBS, brightness);
+    updateLBS(brightness);
+    // constrain the brightness to the low and high thresholds
     dprint(PRINT_LBS, " / ");
     brightness = constrain(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
     brightness = map(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS, MAX_BRIGHTNESS);

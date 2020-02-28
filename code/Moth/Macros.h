@@ -22,9 +22,20 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+////////////////////////////////////////////////////////////////////////////
+///////////////////////// Operating Modes //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// the current modes, or software driven functionality in which 
+// the firmware should use.
+#define TEST_MODE                       0
+#define CICADA_MODE                     1
+#define PITCH_MODE                      2
+#define CICADA_MODE_NEW                 3
+
 ///////////////////// ENCLOSURE_TYPES /////////////////////
 #define ORB_ENCLOSURE             1
 #define GROUND_ENCLOSURE          0
+#define NO_ENCLOSURE              2
 
 ///////////////////// Audio Features //////////////////////
 // Some macros to make it easier to set some software settings

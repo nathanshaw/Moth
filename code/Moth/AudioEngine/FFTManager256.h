@@ -1,28 +1,30 @@
-#ifndef __FFTManager_H__
-#define __FFTManager_H__
+#ifndef __FFTManager256_H__
+#define __FFTManager256_H__
 
 #include "audio_utils.h"
 
-class FFTManager {
+class FFTManager256 {
     public:
         //////////// init ///////////////
-        FFTManager(String _name);
+        FFTManager256(String _name);
         void linkFFT(AudioAnalyzeFFT256*r);
 
         // printers
         void   printFFTVals();
 
         // getters
-        double getFFTRange(uint16_t s, uint16_t e);
+        double getFFTRangeByIdx(uint16_t s, uint16_t e);
+        double getFFTRangeByFreq(uint32_t s, uint32_t e);
         int    getHighestEnergyBin();
         int    getHighestEnergyBin(int start, int end);
         double getRelativeEnergy(uint16_t);
         double getFFTTotalEnergy();
         double getRelativeBinPos() {return relative_bin_pos;};
+
         double getCentroid();
+        double getLastCentroid(){return last_centroid;};;
         double getCentroid(uint16_t min, uint16_t max);
-        double getSmoothedCentroid();
-        double getSmoothedCentroid(uint16_t min, uint16_t max);
+
         double getSpectralFlux();
 
         // setters
@@ -141,10 +143,20 @@ double FFTManager::getFFTTotalEnergy() {
 }
 
 
-double FFTManager::getFFTRange(uint16_t s, uint16_t e) {
+double FFTManager::getFFTRangeByIdx(uint16_t s, uint16_t e) {
     calculateFFT();
     if (fft_active) {
         return fft_ana->read(s, e);
+    }
+    return -1.0;
+}
+
+double FFTManager::getFFTRangeByFreq(uint32_t s, uint32_t e) {
+    calculateFFT();
+    if (fft_active) {
+        uint16_t start_idx = (uint16_t)(s / 172);
+        uint16_t end_idx = (uint16_t)(e / 172);
+        return fft_ana->read(start_idx, end_idx);
     }
     return -1.0;
 }

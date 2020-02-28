@@ -23,9 +23,7 @@
 #include <WS2812Serial.h>
 #include "../Configuration.h"
 #include "../Macros.h"
-
 #include <PrintUtils.h>
-// #include <elapsedMillis.h>
 
 uint32_t packColors(uint8_t &red, uint8_t &green, uint8_t &blue, double scaler) {
     /*
@@ -359,7 +357,8 @@ void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue, double bs) {
   }
   if (shdn_timer < shdn_len) {
     // if the LEDs are in shutdown mode than simply exit without changing the LEDs
-    dprint(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due to shdn_timer : "); dprintln(PRINT_COLOR_WIPE_DEBUG, shdn_timer);
+    dprint(PRINT_COLOR_WIPE_DEBUG, " colorWipe returning due to shdn_timer : "); 
+    dprintln(PRINT_COLOR_WIPE_DEBUG, shdn_timer);
     updateColorLog(0, 0, 0);
     return;
   }
@@ -582,4 +581,5 @@ bool NeoGroup::isInShutdown() {
   }
   return false;
 };
+
 #endif // __LEDS_H__
