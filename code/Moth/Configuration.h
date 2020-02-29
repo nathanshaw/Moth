@@ -25,6 +25,7 @@
 // once the local min and max have been overwritten how long to collect readings for
 // a new min and max before using the new values?
 #define LBS_OVERLAP_TIME               (1000 * 30)
+
 elapsedMillis lbs_timer;
 uint8_t lbs_min =                      255;
 uint8_t lbs_max =                     0;
@@ -47,7 +48,7 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 #define SERIAL_ID                     8
 
-uint32_t  BOOT_DELAY      =           (1000 * 60 * 2 * 0);
+uint32_t  BOOT_DELAY      =           (1000 * 60 * 2);
 
 double MASTER_GAIN_SCALER =           1.0;
 
@@ -102,13 +103,15 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LBS                       true
+#define PRINT_LBS                       false
 //
 #define PRINT_LUX_DEBUG                 true
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
-#define PRINT_SONG_DEBUG                true
+#define PRINT_SONG_DEBUG                false
+#define PRINT_SONG_BRIGHTNESS           false
+#define PRINT_SONG_COLOR                false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
@@ -135,7 +138,7 @@ bool gain_adjust_active =                false;
 #define PRINT_RMS_VALS                  false
 #define PRINT_RMS_DEBUG                 false
 
-#define PRINT_PEAK_VALS                 true
+#define PRINT_PEAK_VALS                 false
 #define PRINT_PEAK_DEBUG                false
 
 #define PRINT_TONE_VALS                 false
@@ -143,7 +146,7 @@ bool gain_adjust_active =                false;
 #define PRINT_FREQ_VALS                 false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
-#define PRINT_FFT_DEBUG                 true
+#define PRINT_FFT_DEBUG                 false
 // for printing raw FFT values
 #define PRINT_FFT_VALS                  false
 // will print spectral flux if flux_active
@@ -151,7 +154,6 @@ bool gain_adjust_active =                false;
 // will print centroid if centroid_active
 #define PRINT_CENTROID_VALS             false
 // will print highest energy bin in FFT
-
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
@@ -172,15 +174,15 @@ bool rear_lux_active  =                 true;
 #define SMOOTH_LUX_READINGS             false
 
 // this is the threshold in which anything below will just be treated as the lowest reading
-#define LOW_LUX_THRESHOLD               1.0
+#define LOW_LUX_THRESHOLD               10.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               100.0
+#define MID_LUX_THRESHOLD               150.0
 #define HIGH_LUX_THRESHOLD              1200.0
 #define EXTREME_LUX_THRESHOLD           4000.0
 
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.75
-#define BRIGHTNESS_SCALER_MAX           1.50
+#define BRIGHTNESS_SCALER_MIN           0.125
+#define BRIGHTNESS_SCALER_MAX           2.00
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -195,16 +197,16 @@ uint16_t  MAX_BRIGHTNESS =              255;
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
-#define FLASH_RED                       100
-#define FLASH_GREEN                     100
-#define FLASH_BLUE                      255
+#define CLICK_RED                       0
+#define CLICK_GREEN                     0
+#define CLICK_BLUE                      255
 
 #define SONG_RED_LOW                    0
-#define SONG_RED_HIGH                   255
+#define SONG_RED_HIGH                   220
 #define SONG_GREEN_LOW                  255
-#define SONG_GREEN_HIGH                 0
+#define SONG_GREEN_HIGH                 20
 #define SONG_BLUE_LOW                   0
-#define SONG_BLUE_HIGH                  0
+#define SONG_BLUE_HIGH                  10
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////

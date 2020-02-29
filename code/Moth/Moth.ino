@@ -145,36 +145,48 @@ void readJumpers() {
     Serial.println(BOOT_DELAY / 1000);
 
     //////////// Jumper 3 ///////////////////////
-    ////////////
-    Serial.println("(pin3) UNMAPPED");
+    //////////// Minor Sensitivity Attenuation //
+    double total_scaler = 0.0;
+    temp_b = digitalRead(JMP3_PIN);
+    if (temp_b == 1) {
+      Serial.println("(pin3) MASTER_SENSITIVITY_SCALER not decreased by 33%");
+    } else {
+      Serial.println("(pin3) MASTER_SENSITIVITY_SCALER decreased by 33%");
+      total_scaler -= 0.33;
+    }
 
     //////////// Jumper 4 ///////////////////////
-    ////////////
-    Serial.println("(pin3) UNMAPPED");
+    //////////// Major Sensitivity Attenuation //
+    temp_b = digitalRead(JMP4_PIN);
+    if (temp_b == 1) {
+      Serial.println("(pin4) MASTER_SENSITIVITY_SCALER not decreased by 50%");
+    } else {
+      Serial.println("(pin4) MASTER_SENSITIVITY_SCALER decreased by 50%");
+      total_scaler -= 0.5;
+    }
 
     ///////////// Jumper 5 //////////////////////
-    //////////// Minor Gain Boost ///////////////
+    //////////// Minor Sensitivity Boost ///////////////
+
     temp_b = digitalRead(JMP5_PIN);
-    double total_scaler = 0.0;
     if (temp_b == 1) {
       total_scaler += 0.25;
-      Serial.println("(pin5) MASTER_GAIN_SCALER increased by 25% : ");
+      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER increased by 25% : ");
     } else {
-      Serial.println("(pin5) MASTER_GAIN_SCALER decreased by 25% : ");
-      total_scaler -= 0.25;
+      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER not increased by 25% : ");
     }
-    
+
     ///////////// Jumper 6 //////////////////////
-    //////////// Major Gain Boost ////////////////
+    //////////// Major Sensitivity Boost ////////////////
     temp_b = digitalRead(JMP6_PIN);
     if (temp_b == 1) {
       total_scaler += 0.5;
-      Serial.print("(pin6) MASTER_GAIN_SCALER increased by 50% : ");
+      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER increased by 50% : ");
     } else {
-      Serial.print("(pin6) MASTER_GAIN_SCALER not increased by 50% : ");
+      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER not increased by 50% : ");
     }
-    MASTER_GAIN_SCALER += total_scaler;
-    Serial.println(MASTER_GAIN_SCALER);
+    MASTER_SENSITIVITY_SCALER += total_scaler;
+    Serial.println(MASTER_SENSITIVITY_SCALER);
 
   } else {
     Serial.println("ERROR - this PCB does not contain jumpers, or jumper pins are not populated");
@@ -202,7 +214,7 @@ void setup() {
   setupAudio();
 
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
-    neos[i].setFlashColors(FLASH_RED, FLASH_GREEN, FLASH_BLUE);
+    neos[i].setFlashColors(CLICK_RED, CLICK_GREEN, CLICK_BLUE);
   }
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 0, 0, 0);
@@ -225,7 +237,18 @@ void setup() {
   }
 #endif
   printMajorDivide("Setup Loop Finished");
-  delay(BOOT_DELAY);
+  uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED * 0.5);
+  // Serial.print("segment : ");
+  // Serial.println(segment);
+  for (int it = 0; it < NUM_LED / 2; it++) {
+    leds.setPixel(it, 10, 32, 20);
+    leds.show();
+    delay(segment);
+  }
+  for (int it = 0; it < NUM_LED / 2; it++) {
+    leds.setPixel(it, 0, 0, 0);
+  }
+  leds.show();
 }
 
 void listenForSerialCommands() {

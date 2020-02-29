@@ -20,11 +20,11 @@
 uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         1.5
+#define ENC_ATTENUATION_FACTOR         1.0
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         3.0
 #elif ENCLOSURE_TYPE == NO_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         1.0
+#define ENC_ATTENUATION_FACTOR         0.75
 #endif
 
 // different microcontrollers which can be used for the system

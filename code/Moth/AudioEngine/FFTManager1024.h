@@ -26,6 +26,9 @@ class FFTManager1024 {
         double getCentroid();
         double getLastCentroid(){return last_centroid;};;
         double getCentroid(uint16_t min, uint16_t max);
+        double getCentroidDelta();
+        double getCentroidPosDelta();
+        double getCentroidNegDelta();
 
         double getSpectralFlux();
 
@@ -129,7 +132,7 @@ void FFTManager1024::printFFTVals() {
 
 void FFTManager1024::linkFFT(AudioAnalyzeFFT1024*r) {
     fft_ana = r;
-    // fft_ana->averageTogether(0); // average together the readings from 10 FFT's before available() returns true, normally produces over 300 fft per second, this will be closer to 30
+    fft_ana->averageTogether(4); // average together the readings from 10 FFT's before available() returns true, normally produces over 300 fft per second, this will be closer to 30
     fft_active = true;
 };
 
@@ -183,7 +186,7 @@ double FFTManager1024::calculateFlux() {
         }
     }
     else {
-        Serial.print("last_fft_vals[0] is equal to zero");
+        dprintln(PRINT_FFT_DEBUG, "last_fft_vals[0] is equal to zero");
     }
     return flux;
 }
@@ -210,6 +213,24 @@ double FFTManager1024::calculateCentroid() {
     dprint(PRINT_CENTROID_VALS, "centroid : ");
     dprintln(PRINT_CENTROID_VALS, centroid);
     return centroid;
+}
+
+double FFTManager1024::getCentroidDelta() {
+    return centroid - last_centroid;
+}
+
+double FFTManager1024::getCentroidPosDelta() {
+    if (last_centroid < centroid) {
+        return centroid - last_centroid;
+    }
+    return 0.0;
+}
+
+double FFTManager1024::getCentroidNegDelta() {
+    if (last_centroid > centroid) {
+        return last_centroid - centroid;
+    }
+    return 0.0;
 }
 
 double FFTManager1024::getCentroid() {

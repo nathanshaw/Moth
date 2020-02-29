@@ -97,6 +97,8 @@ class NeoGroup {
     void colorWipe(uint8_t red, uint8_t green, uint8_t blue);
     void colorWipe(int colors);
     void colorWipeHSB(double h, double s, double b);
+    void colorWipeAdd(uint8_t red, uint8_t green, uint8_t blue);
+    void colorWipeAdd(uint8_t red, uint8_t green, uint8_t blue, double bs);
 
     //////////////////////////////// Flashes //////////////////////////////////
     bool flashOn(uint8_t red, uint8_t green, uint8_t blue); // perhaps add time for flash to flashOn
@@ -325,6 +327,27 @@ void NeoGroup::colorWipeHSB(double h, double s, double b) {
   updateHSB(h, s, b);
   HsbToRgb(h, s, b);
   colorWipe(rgb[0], rgb[1], rgb[2]);
+}
+
+void NeoGroup::colorWipeAdd(uint8_t red, uint8_t green, uint8_t blue, double bs) {
+  red += rgb[0];
+  red = constrain(red, 0, 255);
+  green += rgb[1];
+  green = constrain(green, 0 , 255);
+  blue += rgb[2];
+  blue = constrain(blue, 0, 255);
+  colorWipe(red, green, blue, bs);
+}
+
+
+void NeoGroup::colorWipeAdd(uint8_t red, uint8_t green, uint8_t blue) {
+  red += rgb[0];
+  red = constrain(red, 0, 255);
+  green += rgb[1];
+  green = constrain(green, 0 , 255);
+  blue += rgb[2];
+  blue = constrain(blue, 0, 255);
+  colorWipe(red, green, blue, brightness_scaler);
 }
 
 void NeoGroup::colorWipe(uint8_t red, uint8_t green, uint8_t blue) {
