@@ -48,7 +48,7 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 #define SERIAL_ID                     8
 
-uint32_t  BOOT_DELAY      =           (1000 * 60 * 2);
+uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
 
 double MASTER_GAIN_SCALER =           1.0;
 
@@ -59,7 +59,7 @@ bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TOD
 // WARNING NOT IMPLEMENTED - TODO
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define   COMBINE_LUX_READINGS           true
-#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE 
+#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
 #define   COMBINE_LUX_READINGS           true
 #endif // enclosure type
 
@@ -70,7 +70,7 @@ bool gain_adjust_active =                false;
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE                    CICADA_MODE_NEW
+#define FIRMWARE_MODE                   CICADA_MODE
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -80,17 +80,11 @@ bool gain_adjust_active =                false;
   #define NUM_LUX_MANAGERS              2
   #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
-  #define NUM_AUTOGAINS                 2
-  #define NUM_FEATURE_COLLECTORS        4
-  #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              2
-  #include "Configuration_cicadas.h"
-#elif FIRMWARE_MODE == CICADA_MODE_NEW
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        2
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              2
-  #include "Configuration_cicada_new.h"
+  #include "Configuration_cicada.h"
 #elif FIRMWARE_MODE == TEST_MODE
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        0
@@ -202,11 +196,12 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 #define CLICK_BLUE                      255
 
 #define SONG_RED_LOW                    0
-#define SONG_RED_HIGH                   220
 #define SONG_GREEN_LOW                  255
-#define SONG_GREEN_HIGH                 20
 #define SONG_BLUE_LOW                   0
-#define SONG_BLUE_HIGH                  10
+
+#define SONG_RED_HIGH                   150
+#define SONG_GREEN_HIGH                 100
+#define SONG_BLUE_HIGH                  5
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Datalog Settings /////////////////////////////////

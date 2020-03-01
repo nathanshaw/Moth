@@ -8,8 +8,18 @@
 #define RMS_FEATURE_ACTIVE              1
 #define FFT_FEATURE_ACTIVE              1
 
+double MASTER_SENSITIVITY_SCALER =      1.0;
+
 double CLICK_THRESH =                   0.325;
 #define SMOOTH_CENTROID                 true
+
+// what factor will the new values be scaled by compared to the old values 
+// when calculating the song brightness target vs current levels a 1.0 will turn off
+// the low filtering so only the new values will be used while 0.5 will result in the
+// average of the old and new value to be used, a higher value will be a quicker responce
+// the max value is 1.0 and the min value is 0.0
+#define BRIGHTNESS_LP_LEVEL             (double)0.75
+#define COLOR_LP_LEVEL                  (double)0.75
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
 // if this is set to true the flashes will only contain the Flash color instea
@@ -31,8 +41,9 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 #define MAX_SONG_PEAK_AVG               0.2
 
 // this is the gain that the input amps will be set at at the start of the installation
-#define STARTING_SONG_GAIN              8.0
-#define STARTING_CLICK_GAIN             16.0
+// #define STARTING_SONG_GAIN              8.0
+// #define STARTING_CLICK_GAIN             16.0
+#define STARTING_GAIN                   30.0
 
 #define SONG_BQ1_THRESH                 4000
 #define SONG_BQ1_Q                      0.85
@@ -84,10 +95,5 @@ int CLICK_FEATURE =                     PEAK_DELTA;
 #define CLICK_BQ2_THRESH                3000
 #define CLICK_BQ2_Q                     0.85
 #define CLICK_BQ2_DB                    -12
-
-// keeping track of clicks //////
-long total_clicks_detected[2] =         {0, 0}; // number of clicks which has occurred since boot
-long num_past_clicks[2];            // number of clicks since last auto-gain adjustment
-long num_cpm_clicks[2];
 
 #endif // MODE_CICADA CODE

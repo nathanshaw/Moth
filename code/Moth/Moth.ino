@@ -6,8 +6,6 @@
 #include "Configuration.h"
 #if FIRMWARE_MODE == CICADA_MODE
 #include "ModeCicada.h"
-#elif FIRMWARE_MODE == CICADA_MODE_NEW
-#include "ModeCicadaNew.h"
 #elif FIRMWARE_MODE == PITCH_MODE
 #include "ModePitch.h"
 #elif FIRMWARE_MODE == TEST_MODE
