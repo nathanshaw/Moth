@@ -1,0 +1,6 @@
+[submodule "code/Moth/AudioEngine"]
+	path = code/Moth/AudioEngine
+	url = https://github.com/nathanshaw/AudioEngine
+[submodule "code/Moth/NeopixelManager"]
+	path = code/Moth/NeopixelManager
+	url = https://github.com/nathanshaw/NeopixelManager
