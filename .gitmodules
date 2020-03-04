@@ -4,3 +4,9 @@
 [submodule "code/Moth/NeopixelManager"]
 	path = code/Moth/NeopixelManager
 	url = https://github.com/nathanshaw/NeopixelManager
+[submodule "code/Moth/DLManager"]
+	path = code/Moth/DLManager
+	url = https://github.com/nathanshaw/DLManager
+[submodule "code/Moth/LuxManager"]
+	path = code/Moth/LuxManager
+	url = https://github.com/nathanshaw/LuxManager
