@@ -80,4 +80,33 @@
 #define ONE_HOUR    3600000
 #define ONE_DAY     86400000
 
+/*
+  //updateLoopLength();
+  #if PRINT_LOOP_LENGTH == true
+  elapsedMicros loop_length = 0;
+  unsigned long num_loops = 0;
+  unsigned long loop_totals = 0;
+  unsigned long longest_loop = 0;
+  unsigned long shortest_loop = 0;
+
+  void updateLoopLength() {
+  if (num_loops > 0) {
+    if (loop_length > longest_loop) {
+      longest_loop = loop_length;
+      Serial.print("new longest loop (in  micros)   : ");
+      Serial.println(longest_loop);
+    }
+    loop_totals += loop_length;
+    if (loop_totals % 1000 == 1) {
+      Serial.print("average loop length (in micros) : ");
+      Serial.println((double)loop_totals / (double) num_loops);
+    }
+  }
+  num_loops++;
+  loop_length = 0;
+  }
+  #endif//print loop length
+*/
+
+
 #endif //__MACROS_H

@@ -4,6 +4,7 @@
   The runtime, boot, and all other configurations are found in the Configuration.h file
 */
 #include "Configuration.h"
+#include "Configuration_datalogging.h"
 #if FIRMWARE_MODE == CICADA_MODE
 #include "ModeCicada.h"
 #elif FIRMWARE_MODE == PITCH_MODE
@@ -53,10 +54,6 @@ void updateLuxManagers() {
       }
     }
   }
-}
-void updateDatalog() {
-  datalog_manager.update();
-  runtime = (double)millis() / 60000;
 }
 
 bool testJumpers() {
@@ -168,20 +165,20 @@ void readJumpers() {
 
     temp_b = digitalRead(JMP5_PIN);
     if (temp_b == 1) {
-      total_scaler += 0.25;
-      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER increased by 25% : ");
+      total_scaler += 0.5;
+      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER increased by 50% : ");
     } else {
-      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER not increased by 25% : ");
+      Serial.println("(pin5) MASTER_SENSITIVITY_SCALER not increased by 50% : ");
     }
 
     ///////////// Jumper 6 //////////////////////
     //////////// Major Sensitivity Boost ////////////////
     temp_b = digitalRead(JMP6_PIN);
     if (temp_b == 1) {
-      total_scaler += 0.5;
-      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER increased by 50% : ");
+      total_scaler += 1.0;
+      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER increased by 100% : ");
     } else {
-      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER not increased by 50% : ");
+      Serial.print("(pin6) MASTER_SENSITIVITY_SCALER not increased by 100% : ");
     }
     MASTER_SENSITIVITY_SCALER += total_scaler;
     Serial.println(MASTER_SENSITIVITY_SCALER);
@@ -208,7 +205,7 @@ void setup() {
   } else {
     printMajorDivide("Jumpers are not populated, not printing values");
   }
-  setupDLManager();
+  setupDLManagerCicada();
   setupAudio();
 
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
@@ -228,12 +225,14 @@ void setup() {
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
 
-#if FIRMWARE_MODE == TEST_MODE
+// #if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 64, 64, 64);
     leds.show();
+   
   }
-#endif
+  delay(10000000);
+// #endif
   printMajorDivide("Setup Loop Finished");
   uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED * 0.5);
   // Serial.print("segment : ");
@@ -251,38 +250,34 @@ void setup() {
 
 void listenForSerialCommands() {
   if (Serial.available() > 0) {
-    int incByte = Serial.read();
+    int input = Serial.read();
     Serial.print("incbyte : ");
-    Serial.println(incByte);
+    Serial.println(input);
+    if (input == 'd') {
+      // this is the command to print the datalog
+      datalog_manager.printAllLogs();
+    }
+    if (input == 's') {
+      input = Serial.read();
+      if (input == 'e') {
+        input = Serial.read();
+        if (input == 't') {
+          Serial.println("What setting would you like to change?");
+          Serial.println("enter g for gain");
+          input = Serial.read();
+          if (input == 'g') {
+            Serial.println("what would you like to change the gain to?");
+            input = Serial.read() - 48;
+            Serial.print("A gain of ");
+            Serial.print(input);
+            Serial.println(" has been selected");
+          }
+        }
+
+      }
+    }
   }
 }
-
-/*
-  #if PRINT_LOOP_LENGTH == true
-  elapsedMicros loop_length = 0;
-  unsigned long num_loops = 0;
-  unsigned long loop_totals = 0;
-  unsigned long longest_loop = 0;
-  unsigned long shortest_loop = 0;
-
-  void updateLoopLength() {
-  if (num_loops > 0) {
-    if (loop_length > longest_loop) {
-      longest_loop = loop_length;
-      Serial.print("new longest loop (in  micros)   : ");
-      Serial.println(longest_loop);
-    }
-    loop_totals += loop_length;
-    if (loop_totals % 1000 == 1) {
-      Serial.print("average loop length (in micros) : ");
-      Serial.println((double)loop_totals / (double) num_loops);
-    }
-  }
-  num_loops++;
-  loop_length = 0;
-  }
-  #endif//print loop length
-*/
 
 void loop() {
   updateLuxManagers();
@@ -291,5 +286,4 @@ void loop() {
   updateAutogain();
   updateDatalog();
   listenForSerialCommands();
-  //updateLoopLength();
 }

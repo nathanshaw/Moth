@@ -51,8 +51,8 @@ double readDoubleFromEEPROM(int a) {
   uint32_t data = EEPROM.read(a + 3);
   for (int i = 2; i > -1; i--) {
     uint8_t reading = EEPROM.read(a + i);
-    // dprint(PRINT_LOG_WRITE, reading);
-    // dprint(PRINT_LOG_WRITE, "|");
+    dprint(DLM_PRINT, reading);
+    dprint(DLM_PRINT, "|");
     data = (data << 8) | reading;
   }
   return (double)data / DOUBLE_PRECISION;
@@ -382,11 +382,11 @@ void DLManager::addLog(Datalog log, uint8_t timer_num) {
     active_logs = max(add_log_idx, active_logs);
     add_log_idx++;
     add_log_idx = min(add_log_idx, DATALOG_MANAGER_MAX_LOGS);
-    dprint(PRINT_LOG_WRITE, "Added log to the datamanager under timer ");
-    dprint(PRINT_LOG_WRITE, timer_num);dprint(PRINT_LOG_WRITE, " active_logs now: ");dprintln(PRINT_LOG_WRITE, active_logs);
-    dprint(PRINT_LOG_WRITE, "log written under index :");
-    dprint(PRINT_LOG_WRITE, add_log_idx - 1);
-    dprint(PRINT_LOG_WRITE, " and the contents of the log (from the last runtime) is as follows: ");
+    dprint(DLM_PRINT, "Added log to the datamanager under timer ");
+    dprint(DLM_PRINT, timer_num);dprint(DLM_PRINT, " active_logs now: ");dprintln(DLM_PRINT, active_logs);
+    dprint(DLM_PRINT, "log written under index :");
+    dprint(DLM_PRINT, add_log_idx - 1);
+    dprint(DLM_PRINT, " and the contents of the log (from the last runtime) is as follows: ");
     logs[active_logs - 1].printLog(1);
 }
 
@@ -402,8 +402,8 @@ void DLManager::addLog(Datalog *log, uint8_t timer_num) {
     active_logs_p = max(add_log_idx_p, active_logs_p++);
     add_log_idx_p++;
     add_log_idx_p = min(add_log_idx_p, DATALOG_MANAGER_MAX_LOGS);
-    dprint(PRINT_LOG_WRITE, "Added log to the datamanager under timer ");
-    dprint(PRINT_LOG_WRITE, timer_num);
+    dprint(DLM_PRINT, "Added log to the datamanager under timer ");
+    dprint(DLM_PRINT, timer_num);
 }
 
 /////////////////////////////// Auto Logging ////////////////////////////////
@@ -450,23 +450,43 @@ void DLManager::update() {
             // if it is time to update these logs then do so
             uint8_t updates = 0;
             for (int log = 0; log < active_logs; log++) {
-                 if (log_timer_map[log] == timer_num && u_time > log_refresh_length[timer_num]) {
-                    // Serial.print("Updating : ");Serial.println(logs[log].getName());
-                    logs[log].update();
-                    updates++;
+                 if (log_timer_map[log] == timer_num){
+                     if (u_time > log_refresh_length[timer_num]) {
+                        dprint(DLM_PRINT, "Updating : ");dprintln(DLM_PRINT, logs[log].getName());
+                        logs[log].update();
+                        updates++;
+                    }
+                     else if (DLM_PRINT) {
+                         Serial.print("not updating log ");Serial.print(logs[log].getName());
+                         Serial.print(" u_time is less than refresh_length: ");
+                         Serial.print(u_time);Serial.print(" / ");Serial.println(log_refresh_length[timer_num]);
+                     }
                  }
             }
             for (int log = 0; log < active_logs_p; log++) {
-                 if (log_timer_map_p[log] == timer_num && u_time > log_refresh_length[timer_num]) {
-                    // Serial.print("Updating : ");Serial.println(logs[log].getName());
-                    logs_p[log]->update();
-                    updates++;
+                 if (log_timer_map_p[log] == timer_num) {
+                     if (u_time > log_refresh_length[timer_num]) {
+                        dprint(DLM_PRINT, "Updating : ");dprintln(DLM_PRINT, logs[log].getName());
+                        logs_p[log]->update();
+                        updates++;
+                     }
+                     else if (DLM_PRINT){
+                         Serial.print("not updating plog, u_time is less than refresh_length: ");
+                         Serial.print(u_time);Serial.print(" / ");Serial.println(log_refresh_length[timer_num]);
+                     }
                  }
             }
             if (updates > 0) {
                 log_timers[timer_num] = 0;
                 remaining_logs[timer_num]--;
             }
+        }
+        else {
+            if (DLM_PRINT) {
+                Serial.print(timer_num);Serial.print(" too soon to update logs : ");
+                Serial.print(u_time);Serial.print(" / "); Serial.println(start_delays[timer_num]);
+            }
+
         }
     }
 }

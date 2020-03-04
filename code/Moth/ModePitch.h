@@ -210,7 +210,7 @@ void setupAudio() {
   mixer.gain(1, 0.5);
   mixer.gain(2, 0.0);
   mixer.gain(3, 0.0);
-  input_amp.gain(STARTING_PITCH_GAIN);
+  input_amp.gain(STARTING_GAIN);
   biquad.setHighpass(0, BQ_THRESH, BQ_Q);
   biquad.setHighpass(1, BQ_THRESH, BQ_Q);
   biquad.setHighpass(2, BQ_THRESH + 50, BQ_Q);

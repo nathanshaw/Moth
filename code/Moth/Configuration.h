@@ -9,7 +9,7 @@
  * ----------------------- JUMPER PINS --------------------------
  * 
  */
-#include "Configuration_adv.h"
+#include "Configuration_hardware.h"
 #include <Audio.h>
 #include "Macros.h"
 #include <PrintUtils.h>
@@ -27,7 +27,7 @@
 #define LBS_OVERLAP_TIME               (1000 * 30)
 
 elapsedMillis lbs_timer;
-uint8_t lbs_min =                      255;
+uint8_t lbs_min =                     255;
 uint8_t lbs_max =                     0;
 // to keep track of 
 double lbs_min_temp =                 999999999.9; 
@@ -46,7 +46,7 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                     8
+#define SERIAL_ID                     6
 
 uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
 
@@ -99,9 +99,9 @@ bool gain_adjust_active =                false;
 ///////////////////////// Cicada ///////////////////////////////////////////
 #define PRINT_LBS                       false
 //
-#define PRINT_LUX_DEBUG                 true
-#define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+#define PRINT_LUX_DEBUG                 false
+#define PRINT_LUX_READINGS              false
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
 
 #define PRINT_SONG_DEBUG                false
 #define PRINT_SONG_BRIGHTNESS           false
@@ -118,6 +118,7 @@ bool gain_adjust_active =                false;
 #define PRINT_AUTO_GAIN                 false
 
 #define PRINT_LOG_WRITE                 false
+#define DLM_PRINT                       true
 // if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
 // the main loop, it will also store the min and max loop length values as well as calculate 
 // what the average loop length is
@@ -204,108 +205,11 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 #define SONG_BLUE_HIGH                  5
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// Datalog Settings /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-double runtime;
-bool data_logging_active =              true;
-
-// TODO
-// if this is set to true the hardware settings in the Configuration_hardawre.h file will be writtent o EEPROM
-// if this is set to false then those settings will be read from the EEPROM 
-// this should include things like the number of lux sensors, number of neopixels, etc
-#define WRITE_HARDWARE_SETTINGS         true
-
-// does the autolog get written over each time?
-#define CLEAR_EEPROM_CONTENTS           1
-
-// how long will each of the four different auto-log options be? 
-// // a -1 means that the log will keep updating forever
-#define DATALOG_1_LENGTH                20
-#define DATALOG_2_LENGTH                20
-#define DATALOG_3_LENGTH                100000
-#define DATALOG_4_LENGTH                100000
-
-// record the run time // last value is number of minutes
-#define DATALOG_TIMER_1                 (1000*60*30)
-#define DATALOG_TIMER_2                 (1000*60*60*1)
-#define DATALOG_TIMER_3                 (1000*60*0.5)
-#define DATALOG_TIMER_4                 (1000*60*10)
-
-// how long the program runs for before the datalog starts logging
-#define DATALOG_START_DELAY_1           (1000*60*60*0.125)
-#define DATALOG_START_DELAY_2           (1000*60*60*0.125)
-#define DATALOG_START_DELAY_3           (1000*60*60*0.125)
-#define DATALOG_START_DELAY_4           (1000*60*60*0.125)
-
-// how long the data logging  will last for
-#define DATALOG_TIME_FRAME_1            (1000*60*60*2)
-#define DATALOG_TIME_FRAME_2            (1000*60*60*2)
-// #define DATALOG_TIME_FRAME_3         (1000*60*60*0.1)
-// #define DATALOG_TIME_FRAME_4         (1000*60*60*1)
-
-// refresh rates for the static logs
-#define STATICLOG_RATE_FAST             (1000*60*3)
-#define STATICLOG_RATE_SLOW             (1000*60*12)
-
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// auto logging ///////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// will the lux readings be logged?
-#define AUTOLOG_LUX_F                   0
-#define AUTOLOG_LUX_R                   0
-#define AUTOLOG_LUX_TIMER               0
-
-// the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            1
-#define AUTOLOG_LED_ON_OFF_R            1
-#define AUTOLOG_LED_ON_OFF_TIMER        1
-
-// the number of values to store in the logging process
-#define AUTOLOG_FLASHES_F               0
-#define AUTOLOG_FLASHES_R               0
-#define AUTOLOG_FLASHES_TIMER           0
-
-// the number of values to store in the logging process
-#define AUTOLOG_FPM_F                   0
-#define AUTOLOG_FPM_R                   0
-#define AUTOLOG_FPM_TIMER               0
-
-// the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     1
-#define AUTOLOG_BRIGHTNESS_SCALER_R     1
-#define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
-
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// static logging /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-#define STATICLOG_CLICK_GAIN            1
-#define STATICLOG_SONG_GAIN             1
-#define STATICLOG_LUX_VALUES            1
-#define STATICLOG_FLASHES               1
-#define STATICLOG_RUNTIME               1
-#define STATICLOG_RGB_AVG_VALS          1
-
-#define STATICLOG_LUX_MIN_MAX_TIMER     1
-#define STATICLOG_CLICK_GAIN_TIMER      1
-#define STATICLOG_SONG_GAIN_TIMER       1
-#define STATICLOG_FLASHES_TIMER         1
-#define STATICLOG_RUNTIME_TIMER         1
-#define STATICLOG_RGB_AVG_VALS_TIMER    1
-
-////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
 #define JUMPERS_POPULATED               1
 
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// Datalog Manager ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-#define DATALOG_MANAGER_MAX_LOGS        50
-#define DATALOG_MANAGER_TIMER_NUM       4
-uint8_t datalog_timer_num =             DATALOG_MANAGER_TIMER_NUM;
-uint32_t datalog_timer_lens[4] =        {DATALOG_TIMER_1, DATALOG_TIMER_2, DATALOG_TIMER_3, DATALOG_TIMER_4};
-#define DOUBLE_PRECISION                ((double)100000.0)
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
@@ -369,15 +273,6 @@ uint8_t audio_usage_max =               0;
 elapsedMillis last_usage_print =        0;// for keeping track of audio memory usage
 
 /////////////////////////////////////////////////////////////////////////
-/////////////////////////      Datalogging     //////////////////////////
-/////////////////////////////////////////////////////////////////////////
-// calculate the actual start and end times based on this
-#define EEPROM_LOG_SIZE                 2000
-// How much space will be allocated for the write once logs
-#define EEPROM_WRITE_ONCE_LOG_SIZE      400
-#define AUTO_LOG_SPACE                  (EEPROM_LOG_SIZE - WRITE_ONCE_LOG_SPACE)
-
-/////////////////////////////////////////////////////////////////////////
 /////////////////////////      Feature Collector     ////////////////////
 /////////////////////////////////////////////////////////////////////////
 // minimum amount of time between peak-log resets  which is allowed.
@@ -388,52 +283,5 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 // all the bins of intrest will have their magnitudes add up to 1, thus is best used for determining the centroid within a sub frequency range (for instance 8k - 14k or something
 #define SCALE_FFT_BIN_RANGE             false
 
-void updateLBS(uint8_t feature) {
-    if (lbs_timer > LBS_TIME_FRAME) {
-        lbs_timer = 0;
-        lbs_min = (uint8_t)((double)lbs_min * 1.1);
-        lbs_max = (uint8_t)((double)lbs_max * 0.9);
-        Serial.print("Reset the lbs timers");
-    }
-    if (feature > lbs_max) {
-        lbs_max = feature;
-    } else if (feature < lbs_min) {
-        lbs_min = feature;
-    } else {
-        return;
-    }
-    // if we do not return then it means we updated the min or max and now
-    // need to update the lbs_scaler_min_thresh and max thresb
-    // double range  = lbs_max - lbs_min;
-    // double lbs_scaler_min_thresh = lbs_min
-    // double lbs_scaler_max_thresh =
-    dprint(PRINT_LBS, "old lbs min/max : ");
-    dprint(PRINT_LBS, lbs_scaler_min_thresh);
-    dprint(PRINT_LBS, " / ");
-    dprintln(PRINT_LBS, lbs_scaler_max_thresh);
-    lbs_scaler_min_thresh = lbs_min + ((lbs_max - lbs_min) * LBS_LOW_TRUNCATE_THRESH);
-    lbs_scaler_max_thresh = lbs_max + ((lbs_max - lbs_min) * LBS_HIGH_TRUNCATE_THRESH);
-    dprint(PRINT_LBS, "\tnew min/max : ");
-    dprint(PRINT_LBS, lbs_scaler_min_thresh);
-    dprint(PRINT_LBS, " / ");
-    dprintln(PRINT_LBS, lbs_scaler_max_thresh);
-}
-
-uint8_t applyLBS(uint8_t brightness) {
-    dprint(PRINT_LBS, "brightness (Before/After) lbs: ");
-    dprint(PRINT_LBS, brightness);
-    updateLBS(brightness);
-    // constrain the brightness to the low and high thresholds
-    dprint(PRINT_LBS, " / ");
-    brightness = constrain(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
-    brightness = map(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
-    dprint(PRINT_LBS, " = ");
-    dprint(PRINT_LBS, brightness);
-    dprint(PRINT_LBS, "\tmin/max thresh: ");
-    dprint(PRINT_LBS, lbs_scaler_min_thresh);    
-    dprint(PRINT_LBS, " / ");    
-    dprintln(PRINT_LBS, lbs_scaler_max_thresh);    
-    return brightness;
-}
 
 #endif // CONFIGURATION_H

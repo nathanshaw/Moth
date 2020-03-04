@@ -52,8 +52,8 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 #define SONG_BQ2_Q                      0.85
 #define SONG_BQ2_DB                     -12
 
-#define MIN_SONG_GAIN                   (STARTING_SONG_GAIN * 0.5)
-#define MAX_SONG_GAIN                   (STARTING_SONG_GAIN * 1.5)
+// #define MIN_SONG_GAIN                   (STARTING_SONG_GAIN * 0.5)
+// #define MAX_SONG_GAIN                   (STARTING_SONG_GAIN * 1.5)
 
 ///////// Click Settings
 // what feature will be used to determine if a click has been found
@@ -86,8 +86,8 @@ int CLICK_FEATURE =                     PEAK_DELTA;
 #define HIGH_ON_RATIO_THRESH            0.60
 #define MAX_ON_RATIO_THRESH             0.90
 
-#define MIN_CLICK_GAIN                  (STARTING_CLICK_GAIN * 0.5)
-#define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.5)
+// #define MIN_CLICK_GAIN                  (STARTING_CLICK_GAIN * 0.5)
+// #define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.5)
 
 #define CLICK_BQ1_THRESH                1200
 #define CLICK_BQ1_Q                     0.85

@@ -5,6 +5,35 @@
 #include <EEPROM.h>
 
 class Datalog {
+    public:
+        Datalog();
+        ~Datalog();
+        Datalog(String _id, uint32_t address, double *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint8_t *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint16_t *val, int length, bool _auto);
+        Datalog(String _id, uint32_t address, uint32_t *val, int length, bool _auto);
+
+        void setAutolog(bool v){ autolog_active = v;};
+
+        bool update(); // could this be a while loop at some point?
+
+        String getName() {return id;};
+
+        bool write(double data);
+        bool write(uint8_t data);
+        bool write(uint16_t data);
+        bool write(uint32_t data);
+
+        bool writeCheck(double);
+        bool writeCheck(uint8_t);
+        bool writeCheck(uint16_t);
+        bool writeCheck(uint32_t);
+
+        void clear();
+        void printLog(uint8_t lines);
+        void printlog(uint8_t lines);
+        void printlog(){printlog(4);};
+
     private:
         // to reduce code on the overloaded init functions
         void _setup(String, uint32_t, int, bool);
@@ -51,34 +80,7 @@ class Datalog {
         uint16_t  readShort();
         uint32_t  readLong(int);
         uint32_t  readLong();
-    public:
-        Datalog();
-        ~Datalog();
-        Datalog(String _id, uint32_t address, double *val, int length, bool _auto);
-        Datalog(String _id, uint32_t address, uint8_t *val, int length, bool _auto);
-        Datalog(String _id, uint32_t address, uint16_t *val, int length, bool _auto);
-        Datalog(String _id, uint32_t address, uint32_t *val, int length, bool _auto);
 
-        void setAutolog(bool v){ autolog_active = v;};
-
-        bool update(); // could this be a while loop at some point?
-
-        String getName() {return id;};
-
-        bool write(double data);
-        bool write(uint8_t data);
-        bool write(uint16_t data);
-        bool write(uint32_t data);
-
-        bool writeCheck(double);
-        bool writeCheck(uint8_t);
-        bool writeCheck(uint16_t);
-        bool writeCheck(uint32_t);
-
-        void clear();
-        void printLog(uint8_t lines);
-        void printlog(uint8_t lines);
-        void printlog(){printlog(4);};
 
 };
 Datalog::Datalog(){};
