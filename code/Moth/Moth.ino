@@ -13,6 +13,8 @@
 #include "ModeTest.h"
 #endif
 
+elapsedMillis last_jumper_read;
+
 void updateFeatureCollectors() {
   // update the feature collectors
 #if NUM_FEATURE_COLLECTORS == 1
@@ -97,7 +99,8 @@ bool testJumpers() {
 }
 
 void readJumpers() {
-  if (testJumpers() == true) {
+  if (testJumpers() == true && last_jumper_read < 1000) {
+    last_jumper_read = 0;
     Serial.print("Jumpers passed continuity test...");
     printMinorDivide();
     pinMode(JMP1_PIN, INPUT);
@@ -285,5 +288,6 @@ void loop() {
   updateMode();
   updateAutogain();
   updateDatalog();
+  readJumpers();
   listenForSerialCommands();
 }
