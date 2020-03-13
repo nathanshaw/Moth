@@ -11,6 +11,9 @@
 #include <Audio.h>
 
 //////////////////////////////// Global Variables /////////////////////////
+// is an extreme lux condition currently being observed
+bool extreme_lux_shdn = false;
+
 double color_feature_min = 1.00;
 double color_feature_max = 0.0;
 
@@ -95,14 +98,14 @@ void linkFeatureCollectors() {
   fc[0].linkPeak(&peak1, global_peak_scaler, PRINT_PEAK_VALS);
   fc[1].linkPeak(&peak2, global_peak_scaler, PRINT_PEAK_VALS);
 
-  fft_features.linkFFT(&input_fft);
+  fft_features.linkFFT(&input_fft, true);
   Serial.println("Linked FFT to FFTManager");
-  fft_features.setFFTScaler(global_fft_scaler);
+  //  fft_features.setFFTScaler(global_fft_scaler);
   fft_features.setCentroidActive(true);
   Serial.println("Started calculating Centroid in the FFTManager");
   fft_features.setFluxActive(true);
   Serial.println("Started calculating FLUX in the FFTManager");
- }
+}
 
 void setupAudio() {
   ////////////// Audio ////////////
@@ -126,11 +129,6 @@ void setupAudio() {
 double calculateSongBrightness(uint8_t i) {
   // how much energy is stored in the range of 4000 - 16000 compared to  the entire spectrum?
   double target_brightness = fft_features.getFFTRangeByFreq(4000, 16000) - fft_features.getFFTRangeByFreq(100, 4000);
-  if (target_brightness < 0.01) {
-    target_brightness = 0.0;
-  } else if (target_brightness > 1.0) {
-    target_brightness = 1.0;
-  }
   if (target_brightness < brightness_feature_min[i]) {
     if (i == 0 && PRINT_SONG_BRIGHTNESS) {
       Serial.print("target_B is less than feature_min: ");
@@ -175,6 +173,12 @@ double calculateSongBrightness(uint8_t i) {
   dprintln(PRINT_SONG_BRIGHTNESS, brightness_feature_max[i]);
 
   target_brightness = (target_brightness - brightness_feature_min[i]) / (brightness_feature_max[i] - brightness_feature_min[i]);
+  // to ensure the unit is not always on
+  if (target_brightness < 0.15) {
+    target_brightness = 0.0;
+  } else if (target_brightness > 1.0) {
+    target_brightness = 1.0;
+  }
   dprint(PRINT_SONG_BRIGHTNESS, "target_brightness(2): ");
   dprint(PRINT_SONG_BRIGHTNESS, target_brightness);
   dprint(PRINT_SONG_BRIGHTNESS, " ");
@@ -197,10 +201,10 @@ double calculateSongColor() {
   return cent;
 }
 
-void updateSongNew() {
+void updateSong() {
   double target_color = 0.0;        // 0.0 - 1.0
   uint8_t red, green, blue;
-  
+
   /////////////////// Color ////////////////////////////////////////
   target_color = calculateSongColor();
   last_color = current_color;
@@ -212,51 +216,44 @@ void updateSongNew() {
   dprint(PRINT_SONG_COLOR, last_color);
   dprint(PRINT_SONG_COLOR, "\tcurrent_color: ");
   dprint(PRINT_SONG_COLOR, current_color);
-  
+
   ////////////////// Calculate Actual Values ///////////////////////
   red = ((1.0 - current_color) * SONG_RED_LOW) + (current_color * SONG_RED_HIGH);
   green = ((1.0 - current_color) * SONG_GREEN_LOW) + (current_color * SONG_GREEN_HIGH);
   blue = ((1.0 - current_color) * SONG_BLUE_LOW) + (current_color * SONG_BLUE_HIGH);
 
+  double target_brightness = 0.0;
   for (int i = 0; i < num_channels; i++) {
     /////////////////// Brightness ///////////////////////////////////
-    double target_brightness = calculateSongBrightness(i);
-    last_brightness[i] = current_brightness[i];
-    current_brightness[i] = (target_brightness * 0.8) + (last_brightness[i] * 0.2);
-    // current_brightness[i] = current_brightness[i] + (last_brightness[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
+    double __brightness = calculateSongBrightness(i);
+    if (__brightness > target_brightness) {
+      target_brightness = __brightness;
+    }
+  }
+  last_brightness[0] = current_brightness[0];
+  current_brightness[0] = (target_brightness * 0.8) + (last_brightness[0] * 0.2);
+  // current_brightness[i] = current_brightness[i] + (last_brightness[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
 
-    /*
-      dprint(PRINT_SONG_DEBUG, "last/current_brightness[");
-      dprint(PRINT_SONG_DEBUG, i);
-      dprint(PRINT_SONG_DEBUG, "]: ");
-      dprint(PRINT_SONG_DEBUG, last_brightness[i]);
-      dprint(PRINT_SONG_DEBUG, " => ");
-      dprintln(PRINT_SONG_DEBUG, current_brightness[i]);
-    */
+  dprint(PRINT_SONG_BRIGHTNESS, "last/current_brightness[");
+  dprint(PRINT_SONG_BRIGHTNESS, 0);
+  dprint(PRINT_SONG_BRIGHTNESS, "]: ");
+  dprint(PRINT_SONG_BRIGHTNESS, last_brightness[0]);
+  dprint(PRINT_SONG_BRIGHTNESS, " => ");
+  dprintln(PRINT_SONG_BRIGHTNESS, current_brightness[0]);
 
-    red = (uint8_t)((double)red * current_brightness[i]);
-    green = (uint8_t)((double)green * current_brightness[i]);
-    blue = (uint8_t)((double)blue * current_brightness[i]);
+  red = (uint8_t)((double)red * current_brightness[0]);
+  green = (uint8_t)((double)green * current_brightness[0]);
+  blue = (uint8_t)((double)blue * current_brightness[0]);
 
-    dprint(PRINT_SONG_COLOR, " r: ");
-    dprint(PRINT_SONG_COLOR, red);
-    dprint(PRINT_SONG_COLOR, " g: ");
-    dprint(PRINT_SONG_COLOR, green);
-    dprint(PRINT_SONG_COLOR, " b: ");
-    dprintln(PRINT_SONG_COLOR, blue);
+  dprint(PRINT_SONG_COLOR, " r: ");
+  dprint(PRINT_SONG_COLOR, red);
+  dprint(PRINT_SONG_COLOR, " g: ");
+  dprint(PRINT_SONG_COLOR, green);
+  dprint(PRINT_SONG_COLOR, " b: ");
+  dprintln(PRINT_SONG_COLOR, blue);
 
+  for (int i = 0; i < num_channels; i++) {
     neos[i].colorWipe(red, green, blue, 1.0);
-
-    /*
-      if (i == 0) {
-      Serial.print("brightness_feature_min/max/target: ");
-      Serial.print(brightness_feature_min[i], 4);
-      Serial.print("\t");
-      Serial.print(brightness_feature_max[i], 4);
-      Serial.print("\t");
-      Serial.println(target_brightness, 4);
-      }
-    */
   }
   /////////////////// LOCAL SCALER RESET //////////////////////////
   // this needs to be after the rest of the logic in this function
@@ -286,7 +283,7 @@ double updateScalers(double val, double & min, double & max, double rate) {
   return nval;
 }
 
-void updateClickNew() {
+void updateClick() {
   // for a click in theory the spectral flux will be high, the
   // centroid will decrease since the last frame, and there should be an
   // increase of amplitude in the 1k - 3k freq range
@@ -299,23 +296,25 @@ void updateClickNew() {
   flux = updateScalers(flux, min_flux, max_flux, 0.5);
   last_flux = click_flux;
   click_flux = (flux / (max_flux));
+  dprint(PRINT_CLICK_FLUX, "click flux: ");
+  dprintln(click_flux);
 
   //////////////////////////// Cent Neg Delta ////////////////////////
-  
+
   double new_cent_neg_delta = fft_features.getCentroidNegDelta();
   new_cent_neg_delta = updateScalers(new_cent_neg_delta, min_cent_negd, max_cent_negd, 0.5);
   last_cent_neg_delta = click_cent;
-  
-   // Serial.print("click_cent/min/max: ");
-   // Serial.print((new_cent_neg_delta), 8);
-   click_cent = (new_cent_neg_delta / max_cent_negd);
-   /*Serial.print(" - ");
-   Serial.print(min_cent_negd, 8);
-   Serial.print(" - ");
-   Serial.print(max_cent_negd, 8);
-   Serial.print(" => ");
-   Serial.println(click_cent, 8);
-   */
+
+  // Serial.print("click_cent/min/max: ");
+  // Serial.print((new_cent_neg_delta), 8);
+  click_cent = (new_cent_neg_delta / max_cent_negd);
+  /*Serial.print(" - ");
+    Serial.print(min_cent_negd, 8);
+    Serial.print(" - ");
+    Serial.print(max_cent_negd, 8);
+    Serial.print(" => ");
+    Serial.println(click_cent, 8);
+  */
   //////////////////////////// Energy between 1k - 3k //////////////////
   double range_rms = fft_features.getFFTRangeByFreq(1000, 2000);
   range_rms = updateScalers(range_rms, min_rrms, max_rrms, 0.5);
@@ -326,24 +325,24 @@ void updateClickNew() {
   double feature = (click_flux) * click_cent * click_rrms * 50;
   feature = updateScalers(feature, min_click_feature, max_click_feature, 0.5);
   if (PRINT_CLICK_FEATURES == true) {
-  Serial.print("flux / range / feature   :\t");
-  Serial.print((click_cent), 8);
-  Serial.print("\t");
-  Serial.print(click_flux, 8);
-  Serial.print("\t");
-  Serial.print(click_rrms, 8);
-  Serial.print("\t");
-  Serial.print(feature, 8);
-  // dprintln(PRINT_CLICK_DEBUG, feature);
-  Serial.print("\t");
-  Serial.println(feature, 8);
+    Serial.print("flux / range / feature   :\t");
+    Serial.print((click_cent), 8);
+    Serial.print("\t");
+    Serial.print(click_flux, 8);
+    Serial.print("\t");
+    Serial.print(click_rrms, 8);
+    Serial.print("\t");
+    Serial.print(feature, 8);
+    // dprintln(PRINT_CLICK_DEBUG, feature);
+    Serial.print("\t");
+    Serial.println(feature, 8);
   }
   uint8_t red, green, blue;
-    ////////////////// Calculate Actual Values ///////////////////////
+  ////////////////// Calculate Actual Values ///////////////////////
   red = (current_color * CLICK_RED) * lux_managers[0].getBrightnessScaler();
   green = (current_color * CLICK_GREEN) * lux_managers[0].getBrightnessScaler();
   blue = (current_color * CLICK_BLUE) * lux_managers[0].getBrightnessScaler();
-  
+
   if (feature >= 1.0) {
     // Serial.println("____________________ CLICK ________________________ 3.0");
     /*dprint(PRINT_CLICK_DEBUG, "click feature is above threshold: ");
@@ -380,8 +379,12 @@ void updateAutogain() {
 }
 
 void updateMode() {
-  updateSongNew();
-  updateClickNew();
+  if (lux_managers[0].getExtremeLux() == true) {
+    dprintln(PRINT_LUX_DEBUG, "WARNING ------------ updateMode() returning due extreme lux conditions, not updating click or song...");
+    return;
+  }
+  updateSong();
+  updateClick();
   // Serial.print("audio memory max: ");
   // Serial.print(AudioMemoryUsageMax());
 }

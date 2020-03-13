@@ -118,7 +118,7 @@ bool gain_adjust_active =                false;
 #define PRINT_AUTO_GAIN                 false
 
 #define PRINT_LOG_WRITE                 false
-#define DLM_PRINT                       true
+#define DLM_PRINT                       false
 // if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
 // the main loop, it will also store the min and max loop length values as well as calculate 
 // what the average loop length is
@@ -127,9 +127,6 @@ bool gain_adjust_active =                false;
 // perform a write check on everything that is written to EEPROM
 #define EEPROM_WRITE_CHECK              false
 
-////////////////////////////////////////////////////////////////////////////
-///////////////////////// Feature Collector ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
 #define PRINT_RMS_VALS                  false
 #define PRINT_RMS_DEBUG                 false
 
@@ -146,6 +143,7 @@ bool gain_adjust_active =                false;
 #define PRINT_FFT_VALS                  false
 // will print spectral flux if flux_active
 #define PRINT_FLUX_VALS                 false
+#define PRINT_CLICK_FLUX                false
 // will print centroid if centroid_active
 #define PRINT_CENTROID_VALS             false
 // will print highest energy bin in FFT
@@ -192,15 +190,15 @@ uint16_t  MAX_BRIGHTNESS =              255;
 byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
-#define CLICK_RED                       0
-#define CLICK_GREEN                     0
-#define CLICK_BLUE                      255
+#define CLICK_RED                       200
+#define CLICK_GREEN                     200
+#define CLICK_BLUE                      200
 
 #define SONG_RED_LOW                    0
 #define SONG_GREEN_LOW                  255
 #define SONG_BLUE_LOW                   0
 
-#define SONG_RED_HIGH                   150
+#define SONG_RED_HIGH                   175
 #define SONG_GREEN_HIGH                 100
 #define SONG_BLUE_HIGH                  5
 

@@ -225,14 +225,14 @@ void setup() {
     lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
   }
 
-// #if FIRMWARE_MODE == TEST_MODE
+  #if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 64, 64, 64);
     leds.show();
    
   }
   delay(10000000);
-// #endif
+  #endif
   printMajorDivide("Setup Loop Finished");
   uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED * 0.5);
   // Serial.print("segment : ");
