@@ -83,7 +83,7 @@ bool gain_adjust_active =                false;
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        2
   #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              2
+  #define NUM_LUX_MANAGERS              1
   #include "Configuration_cicada.h"
 #elif FIRMWARE_MODE == TEST_MODE
   #define NUM_AUTOGAINS                 0

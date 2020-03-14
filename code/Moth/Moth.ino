@@ -30,31 +30,13 @@ void updateFeatureCollectors() {
 void updateLuxManagers() {
   // update the feature collectors
   if (LUX_SENSORS_ACTIVE) {
-    uint8_t updated = 0;
-    for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-      if (lux_managers[i].update()) {
-        updated++;
-      }
-    }
-    if (updated) {
-      // calculate what the combined lux is
-      double combined_lux = 0;
+    #if NUM_LUX_MANAGERS > 1
       for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-        if (combined_lux < lux_managers[i].getLux()) {
-          combined_lux = lux_managers[i].getLux();
-        }
-        dprint(PRINT_LUX_DEBUG, " combined_lux value is : ");
-        dprint(PRINT_LUX_DEBUG, combined_lux);
-        // set the new combined lux value to both managers
-        for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-          lux_managers[i].setLuxValue(combined_lux);
-          dprint(PRINT_LUX_DEBUG, "\t");
-          dprint(PRINT_LUX_DEBUG, lux_managers[i].getName());
-          dprint(PRINT_LUX_DEBUG, " lux reading : ");
-          dprint(PRINT_LUX_DEBUG, lux_managers[i].getLux());
-        }
+        lux_managers[i].update();
       }
-    }
+    #else
+      lux_manager.update();
+    #endif
   }
 }
 
@@ -221,21 +203,23 @@ void setup() {
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("turning off LEDs for Lux Calibration");
     // todo make this proper
-    lux_managers[0].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-    lux_managers[1].startSensor(VEML7700_GAIN_1, VEML7700_IT_25MS);
+    lux_manager.addLuxSensor(0, "Front");
+    lux_manager.addLuxSensor(1, "Rear");
+    lux_manager.linkNeoGroup(&neos[0]);
+    lux_manager.linkNeoGroup(&neos[0]);
+    lux_manager.startSensors(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
     delay(200);
-    lux_managers[0].calibrate(LUX_CALIBRATION_TIME);
-    lux_managers[1].calibrate(LUX_CALIBRATION_TIME);
+    lux_manager.calibrate(LUX_CALIBRATION_TIME);
   }
 
-  #if FIRMWARE_MODE == TEST_MODE
+#if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 64, 64, 64);
     leds.show();
-   
+
   }
   delay(10000000);
-  #endif
+#endif
   printMajorDivide("Setup Loop Finished");
   uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED * 0.5);
   // Serial.print("segment : ");

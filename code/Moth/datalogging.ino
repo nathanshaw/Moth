@@ -62,22 +62,18 @@ void setupDLManagerCicada() {
     }
     // the constantly updating logs
     if (STATICLOG_LUX_VALUES) {
-      datalog_manager.addStaticLog("Lowest Front Lux Recorded : ",
-                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].min_reading);
-      datalog_manager.addStaticLog("Highest Front Lux Recorded : ",
-                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[0].max_reading);
-      datalog_manager.addStaticLog("Lowest Rear Lux Recorded : ",
-                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[1].min_reading);
-      datalog_manager.addStaticLog("Highest Rear Lux Recorded : ",
-                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_managers[1].max_reading);
+      datalog_manager.addStaticLog("Lowest Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_manager.min_reading);
+      datalog_manager.addStaticLog("Highest Lux Recorded : ",
+                                   STATICLOG_LUX_MIN_MAX_TIMER, &lux_manager.max_reading);
     }
 
     if (STATICLOG_MASTER_GAIN) {
-        datalog_manager.addStaticLog("Lowest Master Gain  : ",
+      datalog_manager.addStaticLog("Lowest Master Gain  : ",
                                    STATICLOG_CLICK_GAIN_TIMER, &fc[0].min_gain);
-        datalog_manager.addStaticLog("Highest Master Gain ",
+      datalog_manager.addStaticLog("Highest Master Gain ",
                                    STATICLOG_CLICK_GAIN_TIMER, &fc[0].max_gain);
-        datalog_manager.logSetupConfigDouble("Master Starting Gain          : ", STARTING_GAIN);
+      datalog_manager.logSetupConfigDouble("Master Starting Gain          : ", STARTING_GAIN);
     }
 
     if (STATICLOG_FLASHES) {
@@ -109,10 +105,10 @@ void setupDLManagerCicada() {
     // datalog_manager.startAutolog(0);
     double * ptr;
     if (AUTOLOG_LUX_F > 0 && front_lux_active > 0) {
-      datalog_manager.addAutolog("Front Lux Log ", AUTOLOG_LUX_TIMER, &lux_managers[0].lux);
+      datalog_manager.addAutolog("Front Lux Log ", AUTOLOG_LUX_TIMER, &lux_manager.lux[0]);
     }
     if (AUTOLOG_LUX_R > 0 && rear_lux_active > 0) {
-      datalog_manager.addAutolog("Rear Lux Log ", AUTOLOG_LUX_TIMER, &lux_managers[1].lux);
+      datalog_manager.addAutolog("Rear Lux Log ", AUTOLOG_LUX_TIMER, &lux_manager.lux[1]);
     }
 
     if (AUTOLOG_LED_ON_OFF_F > 0) {
@@ -123,24 +119,19 @@ void setupDLManagerCicada() {
       ptr = &neos[1].on_ratio;
       datalog_manager.addAutolog("Rear Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
     }
-    if (AUTOLOG_BRIGHTNESS_SCALER_F > 0) {
-      ptr = &lux_managers[0].brightness_scaler_avg;
-      lux_managers[0].resetBrightnessScalerAvg();
+      if (AUTOLOG_BRIGHTNESS_SCALER > 0) {
+      ptr = &lux_manager.brightness_scaler_avg;
+      lux_manager.resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Front Brightness Scaler Averages ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);
-    }
-    if (AUTOLOG_BRIGHTNESS_SCALER_R > 0) {
-      ptr = &lux_managers[1].brightness_scaler_avg;
-      lux_managers[1].resetBrightnessScalerAvg();
-      datalog_manager.addAutolog("Rear Brightness Scaler Averages  ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);
     }
     if (AUTOLOG_FPM_F > 0) {
       ptr = &neos[0].fpm;
-      lux_managers[1].resetBrightnessScalerAvg();
+      lux_manager.resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Front Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
     }
     if (AUTOLOG_FPM_R > 0) {
       ptr = &neos[1].fpm;
-      lux_managers[1].resetBrightnessScalerAvg();
+      lux_manager.resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Rear Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
     }
     // printing needs to be at the end so that everything actually displays

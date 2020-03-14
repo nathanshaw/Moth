@@ -62,10 +62,8 @@ NeoGroup neos[2] = {
 };
 
 // lux managers to keep track of the VEML readings
-LuxManager lux_managers[NUM_LUX_MANAGERS] = {
-  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 0, (String)"Front", &neos[0]),
-  LuxManager(lux_min_reading_delay, lux_max_reading_delay, 1, (String)"Rear ", &neos[1])
-};
+LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay);
+// LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay, (String)"Front", &neos[0]);
 
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
 
@@ -339,9 +337,9 @@ void updateClick() {
   }
   uint8_t red, green, blue;
   ////////////////// Calculate Actual Values ///////////////////////
-  red = (current_color * CLICK_RED) * lux_managers[0].getBrightnessScaler();
-  green = (current_color * CLICK_GREEN) * lux_managers[0].getBrightnessScaler();
-  blue = (current_color * CLICK_BLUE) * lux_managers[0].getBrightnessScaler();
+  red = (current_color * CLICK_RED) * lux_manager.getBrightnessScaler();
+  green = (current_color * CLICK_GREEN) * lux_manager.getBrightnessScaler();
+  blue = (current_color * CLICK_BLUE) * lux_manager.getBrightnessScaler();
 
   if (feature >= 1.0) {
     // Serial.println("____________________ CLICK ________________________ 3.0");
@@ -351,7 +349,7 @@ void updateClick() {
       dprint(PRINT_CLICK_DEBUG, threshold);
     */
     for (int i = 0; i < num_channels; i++) {
-      neos[i].colorWipeAdd(red, green, blue, lux_managers[0].getBrightnessScaler() * MASTER_SENSITIVITY_SCALER);
+      neos[i].colorWipeAdd(red, green, blue, lux_manager.getBrightnessScaler() * MASTER_SENSITIVITY_SCALER);
     }
   }
 
@@ -379,7 +377,7 @@ void updateAutogain() {
 }
 
 void updateMode() {
-  if (lux_managers[0].getExtremeLux() == true) {
+  if (lux_manager.getExtremeLux() == true) {
     dprintln(PRINT_LUX_DEBUG, "WARNING ------------ updateMode() returning due extreme lux conditions, not updating click or song...");
     return;
   }

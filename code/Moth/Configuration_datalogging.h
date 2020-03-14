@@ -71,15 +71,12 @@ bool data_logging_active =              true;
 #define AUTOLOG_FPM_TIMER               0
 
 // the brightness scaler avg log
-#define AUTOLOG_BRIGHTNESS_SCALER_F     1
-#define AUTOLOG_BRIGHTNESS_SCALER_R     1
+#define AUTOLOG_BRIGHTNESS_SCALER       1
 #define AUTOLOG_BRIGHTNESS_SCALER_TIMER 0
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// static logging /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-// #define STATICLOG_CLICK_GAIN            1
-// #define STATICLOG_SONG_GAIN             1
 #define STATICLOG_MASTER_GAIN           1
 #define STATICLOG_LUX_VALUES            1
 #define STATICLOG_FLASHES               1
