@@ -41,6 +41,7 @@ void updateLuxManagers() {
 }
 
 bool testJumpers() {
+  delay(2000);
   bool populated = true;
   bool values[6];
   values[0] = digitalRead(JMP1_PIN);
@@ -75,7 +76,7 @@ bool testJumpers() {
       populated = false;
       Serial.println("JMP6_PIN returned multiple values");
     }
-    delay(10);
+    delay(50);
   }
   return populated;
 }
@@ -126,17 +127,17 @@ void readJumpers() {
 
     //////////// Jumper 3 ///////////////////////
     //////////// Minor Sensitivity Attenuation //
-    double total_scaler = 0.0;
     temp_b = digitalRead(JMP3_PIN);
+    FLASH_DOMINATES = temp_b;
     if (temp_b == 1) {
-      Serial.println("(pin3) MASTER_SENSITIVITY_SCALER not decreased by 33%");
+      Serial.println("FLASH_DOMINATES is true, flash will erase other brightness messages");
     } else {
-      Serial.println("(pin3) MASTER_SENSITIVITY_SCALER decreased by 33%");
-      total_scaler -= 0.33;
+      Serial.println("FLASH_DOMINATES is false, flash will be added to other brightness messages");
     }
 
     //////////// Jumper 4 ///////////////////////
     //////////// Major Sensitivity Attenuation //
+    double total_scaler = 0.0;
     temp_b = digitalRead(JMP4_PIN);
     if (temp_b == 1) {
       Serial.println("(pin4) MASTER_SENSITIVITY_SCALER not decreased by 50%");
@@ -195,6 +196,9 @@ void setup() {
 
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
     neos[i].setFlashColors(CLICK_RED, CLICK_GREEN, CLICK_BLUE);
+    neos[i].setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
+    neos[i].setFlashBehaviour(FLASH_DOMINATES);
+    neos[i].setSongFeedbackMode(ROUND);
   }
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 0, 0, 0);

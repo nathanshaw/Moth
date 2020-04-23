@@ -11,9 +11,6 @@
 #include <Audio.h>
 
 //////////////////////////////// Global Variables /////////////////////////
-// is an extreme lux condition currently being observed
-bool extreme_lux_shdn = false;
-
 double color_feature_min = 1.00;
 double color_feature_max = 0.0;
 
@@ -99,7 +96,7 @@ void linkFeatureCollectors() {
   fft_features.linkFFT(&input_fft, true);
   Serial.println("Linked FFT to FFTManager");
   //  fft_features.setFFTScaler(global_fft_scaler);
-  fft_features.setCentroidActive(true);
+  fft_features.setupCentroid(true, 4000, 16000);
   Serial.println("Started calculating Centroid in the FFTManager");
   fft_features.setFluxActive(true);
   Serial.println("Started calculating FLUX in the FFTManager");

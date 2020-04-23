@@ -22,9 +22,6 @@ double CLICK_THRESH =                   0.325;
 #define COLOR_LP_LEVEL                  (double)0.75
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
-// if this is set to true the flashes will only contain the Flash color instea
-// if this is set to false then the flash color will be added to the normal color
-#define FLASH_DOMINATES                 false
 // TODO - add bin magnitude as a feature
 // which audio feature to use to test
 // "peak" will look at the audio "peak" value
