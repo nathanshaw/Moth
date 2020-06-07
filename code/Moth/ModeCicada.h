@@ -60,7 +60,6 @@ NeoGroup neos[2] = {
 
 // lux managers to keep track of the VEML readings
 LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay);
-// LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay, (String)"Front", &neos[0]);
 
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
 

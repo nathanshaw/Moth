@@ -35,17 +35,22 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define TEENSY40                  4
 
 #define MICROCONTROLLER           TEENSY32
-#define H_VERSION_MAJOR           2
-#define H_VERSION_MINOR           1
+#define H_VERSION_MAJOR           3
+#define H_VERSION_MINOR           0
 
 #if H_VERSION_MAJOR > 1
 #define NUM_LUX_SENSORS           2
 #endif
 
 // todo add logic to change these if needed...
+#if (H_VERSION_MAJOR == 3)
+#define NUM_LED                   40
+#endif
+
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0)
 #define NUM_LED                   12
 #endif
+
 #if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
 #define NUM_LED                   10
 #endif 
@@ -56,47 +61,56 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 ////////////// TCA Bus Expanders     /////
 // I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
 // I2C MULTI should be 1 if a TCA I2C bus expander is present
+#if H_VERSION_MAJOR < 2
 #define I2C_MULTI                 1
 // the number of active channels on the TCA (can in theory support 8 sensors, etc.)
 #define TCA_CHANNELS              2
+#else
+#define I2C_MULTI                 0
+#define TCA_CHANNELS              0 
+#endif
 
 //////////// MICROCONTROLLER PIN OUTS ////
 #define LED_PIN                   5
 
-//////////// Jumper Pins /////////////////
+//////////// User Controls /////////////////
+#if H_VERSION_MAJOR == 1
+#define NUM_JUMPERS               6
 #define JMP1_PIN                  12
 #define JMP2_PIN                  11
 #define JMP3_PIN                  14
 #define JMP4_PIN                  15
 #define JMP5_PIN                  16
 #define JMP6_PIN                  17
+#define NUM_POTS                  0
 
-////////////////////////////////////////////////////////////////////////////
-////////////////////// Software Configurations /////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-#define S_VERSION_MAJOR           0
-#define S_VERSION_MINOR           1
-#define S_SUBVERSION              1
-// version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
-// as well as the autobrightness calibration routine being very visible and disruptive when resetting
-// version 0.1.0 was created on 24.02.20 as it served as the first viable working song implementation
-// version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
-// how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
-// and the addition of a flag to differentiate between adding the flash brightness of just displaying
-// the brightness
+#elif H_VERSION_MAJOR == 3
+#define NUM_JUMPERS               10
 
-////////////////////////////////////////////////////////////////////////////
-////////////////////// Neopixel Managers  //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// how high the click flash timer will go up to
-#define MAX_FLASH_TIME            60
-// where the click flash timer will start
-#define MIN_FLASH_TIME            40
-// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME       80
+#define JMP1_PIN                  14
+#define JMP2_PIN                  12
+#define JMP3_PIN                  11
+#define JMP4_PIN                  10
+#define JMP5_PIN                  8
+#define JMP6_PIN                  7
+#define JMP7_PIN                  6
+#define JMP8_PIN                  4
+#define JMP9_PIN                  3
+#define JMP10_PIN                 2
 
-///////////////////////////////// General Purpose Functions //////////////////////////////////
-#define SERIAL_BAUD_RATE          115200
+int jmp_pins[NUM_JUMPERS] = {JMP1_PIN, JMP2_PIN, JMP3_PIN, JMP4_PIN, JMP5_PIN,
+                             JMP6_PIN, JMP7_PIN, JMP8_PIN, JMP9_PIN, JMP10_PIN};
+
+#define NUM_POTS                  4
+#define POT1_PIN                  22
+#define POT2_PIN                  21
+#define POT3_PIN                  20
+#define POT4_PIN                  17
+
+int pot_pins[NUM_POTS] = {POT1_PIN, POT2_PIN, POT3_PIN, POT4_PIN};
+uint16_t pot_vals[NUM_POTS] = {0, 0, 0, 0};
+
+#endif
 
 
 #endif // __HARDWARE_CONFIGURATION_H__

@@ -1,14 +1,6 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H 
 
-
-/* This is the main configuration file for the Moth Framework
- * Using this file, along with the other configuration files you
- * Can cistomise how the firmware performs.
- * 
- * ----------------------- JUMPER PINS --------------------------
- * 
- */
 #include "Configuration_hardware.h"
 #include <Audio.h>
 #include "Macros.h"
@@ -17,6 +9,18 @@
 // if this is true the flash messages will erase other brightness values
 // if it is false then the flash values will be added to existing values
 bool FLASH_DOMINATES = false;
+
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// User Controls //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+/* This is the main configuration file for the Moth Framework
+ * Using this file, along with the other configuration files you
+ * Can cistomise how the firmware performs.
+ * 
+ * ----------------------- JUMPER PINS --------------------------
+ * 
+ */
+
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Local Brightness Scalers////////////////////////
@@ -141,6 +145,8 @@ bool gain_adjust_active =                false;
 
 #define PRINT_FREQ_VALS                 false
 
+#define PRINT_POT_VALS                  true
+
 //////////////////////////// FFT Printing ///////////////////////////////////
 #define PRINT_FFT_DEBUG                 false
 // for printing raw FFT values
@@ -211,7 +217,6 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
 #define JUMPERS_POPULATED               1
-
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
@@ -285,5 +290,32 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 // all the bins of intrest will have their magnitudes add up to 1, thus is best used for determining the centroid within a sub frequency range (for instance 8k - 14k or something
 #define SCALE_FFT_BIN_RANGE             false
 
+////////////////////////////////////////////////////////////////////////////
+////////////////////// Software Configurations /////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#define S_VERSION_MAJOR           0
+#define S_VERSION_MINOR           1
+#define S_SUBVERSION              1
+// version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3
+// version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
+// as well as the autobrightness calibration routine being very visible and disruptive when resetting
+// version 0.1.0 was created on 24.02.20 as it served as the first viable working song implementation
+// version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
+// how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
+// and the addition of a flag to differentiate between adding the flash brightness of just displaying
+// the brightness
+
+////////////////////////////////////////////////////////////////////////////
+////////////////////// Neopixel Managers  //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// how high the click flash timer will go up to
+#define MAX_FLASH_TIME            60
+// where the click flash timer will start
+#define MIN_FLASH_TIME            40
+// the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
+#define FLASH_DEBOUNCE_TIME       80
+
+///////////////////////////////// General Purpose Functions //////////////////////////////////
+#define SERIAL_BAUD_RATE          115200
 
 #endif // CONFIGURATION_H
