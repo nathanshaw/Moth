@@ -35,8 +35,8 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define TEENSY40                  4
 
 #define MICROCONTROLLER           TEENSY32
-#define H_VERSION_MAJOR           3
-#define H_VERSION_MINOR           0
+#define H_VERSION_MAJOR           2
+#define H_VERSION_MINOR           1
 
 #if H_VERSION_MAJOR > 1
 #define NUM_LUX_SENSORS           2
@@ -74,7 +74,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define LED_PIN                   5
 
 //////////// User Controls /////////////////
-#if H_VERSION_MAJOR == 1
+#if H_VERSION_MAJOR == 1 || H_VERSION_MAJOR == 2
 #define NUM_JUMPERS               6
 #define JMP1_PIN                  12
 #define JMP2_PIN                  11
@@ -83,6 +83,8 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define JMP5_PIN                  16
 #define JMP6_PIN                  17
 #define NUM_POTS                  0
+int jmp_pins[NUM_JUMPERS] = {JMP1_PIN, JMP2_PIN, JMP3_PIN, JMP4_PIN, JMP5_PIN,
+                             JMP6_PIN};
 
 #elif H_VERSION_MAJOR == 3
 #define NUM_JUMPERS               10

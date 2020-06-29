@@ -6,9 +6,14 @@
 #include "Macros.h"
 #include <PrintUtils.h>
 
-// if this is true the flash messages will erase other brightness values
-// if it is false then the flash values will be added to existing values
-bool FLASH_DOMINATES = false;
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// User Controls //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// should correspond to the serial number on the PCB
+#define SERIAL_ID                       6
+// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
+// depending on what functionality you want
+#define FIRMWARE_MODE                   CICADA_MODE
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// User Controls //////////////////////////////////
@@ -21,6 +26,16 @@ bool FLASH_DOMINATES = false;
  * 
  */
 
+#if H_VERSION_NUMBER == 3
+#define USER_CONTROL_POLL_RATE         1000
+#elif H_VERSION_NUMBER < 3
+#define USER_CONTROL_POLL_RATE         8000
+#endif // H_VERSION_NUMBER
+
+///////////////////////////// Brightness Thresholds ////////////////////////
+// 0.0 - 1.0 any target brightness calculated below this threshold will be discarded
+// in favor of a brightness of 0.0
+#define BRIGHTNESS_CUTTOFF_THRESHOLD  0.2
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Local Brightness Scalers////////////////////////
@@ -29,7 +44,7 @@ bool FLASH_DOMINATES = false;
 // to utalise the entire dynamic range available
 #define LBS_ACTIVE                     true
 // how often should the LBS be recalculated?
-#define LBS_TIME_FRAME                 (1000 * 60 * 3)
+#define LBS_TIME_FRAME                 (1000 * 60 * 10)
 // once the local min and max have been overwritten how long to collect readings for
 // a new min and max before using the new values?
 #define LBS_OVERLAP_TIME               (1000 * 30)
@@ -54,7 +69,6 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define SERIAL_ID                     6
 
 uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
 
@@ -76,9 +90,7 @@ bool gain_adjust_active =                false;
 // WARNING NOT IMPLEMENTED - TODO
 #define DEACTIVATE_UNDER_EXTREME_LUX     true
 
-// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
-// depending on what functionality you want
-#define FIRMWARE_MODE                   CICADA_MODE
+
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
@@ -105,11 +117,13 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LBS                       false
-//
-#define PRINT_LUX_DEBUG                 false
-#define PRINT_LUX_READINGS              false
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   false
+#define PRINT_LBS                       true
+
+// print lux debug mostly prints info about when extreme lux is entered and 
+// other things in the lux manager, it is reccomended to leave this printing on
+#define PRINT_LUX_DEBUG                 true
+#define PRINT_LUX_READINGS              true
+#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
 
 #define PRINT_SONG_DEBUG                false
 #define PRINT_SONG_BRIGHTNESS           false
@@ -118,12 +132,10 @@ bool gain_adjust_active =                false;
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
 
-#define PRINT_LED_VALUES                false
-#define PRINT_LED_DEBUG                 false
 #define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 
-#define PRINT_AUTO_GAIN                 false
+#define PRINT_AUTO_GAIN                 true
 
 #define PRINT_LOG_WRITE                 false
 #define DLM_PRINT                       false
@@ -145,7 +157,7 @@ bool gain_adjust_active =                false;
 
 #define PRINT_FREQ_VALS                 false
 
-#define PRINT_POT_VALS                  true
+#define PRINT_POT_VALS                  false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
 #define PRINT_FFT_DEBUG                 false
@@ -179,7 +191,7 @@ bool rear_lux_active  =                 true;
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               10.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
-#define MID_LUX_THRESHOLD               150.0
+#define MID_LUX_THRESHOLD               350.0
 #define HIGH_LUX_THRESHOLD              1200.0
 #define EXTREME_LUX_THRESHOLD           4000.0
 
@@ -202,15 +214,15 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 
 #define CLICK_RED                       200
 #define CLICK_GREEN                     200
-#define CLICK_BLUE                      200
+#define CLICK_BLUE                      255
 
-#define SONG_RED_LOW                    0
+#define SONG_RED_LOW                    50
 #define SONG_GREEN_LOW                  255
-#define SONG_BLUE_LOW                   0
+#define SONG_BLUE_LOW                   50
 
-#define SONG_RED_HIGH                   175
-#define SONG_GREEN_HIGH                 100
-#define SONG_BLUE_HIGH                  5
+#define SONG_RED_HIGH                   255
+#define SONG_GREEN_HIGH                 60
+#define SONG_BLUE_HIGH                  60
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////
@@ -294,8 +306,9 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 #define S_VERSION_MAJOR           0
-#define S_VERSION_MINOR           1
+#define S_VERSION_MINOR           2
 #define S_SUBVERSION              1
+// version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode
 // version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3
 // version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
 // as well as the autobrightness calibration routine being very visible and disruptive when resetting
@@ -306,8 +319,12 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 // the brightness
 
 ////////////////////////////////////////////////////////////////////////////
-////////////////////// Neopixel Managers  //////////////////////////////////
+////////////////////// Neopixel Stuff  /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+// if this is true the flash messages will erase other brightness values
+// if it is false then the flash values will be added to existing values
+bool FLASH_DOMINATES = false;
+
 // how high the click flash timer will go up to
 #define MAX_FLASH_TIME            60
 // where the click flash timer will start

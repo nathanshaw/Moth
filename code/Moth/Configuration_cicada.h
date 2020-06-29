@@ -18,8 +18,8 @@ double CLICK_THRESH =                   0.325;
 // the low filtering so only the new values will be used while 0.5 will result in the
 // average of the old and new value to be used, a higher value will be a quicker responce
 // the max value is 1.0 and the min value is 0.0
-#define BRIGHTNESS_LP_LEVEL             (double)0.75
-#define COLOR_LP_LEVEL                  (double)0.75
+#define BRIGHTNESS_LP_LEVEL             (double)0.85
+#define COLOR_LP_LEVEL                  (double)0.65
 
 ///////////////////////////////////////////////////////////// SONG /////////////////////////////////////////////////////////////////
 // TODO - add bin magnitude as a feature
@@ -63,29 +63,35 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 
 int CLICK_FEATURE =                     PEAK_DELTA;
 #define CLICK_RMS_DELTA_THRESH          0.05
-#define CLICK_PEAK_DELTA_THRESH         0.20
+#define CLICK_PEAK_DELTA_THRESH         0.17
 #define CLICK_SPECTRAL_FLUX_THRESH      100.0
 #define SPECTRAL_FLUX_SCALER            1
 
 // these values are used to ensure that the light do not turn on when there are low 
 // amplitudes in the sonic environment
 #define RMS_LOW_THRESH                  0.1
-#define PEAK_LOW_THRESH                 0.1
-
-// One click per ten minutes
-#define MIN_FPM_THRESH                  0.1
+#define PEAK_LOW_THRESH                 0.15
+/*
+ * TODO
+ */
+// one click per minute
+#define MIN_FPM_THRESH                  1 
 #define LOW_FPM_THRESH                  1.0
 #define HIGH_FPM_THRESH                 40
 #define MAX_FPM_THRESH                  60.0
 
-#define MIN_ON_RATIO_THRESH             0.10
+/*
+ *  TODO
+ */
+#define ON_RATIO_FEEDBACK               1
+#define MIN_ON_RATIO_THRESH             0.05
 #define LOW_ON_RATIO_THRESH             0.40
 #define HIGH_ON_RATIO_THRESH            0.60
 #define MAX_ON_RATIO_THRESH             0.90
 
-// #define MIN_CLICK_GAIN                  (STARTING_CLICK_GAIN * 0.5)
-// #define MAX_CLICK_GAIN                  (STARTING_CLICK_GAIN * 1.5)
-
+/*
+ * TODO
+ */
 #define CLICK_BQ1_THRESH                1200
 #define CLICK_BQ1_Q                     0.85
 #define CLICK_BQ1_DB                    -12

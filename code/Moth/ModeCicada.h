@@ -122,61 +122,67 @@ void setupAudio() {
 
 double calculateSongBrightness(uint8_t i) {
   // how much energy is stored in the range of 4000 - 16000 compared to  the entire spectrum?
-  double target_brightness = fft_features.getFFTRangeByFreq(4000, 16000) - fft_features.getFFTRangeByFreq(100, 4000);
+  // take the average of two-octave chunks from 1-4k and 250 - 1k
+  double remaining_spect_avg = 0.5 * (fft_features.getFFTRangeByFreq(250, 1000) + fft_features.getFFTRangeByFreq(1000, 4000));
+  double target_brightness = fft_features.getFFTRangeByFreq(4000, 16000) - remaining_spect_avg;
+  if (target_brightness < 0.0) {
+    target_brightness = 0.0;
+    brightness_feature_min[i] = 0.0;
+  }
+  /*
   if (target_brightness < brightness_feature_min[i]) {
     if (i == 0 && PRINT_SONG_BRIGHTNESS) {
-      Serial.print("target_B is less than feature_min: ");
-      Serial.print(target_brightness, 5);
-      Serial.print(" < ");
-      Serial.print(brightness_feature_min[i], 5);
+      dprint(PRINT_SONG_BRIGHTNESS, "target_B is less than feature_min: ");
+      dprint(PRINT_SONG_BRIGHTNESS, target_brightness, 5);
+      dprint(PRINT_SONG_BRIGHTNESS, " < ");
+      dprint(PRINT_SONG_BRIGHTNESS, brightness_feature_min[i], 5);
     }
     brightness_feature_min[i] = (target_brightness * 0.15) + (brightness_feature_min[i] * 0.85);
     if (i == 0 && PRINT_SONG_BRIGHTNESS) {
-      Serial.print(" updated brightness_min and target_brightness to: ");
-      Serial.println(brightness_feature_min[i], 5);
+      dprint(PRINT_SONG_BRIGHTNESS, " updated brightness_min and target_brightness to: ");
+      dprintln(PRINT_SONG_BRIGHTNESS, brightness_feature_min[i], 5);
     }
     target_brightness = brightness_feature_min[i];
   }
+  */
   if (target_brightness > brightness_feature_max[i]) {
-
     if (i == 0 && PRINT_SONG_BRIGHTNESS) {
-      Serial.print("target_B is more than feature_max: ");
-      Serial.print(target_brightness, 5);
-      Serial.print(" > ");
-      Serial.print(brightness_feature_max[i], 5);
+      dprint(PRINT_SONG_BRIGHTNESS, "target_B is more than feature_max: ");
+      dprint(PRINT_SONG_BRIGHTNESS, target_brightness, 5);
+      dprint(PRINT_SONG_BRIGHTNESS, " > ");
+      dprintln(PRINT_SONG_BRIGHTNESS, brightness_feature_max[i], 5);
     }
-    brightness_feature_max[i] = (target_brightness * 0.15) + (brightness_feature_max[i] * 0.85);
+    brightness_feature_max[i] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (brightness_feature_max[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
     // to ensure that loud clipping events do not skew things too much
     if (brightness_feature_max[i] > 1.0) {
       brightness_feature_max[i] = 1.0;
     }
     if (i == 0 && PRINT_SONG_BRIGHTNESS) {
-      Serial.print(" updated brightness_max and target_brightness to: ");
-      Serial.println(brightness_feature_max[i], 5);
+      dprint(PRINT_SONG_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
+      dprintln(PRINT_SONG_BRIGHTNESS, brightness_feature_max[i], 5);
     }
     target_brightness = brightness_feature_max[i];
   }
-  dprintln(PRINT_SONG_BRIGHTNESS);
   dprint(PRINT_SONG_BRIGHTNESS, "channel ");
   dprint(PRINT_SONG_BRIGHTNESS, i);
-  dprint(PRINT_SONG_BRIGHTNESS, " target - min/max ");
+  dprint(PRINT_SONG_BRIGHTNESS, " target: ");
   dprint(PRINT_SONG_BRIGHTNESS, target_brightness);
-  dprint(PRINT_SONG_BRIGHTNESS, " - ");
+  dprint(PRINT_SONG_BRIGHTNESS, "\tmin: ");
   dprint(PRINT_SONG_BRIGHTNESS, brightness_feature_min[i]);
-  dprint(PRINT_SONG_BRIGHTNESS, " / ");
-  dprintln(PRINT_SONG_BRIGHTNESS, brightness_feature_max[i]);
-
-  target_brightness = (target_brightness - brightness_feature_min[i]) / (brightness_feature_max[i] - brightness_feature_min[i]);
+  dprint(PRINT_SONG_BRIGHTNESS, "\tmax: ");
+  dprint(PRINT_SONG_BRIGHTNESS, brightness_feature_max[i]);  
   // to ensure the unit is not always on
-  if (target_brightness < 0.15) {
+  // instead of comparing the brightness to the cuttoff_threshold
+  // we subtract the cuttoff_threshold from both the target and the max
+  target_brightness = (target_brightness - brightness_feature_min[i]) / (brightness_feature_max[i] - brightness_feature_min[i]);
+  target_brightness = target_brightness - BRIGHTNESS_CUTTOFF_THRESHOLD;
+  if (target_brightness < 0.0) {
     target_brightness = 0.0;
   } else if (target_brightness > 1.0) {
     target_brightness = 1.0;
   }
-  dprint(PRINT_SONG_BRIGHTNESS, "target_brightness(2): ");
-  dprint(PRINT_SONG_BRIGHTNESS, target_brightness);
-  dprint(PRINT_SONG_BRIGHTNESS, " ");
-
+  dprint(PRINT_SONG_BRIGHTNESS, " adjusted: ");
+  dprintln(PRINT_SONG_BRIGHTNESS, target_brightness);
   return target_brightness;
 }
 
@@ -202,7 +208,8 @@ void updateSong() {
   /////////////////// Color ////////////////////////////////////////
   target_color = calculateSongColor();
   last_color = current_color;
-  current_color = (target_color * 0.5) + (last_color * 0.5);// * COLOR_LP_LEVEL);
+  // current_color = (target_color * 0.5) + (last_color * 0.5);// * COLOR_LP_LEVEL);
+  current_color = (target_color * COLOR_LP_LEVEL) + (last_color * (1.0 - COLOR_LP_LEVEL));
   // current_color[i] = current_color[i] + (last_color[i] * (1.0 - COLOR_LP_LEVEL));
   dprint(PRINT_SONG_COLOR, "target_color: ");
   dprint(PRINT_SONG_COLOR, target_color);
@@ -225,8 +232,7 @@ void updateSong() {
     }
   }
   last_brightness[0] = current_brightness[0];
-  current_brightness[0] = (target_brightness * 0.8) + (last_brightness[0] * 0.2);
-  // current_brightness[i] = current_brightness[i] + (last_brightness[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
+  current_brightness[0] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (last_brightness[0] * (1.0 - BRIGHTNESS_LP_LEVEL));
 
   dprint(PRINT_SONG_BRIGHTNESS, "last/current_brightness[");
   dprint(PRINT_SONG_BRIGHTNESS, 0);
