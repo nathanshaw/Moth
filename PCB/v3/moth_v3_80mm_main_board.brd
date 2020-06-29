@@ -192,10 +192,10 @@
 <hole x="-22" y="-31" drill="4"/>
 <hole x="22" y="-31" drill="4"/>
 <hole x="0" y="38" drill="4"/>
-<text x="-16.4338" y="26.289" size="1.27" layer="25" font="vector" ratio="12" rot="R180" align="center">POT_1</text>
-<text x="-5.4102" y="18.8722" size="1.27" layer="25" font="vector" ratio="12" align="center">POT_2</text>
-<text x="5.715" y="18.923" size="1.27" layer="25" font="vector" ratio="12" align="center">POT_3</text>
-<text x="16.51" y="26.2382" size="1.27" layer="25" font="vector" ratio="12" rot="R180" align="center">POT_4</text>
+<text x="-16.4338" y="26.289" size="1.524" layer="25" font="vector" ratio="12" rot="R180" align="center">POT_1</text>
+<text x="-5.4102" y="18.8722" size="1.524" layer="25" font="vector" ratio="12" align="center">POT_2</text>
+<text x="5.715" y="18.923" size="1.524" layer="25" font="vector" ratio="12" align="center">POT_3</text>
+<text x="16.51" y="26.2382" size="1.524" layer="25" font="vector" ratio="12" rot="R180" align="center">POT_4</text>
 <text x="-6.5024" y="-7.6454" size="1.016" layer="25" font="vector" ratio="12" rot="R90" align="center">300R</text>
 <text x="-27.4574" y="6.35" size="2.032" layer="25" ratio="12">ID #</text>
 <rectangle x1="-28.448" y1="-2.6416" x2="-21.5392" y2="6.096" layer="25"/>
@@ -3617,6 +3617,9 @@ design rules under a new name.</description>
 <wire x1="25.794315625" y1="-17.488525" x2="27.39734375" y2="-19.26934375" width="1.016" layer="16"/>
 <wire x1="27.39734375" y1="-19.26934375" x2="29.8704" y2="-21.336" width="1.016" layer="16"/>
 <wire x1="28.420790625" y1="-17.620546875" x2="27.39734375" y2="-19.26934375" width="1.016" layer="16"/>
+<via x="10.53174375" y="-31.25814375" extent="1-16" drill="1"/>
+<wire x1="10.53174375" y1="-31.25814375" x2="10.53174375" y2="-29.174890625" width="1.016" layer="16"/>
+<wire x1="10.53174375" y1="-29.174890625" x2="10.5305875" y2="-29.173734375" width="1.016" layer="16"/>
 <wire x1="8.628471875" y1="29.79176875" x2="8.62846875" y2="29.79176875" width="0" layer="19" extent="1-16"/>
 <wire x1="-31" y1="-1" x2="-31" y2="-1" width="0" layer="19" extent="1-16"/>
 <wire x1="-8.628471875" y1="-29.79176875" x2="-8.62846875" y2="-29.79176875" width="0" layer="19" extent="1-16"/>
