@@ -17,6 +17,7 @@ elapsedMillis last_jumper_read = 100000;
 
 void updateFeatureCollectors() {
   // update the feature collectors
+  fft_features.updateFFT();
 #if NUM_FEATURE_COLLECTORS == 1
   fc.update();
 #endif
@@ -34,7 +35,7 @@ void updateLuxManagers() {
     for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
       lux_managers[i].update();
     }
-#else
+#elsef
     lux_manager.update();
 #endif
   }
@@ -116,7 +117,7 @@ void readUserControls() {
 #if H_VERSION_MAJOR > 2
     readPots();
 #endif // H_VERSION_MAJOR
-    readJumpers();
+    readJumpers(); 
     last_jumper_read = 0;
   }
 }
@@ -299,18 +300,25 @@ void setup() {
     neos[i].setFlashBehaviour(FLASH_DOMINATES);
     // neos[i].setSongFeedbackMode(ROUND);
   }
-  for (int i = 0; i < NUM_LED; i++) {
-    leds.setPixel(i, 0, 0, 0);
-    leds.show();
-  }
+
 
   //////////////////////////// Lux Sensors //////////////////////////////
   if (LUX_SENSORS_ACTIVE) {
     Serial.println("---------------------------------------------");
     Serial.println("turning off LEDs for Lux Calibration");
+    for (int i = 0; i < NUM_LED; i++) {
+      leds.setPixel(i, 0, 0, 0);
+    }
+    leds.show();
+    Serial.println("LEDS off");
+    delay(500);
     // todo make this proper
 #if H_VERSION_MAJOR > 2
-    lux_manager.add6030Sensors();
+    lux_manager.add6030Sensors(0.125, 25);
+    lux_manager.linkNeoGroup(&neos[0]);
+    lux_manager.linkNeoGroup(&neos[0]);
+    delay(200);
+    lux_manager.calibrate(LUX_CALIBRATION_TIME);
 #else
     lux_manager.addSensorTcaIdx("Front", 0);
     lux_manager.addSensorTcaIdx("Rear", 1);
@@ -395,11 +403,14 @@ void listenForSerialCommands() {
 }
 
 void loop() {
-  updateLuxManagers();
-  updateFeatureCollectors();
-  updateMode();
-  // updateAutogain();
-  updateDatalog();
-  readUserControls();
-  listenForSerialCommands();
+  if (loop_tmr > loop_length) {
+    updateLuxManagers();
+    updateFeatureCollectors();
+    updateMode();
+    updateAutogain();
+    updateDatalog();
+    readUserControls();
+    listenForSerialCommands();
+    loop_tmr = 0;
+  }
 }

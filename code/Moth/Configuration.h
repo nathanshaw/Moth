@@ -10,10 +10,24 @@
 /////////////////////////// User Controls //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // should correspond to the serial number on the PCB
-#define SERIAL_ID                       6
+#define SERIAL_ID                       3
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
 #define FIRMWARE_MODE                   CICADA_MODE
+
+#define CLICK_ACTIVE                    false
+
+// if set to true an audio USB object will be created so the audio can be debuged via Audacity
+#define AUDIO_USB_DEBUG                 false
+
+// if stereo feedback is set to true than only audio from both channels will be used to calculate visual feedback brightness and color
+// not generally recommended...
+#define STEREO_FEEDBACK                 false
+
+
+#define MAX_FPS                         60.0
+elapsedMillis loop_tmr = 0; 
+uint32_t loop_length = (uint32_t)((double)1000.0 / (double)MAX_FPS);
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// User Controls //////////////////////////////////
@@ -117,17 +131,28 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LBS                       true
+#define PRINT_LBS                       false
 
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
 #define PRINT_LUX_DEBUG                 true
 #define PRINT_LUX_READINGS              true
 #define PRINT_BRIGHTNESS_SCALER_DEBUG   true
+#define PRINT_CALCULATE_BRIGHTNESS_LENGTH false 
 
 #define PRINT_SONG_DEBUG                false
 #define PRINT_SONG_BRIGHTNESS           false
 #define PRINT_SONG_COLOR                false
+
+
+// basically do you want to print the number of song updates which occur every second?
+#define PRINT_NUM_SONG_UPDATES          true
+#if PRINT_NUM_SONG_UPDATES == 1
+uint16_t song_updates = 0;
+elapsedMillis song_update_timer = 0;
+#endif // PRINT_NUM_SONG_UPDATES
+
+#define PRINT_UPDATE_SONG_LENGTH        false
 
 #define PRINT_CLICK_FEATURES            false
 #define PRINT_CLICK_DEBUG               false
@@ -135,7 +160,7 @@ bool gain_adjust_active =                false;
 #define PRINT_LED_ON_RATIO_DEBUG        false
 #define PRINT_COLOR_WIPE_DEBUG          false
 
-#define PRINT_AUTO_GAIN                 true
+#define PRINT_AUTO_GAIN                 false
 
 #define PRINT_LOG_WRITE                 false
 #define DLM_PRINT                       false
@@ -158,6 +183,8 @@ bool gain_adjust_active =                false;
 #define PRINT_FREQ_VALS                 false
 
 #define PRINT_POT_VALS                  false
+
+#define PRINT_AUDIO_USAGE_MAX           true
 
 //////////////////////////// FFT Printing ///////////////////////////////////
 #define PRINT_FFT_DEBUG                 false
@@ -308,7 +335,8 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 #define S_VERSION_MAJOR           0
 #define S_VERSION_MINOR           2
 #define S_SUBVERSION              1
-// version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode
+// version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode as well as
+//   improving the frame rate from 8 to 29, and adding support for PCB v3 in Cicada mode (minus the click)
 // version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3
 // version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
 // as well as the autobrightness calibration routine being very visible and disruptive when resetting

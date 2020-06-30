@@ -73,16 +73,20 @@ AudioFilterBiquad        biquad1;        //xy=219.00390625,270.00391578674316
 AudioAmplifier           amp2;           //xy=378.79129791259766,302.57704162597656
 AudioAmplifier           amp1;           //xy=380.2198715209961,264.0055875778198
 AudioAnalyzePeak         peak2;          //xy=517.0039100646973,316.003924369812
-AudioOutputUSB           usb1;           //xy=519.142822265625,284.71433544158936
 AudioAnalyzePeak         peak1;          //xy=521.00390625,221.0039176940918
 AudioAnalyzeFFT1024      input_fft;      //xy=521.3627586364746,251.71987438201904
+
+#if DEBUG_USB_AUDIO > 0
+AudioOutputUSB           usb1;           //xy=519.142822265625,284.71433544158936
+AudioConnection          patchCord5(amp2, 0, usb1, 1);
+AudioConnection          patchCord7(amp1, 0, usb1, 0);
+#endif // DEBUG_USB_AUDIO
+
 AudioConnection          patchCord1(i2s1, 0, biquad1, 0);
 AudioConnection          patchCord2(i2s1, 1, biquad2, 0);
 AudioConnection          patchCord3(biquad2, amp2);
 AudioConnection          patchCord4(biquad1, amp1);
-AudioConnection          patchCord5(amp2, 0, usb1, 1);
 AudioConnection          patchCord6(amp2, peak2);
-AudioConnection          patchCord7(amp1, 0, usb1, 0);
 AudioConnection          patchCord8(amp1, input_fft);
 AudioConnection          patchCord9(amp1, peak1);
 ////////////////////////////////////////////////////////////////////////////////////
@@ -123,8 +127,15 @@ void setupAudio() {
 double calculateSongBrightness(uint8_t i) {
   // how much energy is stored in the range of 4000 - 16000 compared to  the entire spectrum?
   // take the average of two-octave chunks from 1-4k and 250 - 1k
-  double remaining_spect_avg = 0.5 * (fft_features.getFFTRangeByFreq(250, 1000) + fft_features.getFFTRangeByFreq(1000, 4000));
-  double target_brightness = fft_features.getFFTRangeByFreq(4000, 16000) - remaining_spect_avg;
+  #if PRINT_CALCULATE_BRIGHTNESS_LENGTH > 0
+  uint32_t _start = millis();
+  #endif
+
+  // 250 - 1k Hz is idx 5-23 
+  // 1k -4k Hz is idx 23-93
+  // 4k - 16k Hz is idx 93 - 372
+  double remaining_spect_avg = 0.5 * (fft_features.getFFTRangeByIdx(5, 23) + fft_features.getFFTRangeByIdx(23, 93));
+  double target_brightness = fft_features.getFFTRangeByIdx(93, 372) - remaining_spect_avg;
   if (target_brightness < 0.0) {
     target_brightness = 0.0;
     brightness_feature_min[i] = 0.0;
@@ -183,6 +194,10 @@ double calculateSongBrightness(uint8_t i) {
   }
   dprint(PRINT_SONG_BRIGHTNESS, " adjusted: ");
   dprintln(PRINT_SONG_BRIGHTNESS, target_brightness);
+  #if PRINT_CALCULATE_BRIGHTNESS_LENGTH > 0
+  Serial.print("calculateSongBrightness() function call length: ");
+  Serial.println(millis() - _start);
+  #endif
   return target_brightness;
 }
 
@@ -202,21 +217,32 @@ double calculateSongColor() {
 }
 
 void updateSong() {
+#if PRINT_NUM_SONG_UPDATES == 1
+  song_updates++;
+  uint32_t m = song_update_timer;
+  if (song_update_timer > 1000) {
+    Serial.print("song updates in last second: ");
+    Serial.println(song_updates);
+    song_updates = 0;
+    song_update_timer = 0;
+  }
+  #endif // PRINT_NUM_SONG_UPDATES
   double target_color = 0.0;        // 0.0 - 1.0
   uint8_t red, green, blue;
 
   /////////////////// Color ////////////////////////////////////////
   target_color = calculateSongColor();
   last_color = current_color;
-  // current_color = (target_color * 0.5) + (last_color * 0.5);// * COLOR_LP_LEVEL);
   current_color = (target_color * COLOR_LP_LEVEL) + (last_color * (1.0 - COLOR_LP_LEVEL));
-  // current_color[i] = current_color[i] + (last_color[i] * (1.0 - COLOR_LP_LEVEL));
+
+  #if PRINT_SONG_COLOR > 0
   dprint(PRINT_SONG_COLOR, "target_color: ");
   dprint(PRINT_SONG_COLOR, target_color);
   dprint(PRINT_SONG_COLOR, "\tlast_color: ");
   dprint(PRINT_SONG_COLOR, last_color);
   dprint(PRINT_SONG_COLOR, "\tcurrent_color: ");
   dprint(PRINT_SONG_COLOR, current_color);
+  #endif
 
   ////////////////// Calculate Actual Values ///////////////////////
   red = ((1.0 - current_color) * SONG_RED_LOW) + (current_color * SONG_RED_HIGH);
@@ -226,7 +252,12 @@ void updateSong() {
   double target_brightness = 0.0;
   for (int i = 0; i < num_channels; i++) {
     /////////////////// Brightness ///////////////////////////////////
-    double __brightness = calculateSongBrightness(i);
+    double __brightness = 0.0;
+    if (target_brightness == 0.0) {
+      __brightness = calculateSongBrightness(i);
+    } else if (STEREO_FEEDBACK == true) {
+      __brightness = calculateSongBrightness(i);
+    }
     if (__brightness > target_brightness) {
       target_brightness = __brightness;
     }
@@ -234,23 +265,27 @@ void updateSong() {
   last_brightness[0] = current_brightness[0];
   current_brightness[0] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (last_brightness[0] * (1.0 - BRIGHTNESS_LP_LEVEL));
 
+  #if PRINT_SONG_BRIGHTNESS > 0
   dprint(PRINT_SONG_BRIGHTNESS, "last/current_brightness[");
   dprint(PRINT_SONG_BRIGHTNESS, 0);
   dprint(PRINT_SONG_BRIGHTNESS, "]: ");
   dprint(PRINT_SONG_BRIGHTNESS, last_brightness[0]);
   dprint(PRINT_SONG_BRIGHTNESS, " => ");
   dprintln(PRINT_SONG_BRIGHTNESS, current_brightness[0]);
+  #endif
 
   red = (uint8_t)((double)red * current_brightness[0]);
   green = (uint8_t)((double)green * current_brightness[0]);
   blue = (uint8_t)((double)blue * current_brightness[0]);
-
+  
+  #if PRINT_SONG_COLOR > 0
   dprint(PRINT_SONG_COLOR, " r: ");
   dprint(PRINT_SONG_COLOR, red);
   dprint(PRINT_SONG_COLOR, " g: ");
   dprint(PRINT_SONG_COLOR, green);
   dprint(PRINT_SONG_COLOR, " b: ");
   dprintln(PRINT_SONG_COLOR, blue);
+  #endif
 
   for (int i = 0; i < num_channels; i++) {
     neos[i].colorWipe(red, green, blue, 1.0);
@@ -268,6 +303,10 @@ void updateSong() {
     dprintln(PRINT_SONG_DEBUG, "reset song feature min and max for cent and brightness ");
     feature_reset_tmr = 0;
   }
+  #if PRINT_UPDATE_SONG_LENGTH == 1
+  Serial.print("updateSong() function call length: ");
+  Serial.println(song_update_timer - m);
+  #endif // PRINT_NUM_SONG_UPDATES
 }
 
 double updateScalers(double val, double & min, double & max, double rate) {
@@ -316,7 +355,9 @@ void updateClick() {
     Serial.println(click_cent, 8);
   */
   //////////////////////////// Energy between 1k - 3k //////////////////
-  double range_rms = fft_features.getFFTRangeByFreq(1000, 2000);
+  // using the bins instead of the hard coded frequencies saves some cycles
+  // double range_rms = fft_features.getFFTRangeByFreq(1000, 2000);
+  double range_rms = fft_features.getFFTRangeByIdx(23, 46);
   range_rms = updateScalers(range_rms, min_rrms, max_rrms, 0.5);
   last_range_rms = click_rrms;
   click_rrms = ((range_rms - min_rrms) / (max_rrms - min_rrms));
@@ -384,9 +425,15 @@ void updateMode() {
     return;
   }
   updateSong();
+  
+  #if CLICK_ACTIVE > 0
   updateClick();
-  // Serial.print("audio memory max: ");
-  // Serial.print(AudioMemoryUsageMax());
+  #endif 
+  
+  #if PRINT_AUDIO_MEMORY_MAX > 0
+    Serial.print("audio memory max: ");
+    Serial.print(AudioMemoryUsageMax());
+  #endif
 }
 
 

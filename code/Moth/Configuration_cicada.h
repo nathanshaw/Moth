@@ -40,6 +40,8 @@ int SONG_COLOR_FEATURE =                SPECTRAL_CENTROID;
 // this is the gain that the input amps will be set at at the start of the installation
 // #define STARTING_SONG_GAIN              8.0
 // #define STARTING_CLICK_GAIN             16.0
+
+// 30.0 is good for testing when no enclosure is present, but a higher value should be used when an enclosure is present
 #define STARTING_GAIN                   30.0
 
 #define SONG_BQ1_THRESH                 4000
