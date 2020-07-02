@@ -76,7 +76,7 @@ AudioAnalyzePeak         peak2;          //xy=517.0039100646973,316.003924369812
 AudioAnalyzePeak         peak1;          //xy=521.00390625,221.0039176940918
 AudioAnalyzeFFT1024      input_fft;      //xy=521.3627586364746,251.71987438201904
 
-#if DEBUG_USB_AUDIO > 0
+#if AUDIO_USB_DEBUG > 0
 AudioOutputUSB           usb1;           //xy=519.142822265625,284.71433544158936
 AudioConnection          patchCord5(amp2, 0, usb1, 1);
 AudioConnection          patchCord7(amp1, 0, usb1, 0);
@@ -274,9 +274,9 @@ void updateSong() {
   dprintln(PRINT_SONG_BRIGHTNESS, current_brightness[0]);
   #endif
 
-  red = (uint8_t)((double)red * current_brightness[0]);
-  green = (uint8_t)((double)green * current_brightness[0]);
-  blue = (uint8_t)((double)blue * current_brightness[0]);
+  // red = (uint8_t)((double)red * current_brightness[0]);
+  // green = (uint8_t)((double)green * current_brightness[0]);
+  // blue = (uint8_t)((double)blue * current_brightness[0]);
   
   #if PRINT_SONG_COLOR > 0
   dprint(PRINT_SONG_COLOR, " r: ");
@@ -288,7 +288,7 @@ void updateSong() {
   #endif
 
   for (int i = 0; i < num_channels; i++) {
-    neos[i].colorWipe(red, green, blue, 1.0);
+    neos[i].colorWipe(red, green, blue, current_brightness[0]);
   }
   /////////////////// LOCAL SCALER RESET //////////////////////////
   // this needs to be after the rest of the logic in this function

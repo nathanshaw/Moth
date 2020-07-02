@@ -220,11 +220,13 @@ void readJumpers() {
   Serial.println(MASTER_SENSITIVITY_SCALER);
 #if H_VERSION_MAJOR > 2
   ///////////// Jumper 7 //////////////////////
+  ///////////// Center Out Mapping ////////////
   temp_b = digitalRead(JMP7_PIN);
   if (temp_b == 1) {
-    Serial.print("(pin7)  - ON  - TODO");
+    Serial.print("(pin7)  - ON  - FEEDBACK MODE SET TO CENTER_OUT");
+    LED_MAPPING_MODE = LED_MAPPING_CENTER_OUT;
   } else {
-    Serial.print("(pin7)  - OFF - TODO");
+    Serial.print("(pin7)  - OFF - FEEDBACK MODE remains STANDARD");
   }
 
   ///////////// Jumper 8 //////////////////////
@@ -285,6 +287,7 @@ void setup() {
     leds.setPixel(i, 12, 12, 0);
     leds.show();
   }
+
   Serial.println("-----------------------------");
   Serial.println("LEDS have been initalised");
   Serial.print("There are ");
@@ -298,6 +301,7 @@ void setup() {
     neos[i].setFlashColors(CLICK_RED, CLICK_GREEN, CLICK_BLUE);
     neos[i].setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
     neos[i].setFlashBehaviour(FLASH_DOMINATES);
+    neos[i].changeMapping(LED_MAPPING_MODE);
     // neos[i].setSongFeedbackMode(ROUND);
   }
 

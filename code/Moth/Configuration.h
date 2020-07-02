@@ -10,7 +10,7 @@
 /////////////////////////// User Controls //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // should correspond to the serial number on the PCB
-#define SERIAL_ID                       3
+#define SERIAL_ID                       4
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
 #define FIRMWARE_MODE                   CICADA_MODE
@@ -18,7 +18,7 @@
 #define CLICK_ACTIVE                    false
 
 // if set to true an audio USB object will be created so the audio can be debuged via Audacity
-#define AUDIO_USB_DEBUG                 false
+#define AUDIO_USB_DEBUG                 true
 
 // if stereo feedback is set to true than only audio from both channels will be used to calculate visual feedback brightness and color
 // not generally recommended...
@@ -220,8 +220,11 @@ bool rear_lux_active  =                 true;
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               350.0
 #define HIGH_LUX_THRESHOLD              1200.0
+#if H_VERSION_MAJOR , 3
 #define EXTREME_LUX_THRESHOLD           4000.0
-
+#else
+#define EXTREME_LUX_THRESHOLD           6000.0
+#endif
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
 #define BRIGHTNESS_SCALER_MIN           0.125
 #define BRIGHTNESS_SCALER_MAX           2.00
@@ -362,5 +365,13 @@ bool FLASH_DOMINATES = false;
 
 ///////////////////////////////// General Purpose Functions //////////////////////////////////
 #define SERIAL_BAUD_RATE          115200
+
+#define LED_MAPPING_STANDARD 0
+#define LED_MAPPING_BOTTOM_UP 1
+#define LED_MAPPING_ROUND 2
+#define LED_MAPPING_CENTER_OUT 3
+
+// TODO need to add this to 
+uint8_t LED_MAPPING_MODE = LED_MAPPING_CENTER_OUT;
 
 #endif // CONFIGURATION_H
