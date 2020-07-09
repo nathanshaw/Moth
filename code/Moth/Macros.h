@@ -82,7 +82,7 @@
 
 /*
   //updateLoopLength();
-  #if PRINT_LOOP_LENGTH == true
+  #if P_LOOP_LENGTH == true
   elapsedMicros loop_length = 0;
   unsigned long num_loops = 0;
   unsigned long loop_totals = 0;

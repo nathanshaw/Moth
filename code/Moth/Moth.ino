@@ -5,13 +5,7 @@
 */
 #include "Configuration.h"
 #include "Configuration_datalogging.h"
-#if FIRMWARE_MODE == CICADA_MODE
-#include "ModeCicada.h"
-#elif FIRMWARE_MODE == PITCH_MODE
-#include "ModePitch.h"
-#elif FIRMWARE_MODE == TEST_MODE
-#include "ModeTest.h"
-#endif
+#include "Mode.h"
 
 elapsedMillis last_jumper_read = 100000;
 
@@ -35,13 +29,14 @@ void updateLuxManagers() {
     for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
       lux_managers[i].update();
     }
-#elsef
+#else
     lux_manager.update();
 #endif
   }
 }
 
 bool testJumpers() {
+  Serial.println("Testing the PCB for jumpers");
   delay(2000);
   bool populated = true;
   bool values[10];
@@ -58,7 +53,7 @@ bool testJumpers() {
   values[9] = digitalRead(JMP10_PIN);
 #endif // h_version_major > 2
   printMinorDivide();
-  Serial.println("Testing the PCB for jumpers");
+
   for (int i = 0; i < 10; i++) {
     if (values[0] != digitalRead(JMP1_PIN)) {
       populated = false;
@@ -84,6 +79,7 @@ bool testJumpers() {
       populated = false;
       Serial.println("JMP6_PIN returned multiple values");
     }
+
 #if H_VERSION_MAJOR > 2
     if (values[6] != digitalRead(JMP7_PIN)) {
       populated = false;
@@ -101,7 +97,11 @@ bool testJumpers() {
       populated = false;
       Serial.println("JMP10_PIN returned multiple values");
     }
+
 #endif // H_VERSION_MAJOR > 2
+    if (populated == true) {
+      Serial.print(".");
+    }
     delay(50);
   }
   if (populated == true) {
@@ -113,14 +113,21 @@ bool testJumpers() {
 }
 
 void readUserControls() {
-  if (JUMPERS_POPULATED == true && last_jumper_read > USER_CONTROL_POLL_RATE) {
-#if H_VERSION_MAJOR > 2
-    readPots();
-#endif // H_VERSION_MAJOR
-    readJumpers(); 
-    last_jumper_read = 0;
+  if (JUMPERS_POPULATED != true) {
+    Serial.println("Sorry jumpers not populated, exiting readUserControl()");
+    return;
   }
+  if (last_jumper_read < USER_CONTROL_POLL_RATE) {
+    // dprintln(P_USER_CONTROLS, "Sorry the last reading was too resceent exiting readUserControl();");
+    return;
+  }
+#if H_VERSION_MAJOR > 2
+  readPots();
+#endif // H_VERSION_MAJOR
+  readJumpers();
+  last_jumper_read = 0;
 }
+
 
 #if H_VERSION_MAJOR > 2
 void readPots() {
@@ -129,13 +136,22 @@ void readPots() {
       pot_vals[i] = 1023 - analogRead(pot_pins[i]);
     }
   }
-  if (PRINT_POT_VALS) {
+  if (USER_BRIGHTNESS_OVERDRIVE == true){
+    double scaled_brightness = (double) pot_vals[BS_POT_NUM] / 1023;
+    scaled_brightness = (scaled_brightness * (POT_BS_MAX - POT_BS_MIN)) + POT_BS_MIN;
+    Serial.print("scaled_brightness from POT is now: ");
+    Serial.println(scaled_brightness);
+    for (int i = 0; i < NUM_NEO_GROUPS; i++) {
+      neos[i].updateUserBrightnessScaler(scaled_brightness);
+    }
+  }
+  if (P_POT_VALS) {
     printPots();
   }
 }
 
 void printPots() {
-  Serial.println("-------------------------------------------");
+  printMinorDivide();
   Serial.print("Pot vals: ");
   for (int i = 0; i < NUM_POTS; i++) {
     Serial.print(pot_vals[i]);
@@ -146,7 +162,7 @@ void printPots() {
 #endif // H_VERSION_MAJOR > 2
 
 void readJumpers() {
-  Serial.println("-------------------------------------------");
+  printMinorDivide();
   //////////// Jumper 1 ///////////////////////
   bool temp_b;
   ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
@@ -187,22 +203,23 @@ void readJumpers() {
   double total_scaler = 0.0;
   temp_b = digitalRead(JMP4_PIN);
   if (temp_b == 1) {
-    Serial.println("(pin4)  - ON  - MASTER_SENSITIVITY_SCALER not decreased by 50%");
+    Serial.print("(pin4)  - ON  - MASTER_SENSITIVITY_SCALER not decreased by 50% : ");
   } else {
-    Serial.println("(pin4)  - OFF - MASTER_SENSITIVITY_SCALER decreased by 50%");
+    Serial.print("(pin4)  - OFF - MASTER_SENSITIVITY_SCALER decreased by 50% : ");
     total_scaler -= 0.5;
   }
-
+  Serial.println(total_scaler);
   ///////////// Jumper 5 //////////////////////
   //////////// Minor Sensitivity Boost ///////////////
 
   temp_b = digitalRead(JMP5_PIN);
   if (temp_b == 1) {
     total_scaler += 0.5;
-    Serial.println("(pin5)  - ON  - MASTER_SENSITIVITY_SCALER increased by 50% : ");
+    Serial.print("(pin5)  - ON  - MASTER_SENSITIVITY_SCALER increased by 50% : ");
   } else {
-    Serial.println("(pin5)  - OFF - MASTER_SENSITIVITY_SCALER not increased by 50% : ");
+    Serial.print("(pin5)  - OFF - MASTER_SENSITIVITY_SCALER not increased by 50% : ");
   }
+  Serial.println(total_scaler);
 
   ///////////// Jumper 6 //////////////////////
   //////////// Major Sensitivity Boost ////////////////
@@ -213,11 +230,7 @@ void readJumpers() {
   } else {
     Serial.print("(pin6)  - OFF - MASTER_SENSITIVITY_SCALER not increased by 100% : ");
   }
-  MASTER_SENSITIVITY_SCALER = 1.0;
-  MASTER_SENSITIVITY_SCALER += total_scaler;
-
-  Serial.print("\n MASTER_SENSITIVITY_SCALER set to : ");
-  Serial.println(MASTER_SENSITIVITY_SCALER);
+  Serial.println(total_scaler);
 #if H_VERSION_MAJOR > 2
   ///////////// Jumper 7 //////////////////////
   ///////////// Center Out Mapping ////////////
@@ -227,6 +240,7 @@ void readJumpers() {
     LED_MAPPING_MODE = LED_MAPPING_CENTER_OUT;
   } else {
     Serial.print("(pin7)  - OFF - FEEDBACK MODE remains STANDARD");
+    LED_MAPPING_MODE = LED_MAPPING_STANDARD;
   }
 
   ///////////// Jumper 8 //////////////////////
@@ -255,14 +269,15 @@ void readJumpers() {
     Serial.print("(pin10) - OFF - TODO");
   }
 #endif // H_VERSION_MAJOR > 2
+  MASTER_SENSITIVITY_SCALER = 1.0;
   MASTER_SENSITIVITY_SCALER += total_scaler;
+  Serial.print("\n\nMASTER_SENSITIVITY_SCALER set to : ");
+  Serial.println(MASTER_SENSITIVITY_SCALER);
   Serial.println();
   printMinorDivide();
 }
 
 void setupUserControls() {
-  Serial.println("Jumpers passed continuity test...");
-  printMinorDivide();
   for (int i = 0; i < NUM_JUMPERS; i++) {
     pinMode(jmp_pins[i], INPUT);
   }
@@ -274,29 +289,48 @@ void setupUserControls() {
 }
 
 void setup() {
+  ///////////////// Serial ///////////////////////////////////
   delay(2000); // to avoid booting to the bootloader
   Serial.begin(SERIAL_BAUD_RATE);
+  delay(1000);// so that our Serial messages will appear
+  printDivide();
+  Serial.println("Entering the Setup Loop");
   Serial.println("Serial begun");
+  printMinorDivide();
+  //////////////// Hardware Version //////////////////////////
+  Serial.print("Firmware was compiled for a PCB with a hardware revsion of : ");
+  Serial.print(H_VERSION_MAJOR);
+  Serial.print(".");
+  Serial.println(H_VERSION_MINOR);
+  printMinorDivide();
+  //////////////// User Controls /////////////////////////////
   explainSerialCommands();
   setupUserControls();
   testJumpers();
   readUserControls();
-  //////////////// Leds //////////////////////
+  //////////////// Leds //////////////////////////////////////
   leds.begin();
   for (int i = 0; i < NUM_LED; i++) {
     leds.setPixel(i, 12, 12, 0);
     leds.show();
   }
 
-  Serial.println("-----------------------------");
+  printMinorDivide();
   Serial.println("LEDS have been initalised");
   Serial.print("There are ");
   Serial.print(NUM_LED);
   Serial.println(" LEDs");
-  delay(3000); Serial.println("Setup Loop has started");
-  setupDLManagerCicada();
+  delay(3000);
+  printMinorDivide();
+  ///////////////////////// Audio //////////////////////////
   setupAudio();
-
+  Serial.print("global_peak_scaler = ");
+  Serial.println(global_peak_scaler);
+  Serial.print("global_rms_scaler  = ");
+  Serial.println(global_rms_scaler);
+  Serial.print("global_fft_scaler  = ");
+  Serial.println(global_fft_scaler);
+  ///////////////////////// NeoPixels //////////////////////////
   for (int i = 0; i < NUM_NEO_GROUPS; i++) {
     neos[i].setFlashColors(CLICK_RED, CLICK_GREEN, CLICK_BLUE);
     neos[i].setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
@@ -308,7 +342,7 @@ void setup() {
 
   //////////////////////////// Lux Sensors //////////////////////////////
   if (LUX_SENSORS_ACTIVE) {
-    Serial.println("---------------------------------------------");
+    printMinorDivide();
     Serial.println("turning off LEDs for Lux Calibration");
     for (int i = 0; i < NUM_LED; i++) {
       leds.setPixel(i, 0, 0, 0);
@@ -341,6 +375,9 @@ void setup() {
   }
   delay(10000000);
 #endif
+  ///////////////////////// DL Manager //////////////////////////
+  setupDLManagerCicada();
+  printMinorDivide();
   printMajorDivide("Setup Loop Finished");
 
   /////////////////////////////// Main Loop Delay ////////////////////////////////
@@ -356,6 +393,7 @@ void setup() {
     leds.setPixel(it, 0, 0, 0);
   }
   leds.show();
+  printMajorDivide("Now starting main() loop");
 }
 
 void explainSerialCommands() {
@@ -363,6 +401,7 @@ void explainSerialCommands() {
   Serial.print("Print Commands, denoted by a p prefix: ");
   Serial.print("brightness_scaler (bs), ");
   Serial.println("datalogs (dl)");
+  printMinorDivide();
 }
 
 void listenForSerialCommands() {

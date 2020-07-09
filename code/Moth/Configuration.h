@@ -6,14 +6,17 @@
 #include "Macros.h"
 #include <PrintUtils.h>
 
+
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// MOST IMPORTANT /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#define AUTOGAIN_ACTIVE                 0
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// User Controls //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // should correspond to the serial number on the PCB
-#define SERIAL_ID                       4
-// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
-// depending on what functionality you want
-#define FIRMWARE_MODE                   CICADA_MODE
+#define SERIAL_ID            4
+
 
 #define CLICK_ACTIVE                    false
 
@@ -24,10 +27,23 @@
 // not generally recommended...
 #define STEREO_FEEDBACK                 false
 
+#define P_USER_CONTROLS             true
+
+// this wll allow the POT to overide the brightness at the end of color wipe
+#define USER_BRIGHTNESS_OVERDRIVE   true
+// which pot will be used to control thebrightness overide
+#define BS_POT_NUM                  0
+#define POT_BS_MAX                  5.0
+#define POT_BS_MIN                  0.05
 
 #define MAX_FPS                         60.0
 elapsedMillis loop_tmr = 0; 
 uint32_t loop_length = (uint32_t)((double)1000.0 / (double)MAX_FPS);
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// Pots ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#define MAX_POT_BS       3.0
+#define MIN_POT_BS       0.1
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// User Controls //////////////////////////////////
@@ -84,8 +100,9 @@ uint8_t lbs_scaler_max_thresh =       0;
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// how long will the bot wait until starting the main loop
+// this is useful for when it neeeds to bee put into an enclosure and then installed in the environment
 uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
-
 double MASTER_GAIN_SCALER =           1.0;
 
 // if false, a click detected on either side results in a LED flash on both sides
@@ -102,16 +119,14 @@ bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TOD
 bool gain_adjust_active =                false;
 
 // WARNING NOT IMPLEMENTED - TODO
-#define DEACTIVATE_UNDER_EXTREME_LUX     true
-
-
+#define DEACTIVATE_UNDER_EXTREME_LUX     false
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
-  #define NUM_AUTOGAINS                 1
-  #define NUM_FEATURE_COLLECTORS        1
+  #define NUM_AUTOGAINS                 0
+  #define NUM_FEATURE_COLLECTORS        2
   #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              2
+  #define NUM_LUX_MANAGERS              1
   #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
   #define NUM_AUTOGAINS                 0
@@ -123,7 +138,7 @@ bool gain_adjust_active =                false;
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        0
   #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              2  
+  #define NUM_LUX_MANAGERS              1  
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -131,70 +146,69 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////// Cicada ///////////////////////////////////////////
-#define PRINT_LBS                       false
+#define P_LBS                       false
 
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
-#define PRINT_LUX_DEBUG                 true
-#define PRINT_LUX_READINGS              true
-#define PRINT_BRIGHTNESS_SCALER_DEBUG   true
-#define PRINT_CALCULATE_BRIGHTNESS_LENGTH false 
+#define P_LUX_DEBUG                 true
+#define P_LUX_READINGS              true
+#define P_BRIGHTNESS_SCALER_DEBUG   true
+#define P_CALCULATE_BRIGHTNESS_LENGTH false 
 
-#define PRINT_SONG_DEBUG                false
-#define PRINT_SONG_BRIGHTNESS           false
-#define PRINT_SONG_COLOR                false
-
+#define P_SONG_DEBUG                false
+#define P_SONG_BRIGHTNESS           false
+#define P_SONG_COLOR                false
 
 // basically do you want to print the number of song updates which occur every second?
-#define PRINT_NUM_SONG_UPDATES          true
-#if PRINT_NUM_SONG_UPDATES == 1
+#define P_NUM_SONG_UPDATES          false
+#if P_NUM_SONG_UPDATES == 1
 uint16_t song_updates = 0;
 elapsedMillis song_update_timer = 0;
-#endif // PRINT_NUM_SONG_UPDATES
+#endif // P_NUM_SONG_UPDATES
 
-#define PRINT_UPDATE_SONG_LENGTH        false
+#define P_UPDATE_SONG_LENGTH        false
 
-#define PRINT_CLICK_FEATURES            false
-#define PRINT_CLICK_DEBUG               false
+#define P_CLICK_FEATURES            false
+#define P_CLICK_DEBUG               false
 
-#define PRINT_LED_ON_RATIO_DEBUG        false
-#define PRINT_COLOR_WIPE_DEBUG          false
+#define P_LED_ON_RATIO_DEBUG        false
+#define P_COLOR_WIPE_DEBUG          false
 
-#define PRINT_AUTO_GAIN                 false
+#define P_AUTO_GAIN                 false
 
-#define PRINT_LOG_WRITE                 false
-#define DLM_PRINT                       false
+#define P_LOG_WRITE                 false
+#define DLM_PRINT                   false
 // if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
 // the main loop, it will also store the min and max loop length values as well as calculate 
 // what the average loop length is
-#define PRINT_LOOP_LENGTH               false
+#define P_LOOP_LENGTH               false
 
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK              false
+#define EEPROM_WRITE_CHECK          false
 
-#define PRINT_RMS_VALS                  false
-#define PRINT_RMS_DEBUG                 false
+#define P_RMS_VALS                  false
+#define P_RMS_DEBUG                 false
 
-#define PRINT_PEAK_VALS                 false
-#define PRINT_PEAK_DEBUG                false
+#define P_PEAK_VALS                 false
+#define P_PEAK_DEBUG                false
 
-#define PRINT_TONE_VALS                 false
+#define P_TONE_VALS                 false
 
-#define PRINT_FREQ_VALS                 false
+#define P_FREQ_VALS                 false
 
-#define PRINT_POT_VALS                  false
+#define P_POT_VALS                  true
 
-#define PRINT_AUDIO_USAGE_MAX           true
+#define P_AUDIO_USAGE_MAX           false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
-#define PRINT_FFT_DEBUG                 false
+#define P_FFT_DEBUG                 false
 // for printing raw FFT values
-#define PRINT_FFT_VALS                  false
+#define P_FFT_VALS                  false
 // will print spectral flux if flux_active
-#define PRINT_FLUX_VALS                 false
-#define PRINT_CLICK_FLUX                false
+#define P_FLUX_VALS                 false
+#define P_CLICK_FLUX                false
 // will print centroid if centroid_active
-#define PRINT_CENTROID_VALS             false
+#define P_CENTROID_VALS             false
 // will print highest energy bin in FFT
 
 ////////////////////////////////////////////////////////////////////////////
@@ -255,16 +269,9 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 #define SONG_BLUE_HIGH                  60
 
 ////////////////////////////////////////////////////////////////////////////
-///////////////////////// Jumper Settings //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-// turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
-#define JUMPERS_POPULATED               1
-
-////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Auto-Gain Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // turn on/off auto gain. 0 is off, 1 is on
-#define AUTOGAIN_ACTIVE                 0
 #define MAX_GAIN_ADJUSTMENT             0.125
 
 // maximum amount of gain (as a proportion of the current gain) to be applied in the
@@ -290,7 +297,7 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 // the scaler values are applied to the raw readings read from the audio objects
 // TODO - in the future there needs to be a form of dynamic adjusting of these values according 
 // to some logic
-#if FIRMWARE_MODE == CICADA_MODE 
+ #if FIRMWARE_MODE == CICADA_MODE 
     double global_peak_scaler =         1.0   * ENC_ATTENUATION_FACTOR;
     double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
     double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;

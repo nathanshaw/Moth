@@ -16,7 +16,7 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
-#define COLOR_PRINT_RATE 1000
+#define COLOR_P_RATE 1000
 
 double brightness_scalers[2];
 double global_brightness_scaler = 0.6;
@@ -52,7 +52,7 @@ AudioMixer4              mixer;          //xy=205,137
 AudioFilterBiquad        biquad;         //xy=330.00000381469727,138.00000190734863
 AudioAmplifier           input_amp;      //xy=459.00000381469727,137.00001525878906
 AudioAnalyzePeak         peak;           //xy=650.0000076293945,117.00000190734863
-AudioAnalyzeRMS          rms;            //xy=650.0000076293945,151.00000190734863
+
 AudioOutputUSB           usb;            //xy=651.000057220459,184.00000381469727
 AudioAnalyzeFFT1024      fft;         //xy=652.0000152587891,215.00000190734863
 AudioConnection          patchCord1(i2s, 0, mixer, 0);
@@ -60,6 +60,7 @@ AudioConnection          patchCord2(i2s, 1, mixer, 1);
 AudioConnection          patchCord3(mixer, biquad);
 AudioConnection          patchCord4(biquad, input_amp);
 AudioConnection          patchCord5(input_amp, peak);
+AudioAnalyzeRMS          rms;            //xy=650.0000076293945,151.00000190734863
 AudioConnection          patchCord6(input_amp, rms);
 AudioConnection          patchCord7(input_amp, 0, usb, 0);
 AudioConnection          patchCord8(input_amp, 0, usb, 1);
@@ -162,14 +163,14 @@ void setupDLManager() {
       datalog_manager.addAutolog("Rear Brightness Scaler Averages  ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);
     }
     // printing needs to be at the end so that everything actually displays
-    if (PRINT_EEPROM_CONTENTS > 0) {
+    if (P_EEPROM_CONTENTS > 0) {
       delay(100);
       datalog_manager.printAllLogs();
     } else {
       Serial.println("Not printing the EEPROM Datalog Contents");
     }
   } else {
-    if (PRINT_EEPROM_CONTENTS > 0) {
+    if (P_EEPROM_CONTENTS > 0) {
       datalog_manager.printAllLogs();
     }
   }
@@ -270,10 +271,10 @@ void mainSetup() {
   }
   }*/
 
-bool getColorFromFFTSingleRange(FeatureCollector *f, uint8_t s, uint8_t e) {
+bool getColorFromFFTSingleRange(FFTManager1024 *_fft, uint8_t s, uint8_t e) {
   double tot, frac;
-  frac = f->getFFTRange(s, e);
-  tot = f->getFFTRange(FFT_LOWEST_BIN, 128);
+  frac = _fft->getFFTRange(s, e);
+  tot = _fft->getFFTRange(FFT_LOWEST_BIN, 128);
   frac = frac / tot;
   // RGBConverter::HsvToRgb(frac, 0.5, 1, 0, red, green, blue);
   return 1;
@@ -303,7 +304,7 @@ double getHueFromFFTAllBins(FeatureCollector *f) {
   else*/
   if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
     return (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
-    // dprint(PRINT_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(PRINT_FFT_VALS, h);
+    // dprint(P_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(P_FFT_VALS, h);
   } else {
     Serial.println("ERROR - the COLOR_MAP_MODE is not currently implemented");
     return 0.0;
@@ -455,7 +456,7 @@ void updateNeos() {
 }
 
 void printColors() {
-  if (print_color_timer > COLOR_PRINT_RATE) {
+  if (print_color_timer > COLOR_P_RATE) {
     fc.printFFTVals();
     print_color_timer = 0;
     for (int i = 0; i < NUM_NEO_GROUPS; i++)  {

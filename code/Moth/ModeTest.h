@@ -1,3 +1,4 @@
+/*
 #ifndef TEST_MODE_H
 #define TEST_MODE_H
 
@@ -226,3 +227,4 @@ void updateMode() {
 }
 
 #endif
+*/

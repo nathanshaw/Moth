@@ -16,7 +16,7 @@ bool data_logging_active =              true;
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS           1
 // set to true if you want to print out data stored in EEPROM on boot
-#define PRINT_EEPROM_CONTENTS           true
+#define P_EEPROM_CONTENTS           true
 
 // how long will each of the four different auto-log options be? 
 // // a -1 means that the log will keep updating forever

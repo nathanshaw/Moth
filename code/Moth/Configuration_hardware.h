@@ -5,6 +5,10 @@
 #include "PrintUtils.h"
 #include "Macros.h"
 
+// FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
+// depending on what functionality you want
+#define FIRMWARE_MODE             CICADA_MODE
+
 // TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
 // how long does the microphone test routine last for in the feature collector testMicrophone() function
 #define MICROPHONE_TEST_DURATION  1500
@@ -114,5 +118,10 @@ uint16_t pot_vals[NUM_POTS] = {0, 0, 0, 0};
 
 #endif
 
+////////////////////////////////////////////////////////////////////////////
+///////////////////////// Jumper Settings //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// turn on/off reading jumpers in setup (if off take the default "true" values for jumper bools
+#define JUMPERS_POPULATED               1
 
 #endif // __HARDWARE_CONFIGURATION_H__

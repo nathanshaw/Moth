@@ -135,14 +135,14 @@ void setupDLManagerCicada() {
       datalog_manager.addAutolog("Rear Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
     }
     // printing needs to be at the end so that everything actually displays
-    if (PRINT_EEPROM_CONTENTS > 0) {
+    if (P_EEPROM_CONTENTS > 0) {
       delay(100);
       datalog_manager.printAllLogs();
     } else {
       Serial.println("Not printing the EEPROM Datalog Contents");
     }
   } else {
-    if (PRINT_EEPROM_CONTENTS > 0) {
+    if (P_EEPROM_CONTENTS > 0) {
       datalog_manager.printAllLogs();
     }
   }
