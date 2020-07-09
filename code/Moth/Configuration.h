@@ -1,3 +1,8 @@
+/* This is the main configuration file for the Moth Framework
+ * Using this file, along with the other configuration files you
+ * Can cistomise how the firmware performs.
+ */
+
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H 
 
@@ -6,31 +11,35 @@
 #include "Macros.h"
 #include <PrintUtils.h>
 
-
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// MOST IMPORTANT /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define AUTOGAIN_ACTIVE                 0
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// User Controls //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
+// will autogain based on the LED ON/OFF time be active?
+#define AUTOGAIN_ACTIVE                 false
 // should correspond to the serial number on the PCB
-#define SERIAL_ID            4
-
-
+#define SERIAL_ID                       8
+// will a onset_detector be active?
 #define CLICK_ACTIVE                    false
-
-// if set to true an audio USB object will be created so the audio can be debuged via Audacity
-#define AUDIO_USB_DEBUG                 true
-
 // if stereo feedback is set to true than only audio from both channels will be used to calculate visual feedback brightness and color
 // not generally recommended...
 #define STEREO_FEEDBACK                 false
+// the local brightness scaler will adjust the brightness that would normally be displayed
+// to utalise the entire dynamic range available
+#define LBS_ACTIVE                      true
+// if false, a click detected on either side results in a LED flash on both sides
+// if true, a click detected on one side will only result in a flash on that side
+bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
+////////////////////////////////////////////////////////////////////////////
+/////////////////////////// User Controls //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+// if set to true an audio USB object will be created so the audio can be debuged via Audacity
+#define AUDIO_USB_DEBUG                 true
 
 #define P_USER_CONTROLS             true
 
 // this wll allow the POT to overide the brightness at the end of color wipe
 #define USER_BRIGHTNESS_OVERDRIVE   true
+
 // which pot will be used to control thebrightness overide
 #define BS_POT_NUM                  0
 #define POT_BS_MAX                  5.0
@@ -39,23 +48,8 @@
 #define MAX_FPS                         60.0
 elapsedMillis loop_tmr = 0; 
 uint32_t loop_length = (uint32_t)((double)1000.0 / (double)MAX_FPS);
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// Pots ///////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-#define MAX_POT_BS       3.0
-#define MIN_POT_BS       0.1
 
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// User Controls //////////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-/* This is the main configuration file for the Moth Framework
- * Using this file, along with the other configuration files you
- * Can cistomise how the firmware performs.
- * 
- * ----------------------- JUMPER PINS --------------------------
- * 
- */
-
+/////////////////////////// jumper Pins ////////////////////////////////////
 #if H_VERSION_NUMBER == 3
 #define USER_CONTROL_POLL_RATE         1000
 #elif H_VERSION_NUMBER < 3
@@ -65,14 +59,12 @@ uint32_t loop_length = (uint32_t)((double)1000.0 / (double)MAX_FPS);
 ///////////////////////////// Brightness Thresholds ////////////////////////
 // 0.0 - 1.0 any target brightness calculated below this threshold will be discarded
 // in favor of a brightness of 0.0
-#define BRIGHTNESS_CUTTOFF_THRESHOLD  0.2
+#define BRIGHTNESS_CUTTOFF_THRESHOLD  0.15
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// Local Brightness Scalers////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-// the local brightness scaler will adjust the brightness that would normally be displayed
-// to utalise the entire dynamic range available
-#define LBS_ACTIVE                     true
+
 // how often should the LBS be recalculated?
 #define LBS_TIME_FRAME                 (1000 * 60 * 10)
 // once the local min and max have been overwritten how long to collect readings for
@@ -99,15 +91,10 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-
 // how long will the bot wait until starting the main loop
 // this is useful for when it neeeds to bee put into an enclosure and then installed in the environment
 uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
 double MASTER_GAIN_SCALER =           1.0;
-
-// if false, a click detected on either side results in a LED flash on both sides
-// if true, a click detected on one side will only result in a flash on that side
-bool INDEPENDENT_FLASHES =               false; // WARNING NOT IMPLEMENTED - TODO
 
 // WARNING NOT IMPLEMENTED - TODO
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
@@ -124,13 +111,12 @@ bool gain_adjust_active =                false;
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
   #define NUM_AUTOGAINS                 0
-  #define NUM_FEATURE_COLLECTORS        2
+  #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              1
-  #include "Configuration_pitch.h"
 #elif FIRMWARE_MODE == CICADA_MODE
   #define NUM_AUTOGAINS                 0
-  #define NUM_FEATURE_COLLECTORS        2
+  #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
   #define NUM_LUX_MANAGERS              1
   #include "Configuration_cicada.h"
@@ -144,8 +130,6 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Debuggings ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-
-///////////////////////// Cicada ///////////////////////////////////////////
 #define P_LBS                       false
 
 // print lux debug mostly prints info about when extreme lux is entered and 
@@ -172,7 +156,7 @@ elapsedMillis song_update_timer = 0;
 #define P_CLICK_DEBUG               false
 
 #define P_LED_ON_RATIO_DEBUG        false
-#define P_COLOR_WIPE_DEBUG          false
+#define P_COLOR_WIPE_DEBUG          true
 
 #define P_AUTO_GAIN                 false
 
@@ -240,8 +224,8 @@ bool rear_lux_active  =                 true;
 #define EXTREME_LUX_THRESHOLD           6000.0
 #endif
 // on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
-#define BRIGHTNESS_SCALER_MIN           0.125
-#define BRIGHTNESS_SCALER_MAX           2.00
+#define BRIGHTNESS_SCALER_MIN           0.05
+#define BRIGHTNESS_SCALER_MAX           3.00
 
 uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
 uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
@@ -306,9 +290,9 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
     double global_rms_scaler  =         3.5   * ENC_ATTENUATION_FACTOR;
     double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
 #elif FIRMWARE_MODE == PITCH_MODE
-    double global_peak_scaler =         100.0  * ENC_ATTENUATION_FACTOR;
-    double global_rms_scaler  =         100.0  * ENC_ATTENUATION_FACTOR;
-    double global_fft_scaler  =         1000.0 * ENC_ATTENUATION_FACTOR;
+    double global_peak_scaler =         1.0  * ENC_ATTENUATION_FACTOR;
+    double global_rms_scaler  =         3.5  * ENC_ATTENUATION_FACTOR;
+    double global_fft_scaler  =         100.0 * ENC_ATTENUATION_FACTOR;
 #endif
 
 bool stereo_audio =                     true;
@@ -344,7 +328,8 @@ elapsedMillis last_usage_print =        0;// for keeping track of audio memory u
 ////////////////////////////////////////////////////////////////////////////
 #define S_VERSION_MAJOR           0
 #define S_VERSION_MINOR           2
-#define S_SUBVERSION              1
+#define S_SUBVERSION              2
+// version 0.2.2 was created on 07/07/20 and integrated the pitch and cicada modes for a field expedition
 // version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode as well as
 //   improving the frame rate from 8 to 29, and adding support for PCB v3 in Cicada mode (minus the click)
 // version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3

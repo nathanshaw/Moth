@@ -7,7 +7,7 @@
 
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
-#define FIRMWARE_MODE             CICADA_MODE
+#define FIRMWARE_MODE             PITCH_MODE
 
 // TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
 // how long does the microphone test routine last for in the feature collector testMicrophone() function

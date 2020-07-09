@@ -300,7 +300,9 @@ void updateSong() {
 #endif
 
   for (int i = 0; i < num_channels; i++) {
-    neos[i].colorWipe(red, green, blue, current_brightness[0]);
+    // adding thee target_brightness multiplier will weight the overall brightness in favor
+    // of sounds which have more higher frequency content.
+    neos[i].colorWipe(red, green, blue, current_brightness[0] * (1.0 + (target_brightness * 0.25)));
   }
   /////////////////// LOCAL SCALER RESET //////////////////////////
   // this needs to be after the rest of the logic in this function
@@ -456,7 +458,7 @@ void updateAutogain() {
 // #define FREQ_FEATURE_ACTIVE                 1
 
 /////////////////////////////// Audio Features ////////////////////////////////////
-// all the different features that are available to use through the feature collector for 
+// all the different features that are available to use through the feature collector for
 // varioud mappings.
 #define FEATURE_RMS                         (1)
 #define FEATURE_RMS_POS_DELTA               (11)
@@ -474,7 +476,7 @@ void updateAutogain() {
 #define FEATURE_STRONG_FFT                  (10)
 
 //////////////////////////// FFT //
-// When calculating things such as which bin has the most energy and so on, 
+// When calculating things such as which bin has the most energy and so on,
 // what bin is considered the "1st?" and which one is the last?
 // todo what frequency does this correspond to?
 #define FFT_LOWEST_BIN              1
@@ -489,7 +491,7 @@ void updateAutogain() {
 // look under Audio Features for the Available Features
 #define HUE_FEATURE                         (FEATURE_FFT_MAX_BIN)
 #define BRIGHTNESS_FEATURE                  (FEATURE_PEAK_AVG)
-#define SATURATION_FEATURE                  (FEATURE_FFT_RELATIVE_ENERGY)
+#define SATURATION_FEATURE                  (FEATURE_PEAK_AVG)
 
 // These are different color mapping modes
 #define COLOR_MAPPING_RGB                     0
@@ -520,21 +522,21 @@ bool getHueFromTone(FeatureCollector *f) {
 
 double getHueFromFFTAllBins(FFTManager1024 *f) {
   /*if (COLOR_MAP_MODE == COLOR_MAPPING_RGB) {
-  double red_d, green_d, blue_d, tot;
-  red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
-  green_d = f->getFFTRange(7, 20);
-  blue_d  = f->getFFTRange(20, 128);
-  tot   = (red_d + green_d + blue_d);
-  red_d   = red_d / tot;
-  green_d = green_d / tot;
-  blue_d  = blue_d / tot;
-  rgb[chan][0] = red_d * MAX_BRIGHTNESS;
-  rgb[chan][1] = green_d * MAX_BRIGHTNESS;
-  rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
-  }
-  else*/
+    double red_d, green_d, blue_d, tot;
+    red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
+    green_d = f->getFFTRange(7, 20);
+    blue_d  = f->getFFTRange(20, 128);
+    tot   = (red_d + green_d + blue_d);
+    red_d   = red_d / tot;
+    green_d = green_d / tot;
+    blue_d  = blue_d / tot;
+    rgb[chan][0] = red_d * MAX_BRIGHTNESS;
+    rgb[chan][1] = green_d * MAX_BRIGHTNESS;
+    rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
+    }
+    else*/
   if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
-    return (double) map(f->getHighestEnergyBin(), 0, 128, 0, 1000) / 1000.0;
+    return (double) map(f->getHighestEnergyIdx(), 0, 512, 0, 1000) / 1000.0;
     // dprint(P_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(P_FFT_VALS, h);
   } else {
     Serial.println("ERROR - the COLOR_MAP_MODE is not currently implemented");
@@ -563,18 +565,18 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
       b =  1.0;
     }
   }
-  else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY){
+  else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY) {
     b = _fft->getFFTTotalEnergy();
   } else  if (BRIGHTNESS_FEATURE == FEATURE_STRONG_FFT) {
     // range index is what the highest energy bin is within the range we care about
-    uint16_t range_idx = _fft->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_HIGHEST_BIN);
-    uint16_t tot_idx = _fft->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_NUM_BINS);
+    uint16_t range_idx = _fft->getHighestEnergyIdx();
+    uint16_t tot_idx = _fft->getHighestEnergyIdx();
     if (range_idx != tot_idx) {
       b = 0.0;
     } else {
       b = _fft->getFFTTotalEnergy();
     }
-  }else {
+  } else {
     Serial.println("ERROR - calculateBrightness() does not accept that  BRIGHTNESS_FEATURE");
   }
   return b;
@@ -584,6 +586,7 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   double sat = 0.0;
   if (SATURATION_FEATURE == FEATURE_PEAK_AVG) {
     sat = f->getPeakAvg();
+    Serial.println(sat);
     if (sat > 1.0) {
       sat =  1.0;
     }
@@ -599,7 +602,7 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   }
   else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
     // get how much energy is stored in the max bin, get the amount of energy stored in all bins
-    sat = _fft->getRelativeEnergy(_fft->getHighestEnergyBin()) * 1000.0;
+    sat = _fft->getRelativeEnergy(_fft->getHighestEnergyIdx()) * 1000.0;
     if (sat > 1.0) {
       sat = 1.0;
     }
@@ -611,44 +614,94 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   return sat;
 }
 
+double last_hue = 0.0;
+double hue = 0.0;
+
 double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
-  double hue = 0.0;
+  last_hue = (last_hue * 0.95) + (hue * 0.05);
+  hue = 0.0;
   switch (HUE_FEATURE) {
-  case FEATURE_FFT_BIN_RANGE:
+    case FEATURE_FFT_BIN_RANGE:
       hue = getColorFromFFTSingleRange(_fft, 3, 20);
       break;
-  case FEATURE_FFT:
+    case FEATURE_FFT:
       hue = getHueFromFFTAllBins(_fft);
       break;
-  case FEATURE_FFT_MAX_BIN:
+    case FEATURE_FFT_MAX_BIN:
       // calculate the bin with the most energy,
       // Serial.print("Highest energy bin is: ");Serial.println(f->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_HIGHEST_BIN));
       // map the bin  index to a hue value
-      hue = (double) (_fft->getHighestEnergyBin(FFT_LOWEST_BIN, FFT_HIGHEST_BIN) - FFT_LOWEST_BIN) / FFT_HIGHEST_BIN;
-      // Serial.print("max bin hue is : ");Serial.println(hue); 
+      hue = (double) (_fft->getHighestEnergyIdx(FFT_LOWEST_BIN, FFT_HIGHEST_BIN) - FFT_LOWEST_BIN) / FFT_HIGHEST_BIN;
+      // Serial.print("max bin hu e is : ");Serial.println(hue);
       break;
-  case FEATURE_TONE:
-    hue = getHueFromTone(f);
-    break;
-  case FEATURE_PEAK_AVG:
-    hue = f->getPeakAvg();
-    f->resetPeakAvgLog();
-    break;
-  case FEATURE_PEAK:
-    hue = f->getPeak();
-    break;
-  case FEATURE_RMS_AVG:
-    hue = f->getRMSAvg();
-    break;
-  case FEATURE_RMS:
-    hue = f->getRMS();
-    break;
-  case DEFAULT:
-    Serial.println("ERROR - calculateHue() does not accept that HUE_FEATURE");
-    break;
+    case FEATURE_TONE:
+      hue = getHueFromTone(f);
+      break;
+    case FEATURE_PEAK_AVG:
+      hue = f->getPeakAvg();
+      f->resetPeakAvgLog();
+      break;
+    case FEATURE_PEAK:
+      hue = f->getPeak();
+      break;
+    case FEATURE_RMS_AVG:
+      hue = f->getRMSAvg();
+      break;
+    case FEATURE_RMS:
+      hue = f->getRMS();
+      break;
+    case DEFAULT:
+      Serial.println("ERROR - calculateHue() does not accept that HUE_FEATURE");
+      break;
   }
   return hue;
 }
+
+void updateNeosForPitch() {
+  if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
+    uint8_t inactive = 0;
+    // calculate HSB
+    // the brightness should be the loudness (overall amp of bins)
+    // the saturation should be the relatitive loudness of the primary bin
+    // the hue should be the bin number (With higher frequencies corresponding to reds and yellows)
+    double s = calculateSaturation(&fc[0], &fft_features);
+    double b = calculateBrightness(&fc[0], &fft_features);
+    double h = calculateHue(&fc[0], &fft_features);
+    Serial.print("h: ");
+    Serial.print(h);
+    Serial.print("\ts: ");
+    Serial.print(s);
+    Serial.print("\tb");
+    Serial.println(b);
+    for (int chan = 0; chan < num_channels; chan++) {
+      if (fc[0].isActive() == true) {
+        // now colorWipe the LEDs with the HSB value
+        // if (h > 0) {
+        neos[chan].colorWipeHSB(h, s, b);
+        /*} else {
+          neos[chan].colorWipeHSB(0, 0, 0);
+          }*/
+      } else {
+        inactive++;
+      }
+    }
+    if (inactive > num_channels) {
+      Serial.println("ERROR - not able to updateNeos() as there is no active audio channels");
+      return;
+    }
+  }
+  else {
+    Serial.println("ERROR = that color mode is not implemented in update neos");
+  }
+}
+
+void printColors() {
+  fft_features.printFFTVals();
+  for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
+    neos[i].printColors();
+  }
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////// END of PITCH ////////////////////////////////////
@@ -666,7 +719,8 @@ void updateMode() {
 #endif // CLICK_ACTIVE
   }
   else if (FIRMWARE_MODE == PITCH_MODE) {
-
+    updateNeosForPitch();
+    printColors();
   }
 
 #if P_AUDIO_MEMORY_MAX > 0

@@ -13,7 +13,7 @@ void updateFeatureCollectors() {
   // update the feature collectors
   fft_features.updateFFT();
 #if NUM_FEATURE_COLLECTORS == 1
-  fc.update();
+  fc[0].update();
 #endif
 #if NUM_FEATURE_COLLECTORS > 1
   for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
@@ -100,12 +100,12 @@ bool testJumpers() {
 
 #endif // H_VERSION_MAJOR > 2
     if (populated == true) {
-      Serial.print(".");
+      Serial.print(".\t");
     }
-    delay(50);
+    delay(100);
   }
   if (populated == true) {
-    Serial.println("Great news, the jumpers all seem to be in working order");
+    Serial.println("\nGreat news, the jumpers all seem to be in working order");
   } else {
     Serial.println("Crap, for some reason some of the jumpers are returning multiple values, are the headers present?");
   }
@@ -126,6 +126,7 @@ void readUserControls() {
 #endif // H_VERSION_MAJOR
   readJumpers();
   last_jumper_read = 0;
+  listenForSerialCommands();
 }
 
 
@@ -398,8 +399,8 @@ void setup() {
 
 void explainSerialCommands() {
   Serial.println("The Following Serial Commands are Supported: ");
-  Serial.print("Print Commands, denoted by a p prefix: ");
-  Serial.print("brightness_scaler (bs), ");
+  Serial.println("Print Commands, denoted by a p prefix: ");
+  Serial.println("brightness_scaler (bs)");
   Serial.println("datalogs (dl)");
   printMinorDivide();
 }
@@ -453,7 +454,6 @@ void loop() {
     updateAutogain();
     updateDatalog();
     readUserControls();
-    listenForSerialCommands();
     loop_tmr = 0;
   }
 }
