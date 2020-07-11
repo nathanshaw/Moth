@@ -15,8 +15,6 @@ bool data_logging_active =              true;
 
 // does the autolog get written over each time?
 #define CLEAR_EEPROM_CONTENTS           1
-// set to true if you want to print out data stored in EEPROM on boot
-#define P_EEPROM_CONTENTS           true
 
 // how long will each of the four different auto-log options be? 
 // // a -1 means that the log will keep updating forever
@@ -84,7 +82,7 @@ bool data_logging_active =              true;
 #define STATICLOG_RGB_AVG_VALS          1
 
 #define STATICLOG_LUX_MIN_MAX_TIMER     1
-#define STATICLOG_CLICK_GAIN_TIMER      1
+#define STATICLOG_ONSET_GAIN_TIMER      1
 #define STATICLOG_SONG_GAIN_TIMER       1
 #define STATICLOG_FLASHES_TIMER         1
 #define STATICLOG_RUNTIME_TIMER         1

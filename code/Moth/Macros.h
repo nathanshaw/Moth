@@ -23,6 +23,34 @@
 #define MACROS_H
 
 ////////////////////////////////////////////////////////////////////////////
+////////////////////// Software Configurations /////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+#define S_VERSION_MAJOR           0
+#define S_VERSION_MINOR           2
+#define S_SUBVERSION              2
+/*
+version 0,2.3 was created on 07/10/20 in reaction to thee field expedition, added threshold control 
+  for the click thresholds using the 4th pot, switched around some of the user controls, a splt was made in
+  thee functionality of the pins for v3.0 (removing the brightness scaler), the user brightness_scaler was fixed for
+  pitch mode, control for the brightness threshold was added for the fourth pot, references to 'click'
+  have been replaced with 'onset' which more accurately represents the functions abilities, improved the debug printing,
+  
+  
+// version 0.2.2 was created on 07/07/20 and integrated the pitch and cicada modes for a field expedition
+// version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode as well as
+//   improving the frame rate from 8 to 29, and adding support for PCB v3 in Cicada mode (minus the onset)
+// version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3
+// version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
+// as well as the autobrightness calibration routine being very visible and disruptive when resetting
+// version 0.1.0 was created on 24.02.20 as it served as the first viable working song implementation
+// version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
+// how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
+// and the addition of a flag to differentiate between adding the flash brightness of just displaying
+// the brightness
+*/
+
+
+////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // the current modes, or software driven functionality in which 
@@ -75,10 +103,28 @@
 #define NEAR_ZERO(x) WITHIN(x, -0.000001, 0.000001)
 #define NEAR(x,y) NEAR_ZERO((x)-(y))
 
+///////////////////////// Time Units ////////////////////////
 #define TEN_SECONDS 10000
 #define ONE_MINUTE  60000
 #define ONE_HOUR    3600000
 #define ONE_DAY     86400000
+
+// the Baud rate that our bots will be using
+#define SERIAL_BAUD_RATE          115200
+
+////////////////////////// LED MAPPING MODES ////////////////
+#define LED_MAPPING_STANDARD      0
+#define LED_MAPPING_BOTTOM_UP     1
+#define LED_MAPPING_ROUND         2
+#define LED_MAPPING_CENTER_OUT    3
+
+////////////////////////// Lux Manager stuff ////////////////
+// how long will the lux calibratin routine last for?
+#define LUX_CALIBRATION_TIME            5000
+// how long the lux sensors need the LEDs to be 
+// turned off in order to get an accurate reading
+#define LUX_SHDN_LEN                    40
+
 
 /*
   //updateLoopLength();
@@ -107,6 +153,8 @@
   }
   #endif//print loop length
 */
-
+double mapf(double val, double in_min, double in_max, double out_min, double out_max) {
+    return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 #endif //__MACROS_H

@@ -39,7 +39,7 @@ LuxManager lux_managers[NUM_LUX_SENSORS] = {
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
 
 // AutoGain auto_gain[2] = {AutoGain("Song", &fc[0], &fc[1], MIN_SONG_GAIN, MAX_SONG_GAIN, MAX_GAIN_ADJUSTMENT),
-//                          AutoGain("Click", &fc[2], &fc[3], MIN_CLICK_GAIN, MAX_CLICK_GAIN, MAX_GAIN_ADJUSTMENT)
+//                          AutoGain("Onset", &fc[2], &fc[3], MIN_ONSET_GAIN, MAX_ONSET_GAIN, MAX_GAIN_ADJUSTMENT)
 //                         };
 
 ///////////////////////////////////////////////////////////////////////////////////////////

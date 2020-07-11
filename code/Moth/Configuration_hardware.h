@@ -5,6 +5,8 @@
 #include "PrintUtils.h"
 #include "Macros.h"
 
+#define HV_MAJOR                  2
+#define HV_MINOR                  1
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
 #define FIRMWARE_MODE             PITCH_MODE
@@ -39,23 +41,21 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define TEENSY40                  4
 
 #define MICROCONTROLLER           TEENSY32
-#define H_VERSION_MAJOR           3
-#define H_VERSION_MINOR           0
 
-#if H_VERSION_MAJOR > 1
+#if HV_MAJOR > 1
 #define NUM_LUX_SENSORS           2
 #endif
 
 // todo add logic to change these if needed...
-#if (H_VERSION_MAJOR == 3)
+#if (HV_MAJOR == 3)
 #define NUM_LED                   40
 #endif
 
-#if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 0)
+#if (HV_MAJOR == 2 && HV_MINOR == 0)
 #define NUM_LED                   12
 #endif
 
-#if (H_VERSION_MAJOR == 2 && H_VERSION_MINOR == 1)
+#if (HV_MAJOR == 2 && HV_MINOR == 1)
 #define NUM_LED                   10
 #endif 
 
@@ -65,7 +65,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 ////////////// TCA Bus Expanders     /////
 // I2C_MULTI should be 0 if no TCA I2C bus expander is present on the PCB
 // I2C MULTI should be 1 if a TCA I2C bus expander is present
-#if H_VERSION_MAJOR < 3
+#if HV_MAJOR < 3
 #define I2C_MULTI                 1
 // the number of active channels on the TCA (can in theory support 8 sensors, etc.)
 #define TCA_CHANNELS              2
@@ -78,7 +78,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 #define LED_PIN                   5
 
 //////////// User Controls /////////////////
-#if H_VERSION_MAJOR == 1 || H_VERSION_MAJOR == 2
+#if HV_MAJOR < 3
 #define NUM_JUMPERS               6
 #define JMP1_PIN                  12
 #define JMP2_PIN                  11
@@ -90,7 +90,7 @@ uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
 int jmp_pins[NUM_JUMPERS] = {JMP1_PIN, JMP2_PIN, JMP3_PIN, JMP4_PIN, JMP5_PIN,
                              JMP6_PIN};
 
-#elif H_VERSION_MAJOR == 3
+#elif HV_MAJOR == 3
 #define NUM_JUMPERS               10
 
 #define JMP1_PIN                  14

@@ -15,8 +15,8 @@ void setupDLManagerCicada() {
     datalog_manager.printTimerConfigs();
 
     // Hardware / Software / Serial Numbers
-    datalog_manager.logSetupConfigByte("Hardware Version major      : ", H_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Hardware Version minor      : ", H_VERSION_MINOR);
+    datalog_manager.logSetupConfigByte("Hardware Version major      : ", HV_MAJOR);
+    datalog_manager.logSetupConfigByte("Hardware Version minor      : ", HV_MINOR);
     datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MAJOR);
     datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MINOR);
     datalog_manager.logSetupConfigByte("Software Version major      : ", S_SUBVERSION);
@@ -25,7 +25,6 @@ void setupDLManagerCicada() {
     datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE);
     // Lux Sensors
     printMinorDivide();
-    datalog_manager.logSetupConfigByte("Smooth Lux Readings         : ", SMOOTH_LUX_READINGS);
     datalog_manager.logSetupConfigDouble("Lux Low Threshold           : ", LOW_LUX_THRESHOLD);
     datalog_manager.logSetupConfigDouble("Lux Mid Threshold           : ", MID_LUX_THRESHOLD);
     datalog_manager.logSetupConfigDouble("Lux High Threshold          : ", HIGH_LUX_THRESHOLD);
@@ -36,7 +35,7 @@ void setupDLManagerCicada() {
     // Auto Gain
     printMinorDivide();
     datalog_manager.logSetupConfigDouble("Starting Gain               : ", STARTING_GAIN);
-    datalog_manager.logSetupConfigDouble("MASTER_SENSITIVITY_SCALER   : ", MASTER_SENSITIVITY_SCALER);
+    datalog_manager.logSetupConfigDouble("user_brightness_scaler   : ", user_brightness_scaler);
     datalog_manager.logSetupConfigByte("Autogain Active             : ", BRIGHTNESS_SCALER_MAX);
     datalog_manager.logSetupConfigDouble("Max Autogain Adjustment     : ", MAX_GAIN_ADJUSTMENT);
     datalog_manager.logSetupConfigLong("Autogain Frequency          : ", AUTOGAIN_FREQUENCY);
@@ -70,9 +69,9 @@ void setupDLManagerCicada() {
 
     if (STATICLOG_MASTER_GAIN) {
       datalog_manager.addStaticLog("Lowest Master Gain  : ",
-                                   STATICLOG_CLICK_GAIN_TIMER, &fc[0].min_gain);
+                                   STATICLOG_ONSET_GAIN_TIMER, &fc[0].min_gain);
       datalog_manager.addStaticLog("Highest Master Gain ",
-                                   STATICLOG_CLICK_GAIN_TIMER, &fc[0].max_gain);
+                                   STATICLOG_ONSET_GAIN_TIMER, &fc[0].max_gain);
       datalog_manager.logSetupConfigDouble("Master Starting Gain          : ", STARTING_GAIN);
     }
 
@@ -104,10 +103,10 @@ void setupDLManagerCicada() {
     // Datalog lux_log_f = Datalog(EEPROM_LUX_LOG_START, "Lux Front", lux_managers->lux, true);
     // datalog_manager.startAutolog(0);
     double * ptr;
-    if (AUTOLOG_LUX_F > 0 && front_lux_active > 0) {
+    if (AUTOLOG_LUX_F > 0 && lux_manager.sensor_active[0] > 0) {
       datalog_manager.addAutolog("Front Lux Log ", AUTOLOG_LUX_TIMER, &lux_manager.lux[0]);
     }
-    if (AUTOLOG_LUX_R > 0 && rear_lux_active > 0) {
+    if (AUTOLOG_LUX_R > 0 && lux_manager.sensor_active[1] > 0) {
       datalog_manager.addAutolog("Rear Lux Log ", AUTOLOG_LUX_TIMER, &lux_manager.lux[1]);
     }
 
