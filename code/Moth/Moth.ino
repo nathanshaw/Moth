@@ -420,7 +420,13 @@ void setup() {
   Serial.println("Entering the Setup Loop");
   Serial.println("Serial begun");
   printMinorDivide();
-  //////////////// Hardware Version //////////////////////////
+  //////////////// Hardware/Software Version /////////////////
+  Serial.print("Firmware is version : ");
+  Serial.print(SV_MAJOR);
+  Serial.print(".");
+  Serial.print(SV_MINOR);
+  Serial.print(".");
+  Serial.println(SV_SUBVERSION);
   Serial.print("Firmware was compiled for a PCB with a hardware revsion of : ");
   Serial.print(HV_MAJOR);
   Serial.print(".");
@@ -477,7 +483,7 @@ void setup() {
 #if HV_MAJOR > 2
   lux_manager.add6030Sensors(0.125, 25);
   lux_manager.linkNeoGroup(&neos[0]);
-  lux_manager.linkNeoGroup(&neos[0]);
+  lux_manager.linkNeoGroup(&neos[1]);
   delay(200);
   lux_manager.calibrate(LUX_CALIBRATION_TIME);
   if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
@@ -489,7 +495,7 @@ void setup() {
   lux_manager.startTCA7700Sensors(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
   if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
     lux_manager.linkNeoGroup(&neos[0]);
-    lux_manager.linkNeoGroup(&neos[0]);
+    lux_manager.linkNeoGroup(&neos[1]);
     delay(200);
     lux_manager.calibrate(LUX_CALIBRATION_TIME);
     if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
@@ -535,7 +541,7 @@ void loop() {
   if (loop_tmr > loop_length) {
     updateLuxManagers();
     if (lux_manager.getExtremeLux() == true) {
-      dprintln(P_LUX_DEBUG, "WARNING ------------ updateMode() returning due extreme lux conditions, not updating onset or song...");
+      dprintln(P_LUX, "WARNING ------------ updateMode() returning due extreme lux conditions, not updating onset or song...");
     } else {
       updateFeatureCollectors();
       updateMode();

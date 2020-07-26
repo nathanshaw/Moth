@@ -32,37 +32,38 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Debug Printing ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define P_LBS                       false
+#define P_LBS                           false
 
-#define P_LEDS_ON                   true
+#define P_LEDS_ON                       false
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
-#define P_LED_ON_RATIO_DEBUG        false
-#define P_COLOR_WIPE_DEBUG          true
-#define P_EXTREME_LUX               true
-#define P_LUX_DEBUG                 true
-#define P_LUX_READINGS              true
-#define P_BRIGHTNESS_SCALER_DEBUG   true
-#define P_CALCULATE_BRIGHTNESS_LENGTH false 
+#define P_LED_ON_RATIO                  false
+#define P_COLOR_WIPE                    true
+#define P_EXTREME_LUX                   true
+#define P_LUX                           true
+#define P_LUX_READINGS                  true
+#define P_BRIGHTNESS_SCALER             true
+#define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
 // this is where the final brightness scaler is applied
-#define P_PACK_COLORS_DEBUG         true
+#define P_PACK_COLORS                   true
 
-#define P_SONG_DEBUG                false
-#define P_SONG_BRIGHTNESS           false
-#define P_SONG_COLOR                false
+#define P_SONG                          false
+#define P_SONG_BRIGHTNESS               false
+#define P_SONG_COLOR                    false
+#define P_SCALE_DOWN_BRIGHTNESS         true
 
 // basically do you want to print the number of song updates which occur every second?
-#define P_NUM_SONG_UPDATES          false
+#define P_NUM_SONG_UPDATES              false
 #if P_NUM_SONG_UPDATES == 1
 uint16_t song_updates = 0;
 elapsedMillis song_update_timer = 0;
 #endif // P_NUM_SONG_UPDATES
 
-#define P_UPDATE_SONG_LENGTH        false
+#define P_UPDATE_SONG_LENGTH            false
 
-#define P_ONSET_FEATURES            false
-#define P_ONSET_DEBUG               false
+#define P_ONSET_FEATURES                false
+#define P_ONSET                         false
 
 #define P_AUTO_GAIN                 false
 
@@ -78,15 +79,15 @@ elapsedMillis song_update_timer = 0;
 
 ///////////////////////// Audio Stuff ///////////////////////////////////////
 #define P_RMS_VALS                  false
-#define P_RMS_DEBUG                 false
+#define P_RMS                       false
 #define P_PEAK_VALS                 false
-#define P_PEAK_DEBUG                false
+#define P_PEAK                      false
 #define P_TONE_VALS                 false
 #define P_FREQ_VALS                 false
 #define P_AUDIO_USAGE_MAX           false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
-#define P_FFT_DEBUG                 false
+#define P_FFT                       false
 // for printing raw FFT values
 #define P_FFT_VALS                  false
 // will print spectral flux if flux_active
@@ -108,11 +109,11 @@ elapsedMillis song_update_timer = 0;
 /////////////////////////// User Controls //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // if set to true an audio USB object will be created so the audio can be debuged via Audacity
-#define AUDIO_USB_DEBUG                       true
+#define AUDIO_USB                   true
 
 //////////////////////////// Pots ////////////////////////////////////////////
 // this wll allow the POT to overide the brightness at the end of color wipe
-#define USER_BRIGHTNESS_OVERDRIVE             true
+#define USER_BRIGHTNESS_OVERDRIVE   true
 
 ///////////////////////////// P1 - Brightness Overide ////////////////////////
 // which pot will be used to control thebrightness overide
@@ -163,13 +164,17 @@ double ONSET_THRESH =                         1.0;
 #if FIRMWARE_MODE == CICADA_MODE
 double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.15;
 #elif FIRMWARE_MODE == PITCH_MODE
-double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.20;
+double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.1;
 #endif//FIRMWARE_MODE
+
+// if > 0 then the brightness will be smoothed with a previous value
+#define SMOOTH_HSB_BRIGHTNESS                 0.5
 
 #define BT_POT_NUM                            3   
 #define USER_CUTTOFF_MIN                      0.0   
 #define USER_CUTTOFF_MAX                      0.5
-  
+
+bool SATURATED_COLORS                =        true;
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// System Performance /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -265,7 +270,7 @@ uint8_t  MAX_BRIGHTNESS =              255;
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0
 #define MID_LUX_THRESHOLD               350.0
 #define HIGH_LUX_THRESHOLD              1200.0
-#if HV_MAJOR , 3
+#if HV_MAJOR < 3
 #define EXTREME_LUX_THRESHOLD           4000.0
 #else
 #define EXTREME_LUX_THRESHOLD           6000.0
@@ -456,6 +461,7 @@ uint8_t LED_MAPPING_MODE = LED_MAPPING_STANDARD;
 
 // For the neopixels will the color mapping exist within the RGB or HSB domain?
 #define COLOR_MAP_MODE              (COLOR_MAPPING_HSB)
+
 
 #define  MODE_SINGLE_RANGE                    0
 #define  MODE_ALL_BINS                        1

@@ -16,7 +16,7 @@ WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS28
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, (NUM_LED / 2) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
   NeoGroup(&leds, NUM_LED / 2, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
-};
+}; 
 
 // lux managers to keep track of the VEML readings
 LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay);
@@ -38,7 +38,7 @@ AudioAnalyzeFFT1024      input_fft;      //xy=521.3627586364746,251.719874382019
 AudioAnalyzeRMS          rms;            //xy=650.0000076293945,151.00000190734863
 AudioConnection          patchCord10(amp1, rms);
 
-#if AUDIO_USB_DEBUG > 0
+#if AUDIO_USB > 0
 AudioOutputUSB           usb1;           //xy=519.142822265625,284.71433544158936
 AudioConnection          patchCord5(amp2, 0, usb1, 1);
 AudioConnection          patchCord7(amp1, 0, usb1, 0);
@@ -273,7 +273,7 @@ void updateSong() {
       brightness_feature_min[t] += ((brightness_feature_max[t] - brightness_feature_min[t]) * 0.05);
       brightness_feature_max[t] -= ((brightness_feature_max[t] - brightness_feature_min[t]) * 0.05);
     }
-    dprintln(P_SONG_DEBUG, "reset song feature min and max for cent and brightness ");
+    dprintln(P_SONG, "reset song feature min and max for cent and brightness ");
     feature_reset_tmr = 0;
   }
 #if P_UPDATE_SONG_LENGTH == 1
@@ -348,7 +348,7 @@ void updateOnset() {
     Serial.print(onset_rrms, 8);
     Serial.print("\t");
     Serial.print(feature, 8);
-    // dprintln(P_ONSET_DEBUG, feature);
+    // dprintln(P_ONSET, feature);
     Serial.print("\t");
     Serial.println(feature, 8);
   }
@@ -361,10 +361,10 @@ void updateOnset() {
   // note that normally 1.0 is the threshold for onsets
   if (feature >= ONSET_THRESH) {
     // Serial.println("____________________ ONSET ________________________ 3.0");
-    /*dprint(P_ONSET_DEBUG, "onset feature is above threshold: ");
-      dprint(P_ONSET_DEBUG, current_feature[i]);
-      dprint(P_ONSET_DEBUG, " - ");
-      dprint(P_ONSET_DEBUG, threshold);
+    /*dprint(P_ONSET, "onset feature is above threshold: ");
+      dprint(P_ONSET, current_feature[i]);
+      dprint(P_ONSET, " - ");
+      dprint(P_ONSET, threshold);
     */
     for (int i = 0; i < num_channels; i++) {
       neos[i].colorWipeAdd(red, green, blue, lux_manager.getBrightnessScaler() * user_brightness_scaler);
@@ -381,7 +381,7 @@ void updateOnset() {
     max_flux -= ((max_flux - min_flux) * 0.05);
     min_cent_negd += ((max_cent_negd - min_cent_negd) * 0.05);
     max_cent_negd -= ((max_cent_negd - min_cent_negd) * 0.05);
-    dprintln(P_SONG_DEBUG, "reset onset feature min and max for rrms, flux and cent_negd ");
+    dprintln(P_SONG, "reset onset feature min and max for rrms, flux and cent_negd ");
     onset_feature_reset_tmr = 0;
   }
 #endif // ONSET_ACTIVE
@@ -441,7 +441,7 @@ double getHueFromFFTAllBins(FFTManager1024 *f) {
   }
 }
 
-double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
+double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   double b;
   if (BRIGHTNESS_FEATURE == FEATURE_PEAK_AVG) {
     b = f->getPeakAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
@@ -474,10 +474,19 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
       b = _fft->getFFTTotalEnergy();
     }
   } else {
-    Serial.println("ERROR - calculateBrightness() does not accept that  BRIGHTNESS_FEATURE");
+    Serial.println("ERROR - calculateHSBBrightness() does not accept that  BRIGHTNESS_FEATURE");
   }
   ///////////////////////// If user controls are in place to scale the brightness it is done now //////////////////////
-
+  /////////////////////// Make sure that it is within bounds ////////////////////
+  
+  
+  if (b < 0) {
+    Serial.println("brightness too low, changing to 0.0");
+    b = 0;
+  }else if (b > 1.0) {
+    b = 1.0;
+    Serial.println("brightness too high, changing to 1.0");
+  }
   if (USER_BS_ACTIVE > 0) {
     Serial.print("changing brightness due to user brightness_scaler | before: ");
     Serial.print(b);
@@ -488,11 +497,11 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   
   //////////////////////// Scale down the brightness and make it more exponential for better results //////////////////
   if (SCALE_DOWN_BRIGHTNESS == true) {
-    Serial.print("changing brightness due to SCALE_DOWN_BRIGHTNESS | before: ");
-    Serial.print(b);
-    b = (b + b) * b;
-    Serial.print(" after: ");
-    Serial.println(b);
+    dprint(P_SCALE_DOWN_BRIGHTNESS, "changing brightness due to SCALE_DOWN_BRIGHTNESS | before: ");
+    dprint(P_SCALE_DOWN_BRIGHTNESS, b);
+    b = (b) * b;
+    dprint(P_SCALE_DOWN_BRIGHTNESS, " after: ");
+    dprintln(P_SCALE_DOWN_BRIGHTNESS, b);
   }
   
   /////////////////////// Make sure that it is within bounds ////////////////////
@@ -502,6 +511,10 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   }else if (b > 1.0) {
     b = 1.0;
     Serial.println("brightness too high, changing to 1.0");
+  }
+  if (SMOOTH_HSB_BRIGHTNESS > 0.0) {
+    b = (b * SMOOTH_HSB_BRIGHTNESS) + (last_brightness * (1.0 - SMOOTH_HSB_BRIGHTNESS));
+    last_brightness[0] = b;
   }
   return b;
 }
@@ -595,7 +608,7 @@ void updateNeosForPitch() {
     uint8_t inactive = 0;
     double s = calculateSaturation(&fc[0], &fft_features);
     // user brightness scaler is applied in this function
-    double b = calculateBrightness(&fc[0], &fft_features);
+    double b = calculateHSBBrightness(&fc[0], &fft_features);
     double h = calculateHue(&fc[0], &fft_features);
     Serial.print("h: ");Serial.print(h);
     Serial.print("\ts: ");

@@ -17,9 +17,9 @@ void setupDLManagerCicada() {
     // Hardware / Software / Serial Numbers
     datalog_manager.logSetupConfigByte("Hardware Version major      : ", HV_MAJOR);
     datalog_manager.logSetupConfigByte("Hardware Version minor      : ", HV_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MAJOR);
-    datalog_manager.logSetupConfigByte("Software Version major      : ", S_VERSION_MINOR);
-    datalog_manager.logSetupConfigByte("Software Version major      : ", S_SUBVERSION);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", SV_MAJOR);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", SV_MINOR);
+    datalog_manager.logSetupConfigByte("Software Version major      : ", SV_SUBVERSION);
     datalog_manager.logSetupConfigByte("Bot ID Number               : ", SERIAL_ID);
     datalog_manager.logSetupConfigByte("Datalog Active              : ", data_logging_active);
     datalog_manager.logSetupConfigByte("Firmware Mode               : ", FIRMWARE_MODE);

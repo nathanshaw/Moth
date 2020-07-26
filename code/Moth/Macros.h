@@ -25,28 +25,28 @@
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define S_VERSION_MAJOR           0
-#define S_VERSION_MINOR           2
-#define S_SUBVERSION              2
+#define SV_MAJOR           0
+#define SV_MINOR           2
+#define SV_SUBVERSION              3
 /*
-version 0,2.3 was created on 07/10/20 in reaction to thee field expedition, added threshold control 
-  for the click thresholds using the 4th pot, switched around some of the user controls, a splt was made in
-  thee functionality of the pins for v3.0 (removing the brightness scaler), the user brightness_scaler was fixed for
-  pitch mode, control for the brightness threshold was added for the fourth pot, references to 'click'
-  have been replaced with 'onset' which more accurately represents the functions abilities, improved the debug printing,
-  
-  
+// version 0.2.4 is an expansion of 0.2.3 and further improved the debug printing abilities of the
+   progam as a whole.
+// version 0.2.3 was created on 07/10/20 in reaction to thee field expedition, added threshold control 
+   for the click thresholds using the 4th pot, switched around some of the user controls, a splt was made in
+   thee functionality of the pins for v3.0 (removing the brightness scaler), the user brightness_scaler was fixed for
+   pitch mode, control for the brightness threshold was added for the fourth pot, references to 'click'
+   have been replaced with 'onset' which more accurately represents the functions abilities, improved the debug printing,
 // version 0.2.2 was created on 07/07/20 and integrated the pitch and cicada modes for a field expedition
 // version 0.2.1 was creaeted on 29.06.20 and got a working version of the code working for PCB v2.1 in Cicada Mode as well as
-//   improving the frame rate from 8 to 29, and adding support for PCB v3 in Cicada mode (minus the onset)
+   improving the frame rate from 8 to 29, and adding support for PCB v3 in Cicada mode (minus the onset)
 // version 0.2.0 was created on 07/05/20 as the first attempt to get everything workin on PCB v3
 // version 0.1.0 was created on 25.02.20 to address issues with the ground enclosure not being as responsive
-// as well as the autobrightness calibration routine being very visible and disruptive when resetting
+   as well as the autobrightness calibration routine being very visible and disruptive when resetting
 // version 0.1.0 was created on 24.02.20 as it served as the first viable working song implementation
 // version 0.0.5 was created on 20.02.20 in the field at Kiatoke Cicada Grove as a first reaction to 
-// how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
-// and the addition of a flag to differentiate between adding the flash brightness of just displaying
-// the brightness
+   how version 0.0.4 was performing, the changes included higher starting gains, a brighter flash,
+   and the addition of a flag to differentiate between adding the flash brightness of just displaying
+   the brightness
 */
 
 
