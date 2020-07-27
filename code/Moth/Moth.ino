@@ -141,7 +141,7 @@ void readPots() {
     }
     Serial.print("user brightness scaler (pre lux scaler) is now: ");
     Serial.println(scaled_brightness);
-    user_brightness_scaler = scaled_brightnes;
+    user_brightness_scaler = scaled_brightness;
     printMinorDivide();
   }
   if (USER_ONSET_THRESH_OVERRIDE == true) {
@@ -183,7 +183,7 @@ void readJumpers() {
 #else
   temp_b = digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
-  if (temp_B == 0) {
+  if (temp_b == 0) {
     Serial.print(" OFF - TODO");
   } else {
     Serial.print(" ON - TODO");
@@ -239,7 +239,7 @@ void readJumpers() {
 #else
   temp_b = digitalRead(JMP4_PIN);
   Serial.print("(pin4) - ");
-  if (temp_B == 0) {
+  if (temp_b == 0) {
     Serial.print("(pin4)  - OFF - TODO");
   } else {
     Serial.print("(pin4  - ON - TODO");
@@ -260,7 +260,7 @@ void readJumpers() {
 #else
   temp_b = digitalRead(JMP4_PIN);
   Serial.print("(pin4) - ");
-  if (temp_B == 0) {
+  if (temp_b == 0) {
     Serial.print("(pin4)  - OFF - TODO");
   } else {
     Serial.print("(pin4  - ON - TODO");
@@ -281,7 +281,7 @@ void readJumpers() {
 #else
   temp_b = digitalRead(JMP6_PIN);
   Serial.print("(pin6) - ");
-  if (temp_B == 0) {
+  if (temp_b == 0) {
     Serial.print("OFF - TODO");
   } else {
     Serial.print("ON - TODO");
@@ -328,9 +328,8 @@ void readJumpers() {
 #endif // HV_MAJOR > 2
   user_brightness_scaler = 1.0;
   user_brightness_scaler += total_scaler;
-  Serial.print("\n\nuser_brightness_scaler set to : ");
+  Serial.print("\nuser_brightness_scaler set to : ");
   Serial.println(user_brightness_scaler);
-  Serial.println();
   printMinorDivide();
 }
 

@@ -34,15 +34,20 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 ////////////////////////////////////////////////////////////////////////////
 #define P_LBS                           false
 
-#define P_LEDS_ON                       false
+#define P_LEDS_ON                       true
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
 #define P_LED_ON_RATIO                  false
 #define P_COLOR_WIPE                    true
+#define P_HUE                           false
+#define P_HSB                           false
+#define P_NEO_COLORS                    false
+
 #define P_EXTREME_LUX                   true
 #define P_LUX                           true
 #define P_LUX_READINGS                  true
-#define P_BRIGHTNESS_SCALER             true
+
+#define P_BRIGHTNESS_SCALER             false
 #define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
 // this is where the final brightness scaler is applied
@@ -65,55 +70,55 @@ elapsedMillis song_update_timer = 0;
 #define P_ONSET_FEATURES                false
 #define P_ONSET                         false
 
-#define P_AUTO_GAIN                 false
+#define P_AUTO_GAIN                     false
 
-#define P_LOG_WRITE                 false
-#define DLM_PRINT                   false
+#define P_LOG_WRITE                     false
+#define DLM_PRINT                       false
 // if LOOP_LENGTH is set to true the program will keep track of how long it takes to go through
 // the main loop, it will also store the min and max loop length values as well as calculate 
 // what the average loop length is
-#define P_LOOP_LENGTH               false
+#define P_LOOP_LENGTH                   false
 
 // perform a write check on everything that is written to EEPROM
-#define EEPROM_WRITE_CHECK          false
+#define EEPROM_WRITE_CHECK              false
 
 ///////////////////////// Audio Stuff ///////////////////////////////////////
-#define P_RMS_VALS                  false
-#define P_RMS                       false
-#define P_PEAK_VALS                 false
-#define P_PEAK                      false
-#define P_TONE_VALS                 false
-#define P_FREQ_VALS                 false
-#define P_AUDIO_USAGE_MAX           false
+#define P_RMS_VALS                      false
+#define P_RMS                           false
+#define P_PEAK_VALS                     false
+#define P_PEAK                          false
+#define P_TONE_VALS                     false
+#define P_FREQ_VALS                     false
+#define P_AUDIO_USAGE_MAX               false
 
 //////////////////////////// FFT Printing ///////////////////////////////////
-#define P_FFT                       false
+#define P_FFT                           false
 // for printing raw FFT values
-#define P_FFT_VALS                  false
+#define P_FFT_VALS                      false
 // will print spectral flux if flux_active
-#define P_FLUX_VALS                 false
-#define P_ONSET_FLUX                false
+#define P_FLUX_VALS                     false
+#define P_ONSET_FLUX                    false
 // will print centroid if centroid_active
-#define P_CENTROID_VALS             false
+#define P_CENTROID_VALS                 false
 // will print highest energy bin in FFT
 
 //////////////////////////// User Controls ///////////////////////////////////
-#define P_USER_CONTROLS             true
-#define P_POT_VALS                  true
+#define P_USER_CONTROLS                 true
+#define P_POT_VALS                      true
 
 //////////////////////////// EEPROM ///////////////////////////////////
 // set to true if you want to print out data stored in EEPROM on boot
-#define P_EEPROM_CONTENTS           false
+#define P_EEPROM_CONTENTS               false
 
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// User Controls //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 // if set to true an audio USB object will be created so the audio can be debuged via Audacity
-#define AUDIO_USB                   true
+#define AUDIO_USB                       true
 
 //////////////////////////// Pots ////////////////////////////////////////////
 // this wll allow the POT to overide the brightness at the end of color wipe
-#define USER_BRIGHTNESS_OVERDRIVE   true
+#define USER_BRIGHTNESS_OVERDRIVE       true
 
 ///////////////////////////// P1 - Brightness Overide ////////////////////////
 // which pot will be used to control thebrightness overide
@@ -248,8 +253,6 @@ bool gain_adjust_active =                false;
   #define NUM_LUX_MANAGERS              1  
 #endif
 
-
-
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -279,13 +282,14 @@ uint8_t  MAX_BRIGHTNESS =              255;
 #define BRIGHTNESS_SCALER_MIN           0.05
 #define BRIGHTNESS_SCALER_MAX           3.00
 
-uint32_t lux_max_reading_delay =        1000 * 60 * 2;   // every two minutes
-uint32_t lux_min_reading_delay =        1000 * 15;       // fifteen seconds
+uint32_t lux_max_reading_delay =        1000 * 60 * 1;   // every minute
+uint32_t lux_min_reading_delay =        1000 * 10;       // ten seconds
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// NeoPixel Settings ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
+// this is needed for the forced lux 
 #define UPDATE_ON_OFF_RATIOS            true
 
 #define ONSET_RED                       200

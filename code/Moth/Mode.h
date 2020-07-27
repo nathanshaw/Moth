@@ -481,18 +481,18 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   
   
   if (b < 0) {
-    Serial.println("brightness too low, changing to 0.0");
+    dprint(P_BRIGHTNESS_SCALER,"brightness too low, changing to 0.0");
     b = 0;
   }else if (b > 1.0) {
     b = 1.0;
-    Serial.println("brightness too high, changing to 1.0");
+    dprintln(P_BRIGHTNESS_SCALER,"brightness too high, changing to 1.0");
   }
   if (USER_BS_ACTIVE > 0) {
-    Serial.print("changing brightness due to user brightness_scaler | before: ");
-    Serial.print(b);
+    dprint(P_BRIGHTNESS_SCALER, "changing brightness due to user brightness_scaler | before: ");
+    dprint(P_BRIGHTNESS_SCALER, b);
     b = b * user_brightness_scaler;
-    Serial.print(" after: ");
-    Serial.println(b);  
+    dprint(P_BRIGHTNESS_SCALER, " after: ");
+    dprintln(P_BRIGHTNESS_SCALER,b);  
   }
   
   //////////////////////// Scale down the brightness and make it more exponential for better results //////////////////
@@ -506,14 +506,14 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   
   /////////////////////// Make sure that it is within bounds ////////////////////
   if (b < 0) {
-    Serial.println("brightness too low, changing to 0.0");
+    dprintln(P_BRIGHTNESS_SCALER,"brightness too low, changing to 0.0");
     b = 0;
   }else if (b > 1.0) {
     b = 1.0;
-    Serial.println("brightness too high, changing to 1.0");
+    dprintln(P_BRIGHTNESS_SCALER,"brightness too high, changing to 1.0");
   }
   if (SMOOTH_HSB_BRIGHTNESS > 0.0) {
-    b = (b * SMOOTH_HSB_BRIGHTNESS) + (last_brightness * (1.0 - SMOOTH_HSB_BRIGHTNESS));
+    b = (b * SMOOTH_HSB_BRIGHTNESS) + (last_brightness[0] * (1.0 - SMOOTH_HSB_BRIGHTNESS));
     last_brightness[0] = b;
   }
   return b;
@@ -523,7 +523,7 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   double sat = 0.0;
   if (SATURATION_FEATURE == FEATURE_PEAK_AVG) {
     sat = f->getPeakAvg();
-    Serial.println(sat);
+    // Serial.println(sat);
     if (sat > 1.0) {
       sat =  1.0;
     }
@@ -593,8 +593,8 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
   }
   hue = (last_hue * 0.75) + (hue * 0.25);
   if (hue < 0.0){hue = 0.0;};
-  Serial.print("last_hue: ");Serial.print(last_hue);
-  Serial.print("\thue: "); Serial.println(hue);
+  dprint(P_HUE,"last_hue: ");dprint(P_HUE,last_hue);
+  dprint(P_HUE,"\thue: "); dprintln(P_HUE,hue);
   last_hue = hue;
   return hue;
 }
@@ -610,11 +610,13 @@ void updateNeosForPitch() {
     // user brightness scaler is applied in this function
     double b = calculateHSBBrightness(&fc[0], &fft_features);
     double h = calculateHue(&fc[0], &fft_features);
+    if (P_HSB) {
     Serial.print("h: ");Serial.print(h);
     Serial.print("\ts: ");
     Serial.print(s);
     Serial.print("\tb");
     Serial.println(b);
+    }
     for (int chan = 0; chan < 2; chan++) {
       if (fc[0].isActive() == true) {
         // now colorWipe the LEDs with the HSB value
@@ -639,8 +641,10 @@ void updateNeosForPitch() {
 
 void printColors() {
   fft_features.printFFTVals();
+  if (P_NEO_COLORS) {
   for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
     neos[i].printColors();
+  }
   }
 }
 
