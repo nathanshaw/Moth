@@ -46,7 +46,8 @@ void setup() {
 
   Wire.begin();
   Serial.begin(115200);
-
+  delay(5000);
+  /*
   if (lights[0].begin()) {
     Serial.println("Ready to sense some light (1)!");
     // Again the gain and integration times determine the resolution of the lux
@@ -63,8 +64,10 @@ void setup() {
     Serial.println(timeVal);
   }
   else {
+ 
     Serial.println("Could not communicate with the sensor (1)!");
   }
+  */
   if (lights[1].begin()) {
     Serial.println("Ready to sense some light (2)!");
     lights[1].setGain(gain);
@@ -84,7 +87,7 @@ void setup() {
 }
 
 void loop() {
-  for (int i = 0; i < 2; i++) {
+  for (int i = 1; i < 2; i++) {
     luxVal = lights[i].readLight();
     Serial.print("Ambient Light Reading "); Serial.print(i); Serial.print(" : ");
     Serial.print(luxVal);
