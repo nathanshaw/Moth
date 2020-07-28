@@ -16,7 +16,7 @@
 // will autogain based on the LED ON/OFF time be active?
 #define AUTOGAIN_ACTIVE                 false
 // should correspond to the serial number on the PCB
-#define SERIAL_ID                       6
+#define SERIAL_ID                       5
 // will a onset_detector be active?
 #define ONSET_ACTIVE                    false
 // if stereo feedback is set to true than only audio from both channels will be used to calculate visual feedback brightness and color
@@ -34,12 +34,17 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 ////////////////////////////////////////////////////////////////////////////
 #define P_LBS                           false
 
-#define P_LEDS_ON                       true
+#define P_LEDS_ON                       false
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
 #define P_LED_ON_RATIO                  false
-#define P_COLOR_WIPE                    true
+#define P_COLOR_WIPE                    false
+
 #define P_HUE                           false
+
+#define P_BRIGHTNESS                    false
+#define P_BRIGHTNESS_SCALER             false
+
 #define P_HSB                           false
 #define P_NEO_COLORS                    false
 
@@ -47,16 +52,13 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 #define P_LUX                           true
 #define P_LUX_READINGS                  true
 
-#define P_BRIGHTNESS_SCALER             false
 #define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
 // this is where the final brightness scaler is applied
-#define P_PACK_COLORS                   true
+#define P_PACK_COLORS                   false
 
 #define P_SONG                          false
-#define P_SONG_BRIGHTNESS               false
 #define P_SONG_COLOR                    false
-#define P_SCALE_DOWN_BRIGHTNESS         true
 
 // basically do you want to print the number of song updates which occur every second?
 #define P_NUM_SONG_UPDATES              false
@@ -227,7 +229,7 @@ uint8_t lbs_scaler_max_thresh =       0;
 ////////////////////////////////////////////////////////////////////////////
 // how long will the bot wait until starting the main loop
 // this is useful for when it neeeds to bee put into an enclosure and then installed in the environment
-uint32_t  BOOT_DELAY      =           (1000 * 60 * 8);
+uint32_t  BOOT_DELAY      =           (1000 * 60 * 2);
 double MASTER_GAIN_SCALER =           1.0;
 
 bool gain_adjust_active =                false;
@@ -383,17 +385,17 @@ byte LED_DRAWING_MEMORY[NUM_LED * 3];       //  3 bytes per LED
 DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 // if this is true the flash messages will erase other brightness values
 // if it is false then the flash values will be added to existing values
-bool FLASH_DOMINATES =            false;
+bool FLASH_DOMINATES =                  false;
 
 // if this is true then the brightness will b = (b + b) * b; in order to reduce its value, and make loud events even more noticable
-#define SCALE_DOWN_BRIGHTNESS     true
+bool SCALE_DOWN_BRIGHTNESS =            true;
 
 // how high the onset flash timer will go up to
-#define MAX_FLASH_TIME            60
+#define MAX_FLASH_TIME                  60
 // where the onset flash timer will start
-#define MIN_FLASH_TIME            40
+#define MIN_FLASH_TIME                  40
 // the amount of time that the LEDs need to be shutdown to allow lux sensors to get an accurate reading
-#define FLASH_DEBOUNCE_TIME       80
+#define FLASH_DEBOUNCE_TIME             80
 
 /*//////////////////////////// LED MAPPING MODE //////////////////////////////////////////////
  * The options which are being considered are 
@@ -503,7 +505,7 @@ int SONG_COLOR_FEATURE =                      SPECTRAL_CENTROID;
 // #define STARTING_ONSET_GAIN             16.0
 
 #if HV_MAJOR < 3
-#define STARTING_GAIN                         40.0
+#define STARTING_GAIN                         60.0
 #elif HV_MAJOR == 3
 // 30.0 is good for testing when no enclosure is present, but a higher value should be used when an enclosure is present
 #define STARTING_GAIN                         30.0
@@ -607,6 +609,5 @@ double max_onset_feature = 0.0;
 double onset_flux = 0.0;
 double onset_rrms = 0.0;
 double onset_cent = 0.0;
-
 
 #endif // CONFIGURATION_H

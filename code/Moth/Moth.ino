@@ -170,7 +170,7 @@ void readJumpers() {
   //////////// Jumper 1 ///////////////////////
   bool temp_b;
 #if HV_MAJOR < 3
-  ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
+  /*ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
   if (ENCLOSURE_TYPE == 0) {
     num_channels = 1;
@@ -178,6 +178,13 @@ void readJumpers() {
   } else {
     num_channels = 2;
     Serial.print(" ON - Orb Enclosure - num_channels = 2");
+  }*/
+  SCALE_DOWN_BRIGHTNESS = digitalRead(JMP1_PIN);
+  Serial.print("(pin1) - ");
+  if (SCALE_DOWN_BRIGHTNESS == 0) {
+    Serial.print(" OFF - WILL NOT scale down brightness");
+  } else {
+    Serial.print(" On  - WILL scale down brightness");
   }
   Serial.println();
 #else

@@ -16,7 +16,7 @@ WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS28
 NeoGroup neos[2] = {
   NeoGroup(&leds, 0, (NUM_LED / 2) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
   NeoGroup(&leds, NUM_LED / 2, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
-}; 
+};
 
 // lux managers to keep track of the VEML readings
 LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay);
@@ -113,46 +113,46 @@ double calculateSongBrightness(uint8_t i) {
   }
   /*
     if (target_brightness < brightness_feature_min[i]) {
-    if (i == 0 && P_SONG_BRIGHTNESS) {
-      dprint(P_SONG_BRIGHTNESS, "target_B is less than feature_min: ");
-      dprint(P_SONG_BRIGHTNESS, target_brightness, 5);
-      dprint(P_SONG_BRIGHTNESS, " < ");
-      dprint(P_SONG_BRIGHTNESS, brightness_feature_min[i], 5);
+    if (i == 0 && P_BRIGHTNESS) {
+      dprint(P_BRIGHTNESS, "target_B is less than feature_min: ");
+      dprint(P_BRIGHTNESS, target_brightness, 5);
+      dprint(P_BRIGHTNESS, " < ");
+      dprint(P_BRIGHTNESS, brightness_feature_min[i], 5);
     }
     brightness_feature_min[i] = (target_brightness * 0.15) + (brightness_feature_min[i] * 0.85);
-    if (i == 0 && P_SONG_BRIGHTNESS) {
-      dprint(P_SONG_BRIGHTNESS, " updated brightness_min and target_brightness to: ");
-      dprintln(P_SONG_BRIGHTNESS, brightness_feature_min[i], 5);
+    if (i == 0 && P_BRIGHTNESS) {
+      dprint(P_BRIGHTNESS, " updated brightness_min and target_brightness to: ");
+      dprintln(P_BRIGHTNESS, brightness_feature_min[i], 5);
     }
     target_brightness = brightness_feature_min[i];
     }
   */
   if (target_brightness > brightness_feature_max[i]) {
-    if (i == 0 && P_SONG_BRIGHTNESS) {
-      dprint(P_SONG_BRIGHTNESS, "target_B is more than feature_max: ");
-      dprint(P_SONG_BRIGHTNESS, target_brightness, 5);
-      dprint(P_SONG_BRIGHTNESS, " > ");
-      dprintln(P_SONG_BRIGHTNESS, brightness_feature_max[i], 5);
+    if (i == 0 && P_BRIGHTNESS) {
+      dprint(P_BRIGHTNESS, "target_B is more than feature_max: ");
+      dprint(P_BRIGHTNESS, target_brightness, 5);
+      dprint(P_BRIGHTNESS, " > ");
+      dprintln(P_BRIGHTNESS, brightness_feature_max[i], 5);
     }
     brightness_feature_max[i] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (brightness_feature_max[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
     // to ensure that loud clipping events do not skew things too much
     if (brightness_feature_max[i] > 1.0) {
       brightness_feature_max[i] = 1.0;
     }
-    if (i == 0 && P_SONG_BRIGHTNESS) {
-      dprint(P_SONG_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
-      dprintln(P_SONG_BRIGHTNESS, brightness_feature_max[i], 5);
+    if (i == 0 && P_BRIGHTNESS) {
+      dprint(P_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
+      dprintln(P_BRIGHTNESS, brightness_feature_max[i], 5);
     }
     target_brightness = brightness_feature_max[i];
   }
-  dprint(P_SONG_BRIGHTNESS, "channel ");
-  dprint(P_SONG_BRIGHTNESS, i);
-  dprint(P_SONG_BRIGHTNESS, " target: ");
-  dprint(P_SONG_BRIGHTNESS, target_brightness);
-  dprint(P_SONG_BRIGHTNESS, "\tmin: ");
-  dprint(P_SONG_BRIGHTNESS, brightness_feature_min[i]);
-  dprint(P_SONG_BRIGHTNESS, "\tmax: ");
-  dprint(P_SONG_BRIGHTNESS, brightness_feature_max[i]);
+  dprint(P_BRIGHTNESS, "channel ");
+  dprint(P_BRIGHTNESS, i);
+  dprint(P_BRIGHTNESS, " target: ");
+  dprint(P_BRIGHTNESS, target_brightness);
+  dprint(P_BRIGHTNESS, "\tmin: ");
+  dprint(P_BRIGHTNESS, brightness_feature_min[i]);
+  dprint(P_BRIGHTNESS, "\tmax: ");
+  dprint(P_BRIGHTNESS, brightness_feature_max[i]);
   // to ensure the unit is not always on
   // instead of comparing the brightness to the cuttoff_threshold
   // we subtract the cuttoff_threshold from both the target and the max
@@ -163,8 +163,8 @@ double calculateSongBrightness(uint8_t i) {
   } else if (target_brightness > 1.0) {
     target_brightness = 1.0;
   }
-  dprint(P_SONG_BRIGHTNESS, " adjusted: ");
-  dprintln(P_SONG_BRIGHTNESS, target_brightness);
+  dprint(P_BRIGHTNESS, " adjusted: ");
+  dprintln(P_BRIGHTNESS, target_brightness);
 #if P_CALCULATE_BRIGHTNESS_LENGTH > 0
   Serial.print("calculateSongBrightness() function call length: ");
   Serial.println(millis() - _start);
@@ -236,13 +236,13 @@ void updateSong() {
   last_brightness[0] = current_brightness[0];
   current_brightness[0] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (last_brightness[0] * (1.0 - BRIGHTNESS_LP_LEVEL));
 
-#if P_SONG_BRIGHTNESS > 0
-  dprint(P_SONG_BRIGHTNESS, "last/current_brightness[");
-  dprint(P_SONG_BRIGHTNESS, 0);
-  dprint(P_SONG_BRIGHTNESS, "]: ");
-  dprint(P_SONG_BRIGHTNESS, last_brightness[0]);
-  dprint(P_SONG_BRIGHTNESS, " => ");
-  dprintln(P_SONG_BRIGHTNESS, current_brightness[0]);
+#if P_BRIGHTNESS > 0
+  dprint(P_BRIGHTNESS, "last/current_brightness[");
+  dprint(P_BRIGHTNESS, 0);
+  dprint(P_BRIGHTNESS, "]: ");
+  dprint(P_BRIGHTNESS, last_brightness[0]);
+  dprint(P_BRIGHTNESS, " => ");
+  dprintln(P_BRIGHTNESS, current_brightness[0]);
 #endif
 
   // red = (uint8_t)((double)red * current_brightness[0]);
@@ -296,7 +296,7 @@ double updateScalers(double val, double & min, double & max, double rate) {
 }
 
 void updateOnset() {
-  #if ONSET_ACTIVE > 0
+#if ONSET_ACTIVE > 0
   // for a onset in theory the spectral flux will be high, the
   // centroid will decrease since the last frame, and there should be an
   // increase of amplitude in the 1k - 3k freq range
@@ -443,13 +443,17 @@ double getHueFromFFTAllBins(FFTManager1024 *f) {
 
 double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   double b;
+  dprintMinorDivide(P_BRIGHTNESS);
+  dprint(P_BRIGHTNESS, "calculating HSB Brightness: ");
   if (BRIGHTNESS_FEATURE == FEATURE_PEAK_AVG) {
+    dprintln(P_BRIGHTNESS, "feature is PEAK_AVG");
     b = f->getPeakAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
     if (b > 1.0) {
       b =  1.0;
     }
     f->resetPeakAvgLog();
   } else if (BRIGHTNESS_FEATURE == FEATURE_RMS_AVG) {
+    dprintln(P_BRIGHTNESS, "feature is RMS_AVG");
     b = f->getRMSAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
     if (b > 1.0) {
       b =  1.0;
@@ -457,12 +461,14 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
     f->resetRMSAvgLog();
   }
   else if (BRIGHTNESS_FEATURE == FEATURE_RMS) {
+    dprintln(P_BRIGHTNESS, "feature is RMS");
     b = f->getRMS() - BRIGHTNESS_CUTTOFF_THRESHOLD;
     if (b > 1.0) {
       b =  1.0;
     }
   }
   else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY) {
+    dprintln(P_BRIGHTNESS, "feature is FFT_ENERGY");
     b = _fft->getFFTTotalEnergy() - BRIGHTNESS_CUTTOFF_THRESHOLD;
   } else  if (BRIGHTNESS_FEATURE == FEATURE_STRONG_FFT) {
     // range index is what the highest energy bin is within the range we care about
@@ -478,39 +484,39 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   }
   ///////////////////////// If user controls are in place to scale the brightness it is done now //////////////////////
   /////////////////////// Make sure that it is within bounds ////////////////////
-  
-  
+
+
   if (b < 0) {
-    dprint(P_BRIGHTNESS_SCALER,"brightness too low, changing to 0.0");
+    dprint(P_BRIGHTNESS_SCALER, "brightness too low, changing to 0.0");
     b = 0;
-  }else if (b > 1.0) {
+  } else if (b > 1.0) {
     b = 1.0;
-    dprintln(P_BRIGHTNESS_SCALER,"brightness too high, changing to 1.0");
+    dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
   }
   if (USER_BS_ACTIVE > 0) {
     dprint(P_BRIGHTNESS_SCALER, "changing brightness due to user brightness_scaler | before: ");
     dprint(P_BRIGHTNESS_SCALER, b);
     b = b * user_brightness_scaler;
     dprint(P_BRIGHTNESS_SCALER, " after: ");
-    dprintln(P_BRIGHTNESS_SCALER,b);  
+    dprintln(P_BRIGHTNESS_SCALER, b);
   }
-  
+
   //////////////////////// Scale down the brightness and make it more exponential for better results //////////////////
   if (SCALE_DOWN_BRIGHTNESS == true) {
-    dprint(P_SCALE_DOWN_BRIGHTNESS, "changing brightness due to SCALE_DOWN_BRIGHTNESS | before: ");
-    dprint(P_SCALE_DOWN_BRIGHTNESS, b);
+    dprint(P_BRIGHTNESS_SCALER, "changing brightness due to SCALE_DOWN_BRIGHTNESS | before: ");
+    dprint(P_BRIGHTNESS_SCALER, b);
     b = (b) * b;
-    dprint(P_SCALE_DOWN_BRIGHTNESS, " after: ");
-    dprintln(P_SCALE_DOWN_BRIGHTNESS, b);
+    dprint(P_BRIGHTNESS_SCALER, " after: ");
+    dprintln(P_BRIGHTNESS_SCALER, b);
   }
-  
+
   /////////////////////// Make sure that it is within bounds ////////////////////
   if (b < 0) {
-    dprintln(P_BRIGHTNESS_SCALER,"brightness too low, changing to 0.0");
+    dprintln(P_BRIGHTNESS_SCALER, "brightness too low, changing to 0.0");
     b = 0;
-  }else if (b > 1.0) {
+  } else if (b > 1.0) {
     b = 1.0;
-    dprintln(P_BRIGHTNESS_SCALER,"brightness too high, changing to 1.0");
+    dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
   }
   if (SMOOTH_HSB_BRIGHTNESS > 0.0) {
     b = (b * SMOOTH_HSB_BRIGHTNESS) + (last_brightness[0] * (1.0 - SMOOTH_HSB_BRIGHTNESS));
@@ -592,9 +598,11 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
       break;
   }
   hue = (last_hue * 0.75) + (hue * 0.25);
-  if (hue < 0.0){hue = 0.0;};
-  dprint(P_HUE,"last_hue: ");dprint(P_HUE,last_hue);
-  dprint(P_HUE,"\thue: "); dprintln(P_HUE,hue);
+  if (hue < 0.0) {
+    hue = 0.0;
+  };
+  dprint(P_HUE, "last_hue: "); dprint(P_HUE, last_hue);
+  dprint(P_HUE, "\thue: "); dprintln(P_HUE, hue);
   last_hue = hue;
   return hue;
 }
@@ -611,11 +619,11 @@ void updateNeosForPitch() {
     double b = calculateHSBBrightness(&fc[0], &fft_features);
     double h = calculateHue(&fc[0], &fft_features);
     if (P_HSB) {
-    Serial.print("h: ");Serial.print(h);
-    Serial.print("\ts: ");
-    Serial.print(s);
-    Serial.print("\tb");
-    Serial.println(b);
+      Serial.print("h: "); Serial.print(h);
+      Serial.print("\ts: ");
+      Serial.print(s);
+      Serial.print("\tb: ");
+      Serial.println(b);
     }
     for (int chan = 0; chan < 2; chan++) {
       if (fc[0].isActive() == true) {
@@ -642,9 +650,9 @@ void updateNeosForPitch() {
 void printColors() {
   fft_features.printFFTVals();
   if (P_NEO_COLORS) {
-  for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
-    neos[i].printColors();
-  }
+    for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
+      neos[i].printColors();
+    }
   }
 }
 
