@@ -179,12 +179,12 @@ void readJumpers() {
     num_channels = 2;
     Serial.print(" ON - Orb Enclosure - num_channels = 2");
   }*/
-  SCALE_DOWN_BRIGHTNESS = digitalRead(JMP1_PIN);
+  SCALE_DOWN_BRIGHTNESS = !digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
   if (SCALE_DOWN_BRIGHTNESS == 0) {
-    Serial.print(" OFF - WILL NOT scale down brightness");
+    Serial.print(" ON  - WILL NOT scale down brightness");
   } else {
-    Serial.print(" On  - WILL scale down brightness");
+    Serial.print(" OFF - WILL scale down brightness");
   }
   Serial.println();
 #else
@@ -221,20 +221,21 @@ void readJumpers() {
     Serial.println("(pin3)  - OFF - FLASH_DOMINATES is false, flash will be added to other brightness messages");
   }
 #else
-  temp_b = digitalRead(JMP1_PIN);
   Serial.print("(pin3) - ");
   if (temp_b == 0) {
-    Serial.print(" OFF - TODO");
+    SMOOTH_HSB_BRIGHTNESS = 0.125;
+    Serial.print(" OFF - SMOOTH_HSB_BRIGHTNESS is now set at 0.125");
   } else {
-    Serial.print(" ON - TODO");
+    SMOOTH_HSB_BRIGHTNESS = 0.5;
+    Serial.print(" ON - SMOOTH_HSB_BRIGHTNESS is now set at 0.5");
   }
   Serial.println();
 #endif//FIRMWARE_MODE
 
   //////////// Jumper 4 ///////////////////////
   //////////// Major Sensitivity Attenuation //
+    double total_scaler = 0.0;
 #if HV_MAJOR < 3
-  double total_scaler = 0.0;
   temp_b = digitalRead(JMP4_PIN);
   if (temp_b == 1) {
     Serial.print("(pin4)  - ON  - user_brightness_scaler not decreased by 50% : ");
@@ -289,22 +290,24 @@ void readJumpers() {
   temp_b = digitalRead(JMP6_PIN);
   Serial.print("(pin6) - ");
   if (temp_b == 0) {
-    Serial.print("OFF - TODO");
+    Serial.println("OFF - TODO");
   } else {
-    Serial.print("ON - TODO");
+    Serial.println("ON - TODO");
   }
-  Serial.println();
 #endif//HV_MAJOR
 #if HV_MAJOR > 2
   ///////////// Jumper 7 //////////////////////
   ///////////// Center Out Mapping ////////////
   temp_b = digitalRead(JMP7_PIN);
   if (temp_b == 1) {
-    Serial.print("(pin7)  - ON  - FEEDBACK MODE SET TO CENTER_OUT");
+    Serial.println("(pin7)  - ON  - LED_MAPPING_MODE SET TO CENTER_OUT");
     LED_MAPPING_MODE = LED_MAPPING_CENTER_OUT;
   } else {
-    Serial.print("(pin7)  - OFF - FEEDBACK MODE remains STANDARD");
+    Serial.println("(pin7)  - OFF - LED_MAPPING_MODE remains STANDARD");
     LED_MAPPING_MODE = LED_MAPPING_STANDARD;
+  }
+  for (int i = 0; i < NUM_NEO_GROUPS; i++) {
+    neos[i].changeMapping(LED_MAPPING_MODE);
   }
 
   ///////////// Jumper 8 //////////////////////
@@ -326,13 +329,14 @@ void readJumpers() {
   Serial.println();
 
   ///////////// Jumper 10 //////////////////////
-  temp_b = digitalRead(JMP10_PIN);
+  LBS_ACTIVE = digitalRead(JMP10_PIN);
   if (temp_b == 1) {
-    Serial.print("(pin10) - ON  - TODO");
+    Serial.print("(pin10) - ON  - Local Brightness Scaler Active");
   } else {
-    Serial.print("(pin10) - OFF - TODO");
+    Serial.print("(pin10) - OFF - Local Brightness Scaler Off");
   }
 #endif // HV_MAJOR > 2
+
   user_brightness_scaler = 1.0;
   user_brightness_scaler += total_scaler;
   Serial.print("\nuser_brightness_scaler set to : ");
@@ -424,6 +428,7 @@ void setup() {
   delay(1000);// so that our Serial messages will appear
   printDivide();
   Serial.println("Entering the Setup Loop");
+  printDivide();
   Serial.println("Serial begun");
   printMinorDivide();
   //////////////// Hardware/Software Version /////////////////
@@ -533,7 +538,9 @@ void setup() {
     uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED);
     leds.setPixel(it, 10, 32, 20);
     leds.show();
-    delay(segment);
+    if (digitalRead(JMP1_PIN)){
+      delay(segment);
+    }
   }
   for (int it = 0; it < NUM_LED; it++) {
     leds.setPixel(it, 0, 0, 0);

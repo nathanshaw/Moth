@@ -5,8 +5,8 @@
 #include "PrintUtils.h"
 #include "Macros.h"
 
-#define HV_MAJOR                  2
-#define HV_MINOR                  1
+#define HV_MAJOR                  3
+#define HV_MINOR                  0
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
 #define FIRMWARE_MODE             PITCH_MODE

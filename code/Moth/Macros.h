@@ -27,10 +27,13 @@
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
 #define SV_MINOR           2
-#define SV_SUBVERSION              3
+#define SV_SUBVERSION      5
 /*
+// version 0.2.5 added functionality for the thirdd jumper on v2.1. It now determines the amout of smoothing
+   for the HSB values. it also reintegrated LBS into the pitch mode. Made it so you could overide the boot delay.
+   Also fixed a bug with the center out feedback setting on the Moth v3, pushed v on 07/28/2020
 // version 0.2.4 is an expansion of 0.2.3 and further improved the debug printing abilities of the
-   progam as a whole.
+   progam as a whole. Fixed bug with the lux manager not polling correctly. Updated on 07/27/2020
 // version 0.2.3 was created on 07/10/20 in reaction to thee field expedition, added threshold control 
    for the click thresholds using the 4th pot, switched around some of the user controls, a splt was made in
    thee functionality of the pins for v3.0 (removing the brightness scaler), the user brightness_scaler was fixed for
@@ -153,6 +156,16 @@
   }
   #endif//print loop length
 */
+double constrainf(double val, double _min, double _max) {
+  if (val > _max) {
+    return _max;
+  } else if (val < _min) {
+    return _min;
+  } else {
+    return val;
+  }
+}
+
 double mapf(double val, double in_min, double in_max, double out_min, double out_max) {
     return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

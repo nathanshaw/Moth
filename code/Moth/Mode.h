@@ -519,8 +519,12 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
     dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
   }
   if (SMOOTH_HSB_BRIGHTNESS > 0.0) {
-    b = (b * SMOOTH_HSB_BRIGHTNESS) + (last_brightness[0] * (1.0 - SMOOTH_HSB_BRIGHTNESS));
+    dprint(P_BRIGHTNESS_SCALER, "smoothing brightness: ");
+    dprint(P_BRIGHTNESS_SCALER, b);
+    dprint(P_BRIGHTNESS_SCALER, "\t");
+    b = (b * (1.0 - SMOOTH_HSB_BRIGHTNESS)) + (last_brightness[0] * (SMOOTH_HSB_BRIGHTNESS));
     last_brightness[0] = b;
+    dprint(P_BRIGHTNESS_SCALER, b);
   }
   return b;
 }
@@ -606,7 +610,116 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
   last_hue = hue;
   return hue;
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// Local Brightness Scaler /////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+void updateLBS(uint8_t feature) {
+  if (lbs_timer > LBS_TIME_FRAME) {
+    lbs_timer = 0;
+    lbs_min = (uint8_t)((double)lbs_min * 1.1);
+    lbs_max = (uint8_t)((double)lbs_max * 0.9);
+    Serial.print("Reset the lbs timers");
+  }
+  if (feature > lbs_max) {
+    lbs_max = feature;
+  } else if (feature < lbs_min) {
+    lbs_min = feature;
+  } else {
+    return;
+  }
+  // if we do not return then it means we updated the min or max and now
+  // need to update the lbs_scaler_min_thresh and max thresb
+  // double range  = lbs_max - lbs_min;
+  // double lbs_scaler_min_thresh = lbs_min
+  // double lbs_scaler_max_thresh =
+  dprint(P_LBS, "old lbs min/max : ");
+  dprint(P_LBS, lbs_scaler_min_thresh);
+  dprint(P_LBS, " / ");
+  dprintln(P_LBS, lbs_scaler_max_thresh);
+  lbs_scaler_min_thresh = lbs_min + ((lbs_max - lbs_min) * LBS_LOW_TRUNCATE_THRESH);
+  lbs_scaler_max_thresh = lbs_max + ((lbs_max - lbs_min) * LBS_HIGH_TRUNCATE_THRESH);
+  dprint(P_LBS, "\tnew min/max : ");
+  dprint(P_LBS, lbs_scaler_min_thresh);
+  dprint(P_LBS, " / ");
+  dprintln(P_LBS, lbs_scaler_max_thresh);
+}
+*/
+void updateLBS(double feature) {
+  if (lbs_timer > LBS_TIME_FRAME) {
+    lbs_timer = 0;
+    lbs_min = lbs_min * 1.1;
+    lbs_max = lbs_max * 0.9;
+    dprint(P_LBS, "Reset the lbs timers and min/max values: ");
+    dprint(P_LBS, lbs_min);
+    dprint(P_LBS, "\t");
+    dprintln(P_LBS, lbs_max);
+  }
+  if (feature > lbs_max) {
+    lbs_max = feature;
+    dprint(P_LBS, "\nold lbs_scaler_min/max_thresh : ");
+    dprint(P_LBS, lbs_scaler_min_thresh);
+    dprint(P_LBS, " / ");
+    dprintln(P_LBS, lbs_scaler_max_thresh);
+    lbs_scaler_max_thresh = lbs_max - ((lbs_max - lbs_min) * LBS_HIGH_TRUNCATE_THRESH);
+  } else if (feature < lbs_min) {
+    lbs_min = feature;
+    dprint(P_LBS, "\nold lbs_scaler_min/max_thresh : ");
+    dprint(P_LBS, lbs_scaler_min_thresh);
+    dprint(P_LBS, " / ");
+    dprintln(P_LBS, lbs_scaler_max_thresh);
+    lbs_scaler_min_thresh = lbs_min + ((lbs_max - lbs_min) * LBS_LOW_TRUNCATE_THRESH);
+  } else {
+    return;
+  }
+  // if we do not return then it means we updated the min or max and now
+  // need to update the lbs_scaler_min_thresh and max thresb
+  dprint(P_LBS, "\tnew lbs_scaler_min/max_thresh : ");
+  dprint(P_LBS, lbs_scaler_min_thresh);
+  dprint(P_LBS, " / ");
+  dprintln(P_LBS, lbs_scaler_max_thresh);
+}
 
+uint8_t applyLBS(uint8_t brightness) {
+  dprint(P_LBS, "brightness (Before/After) lbs(uint8_t): ");
+  dprint(P_LBS, brightness);
+  updateLBS(brightness);
+  // constrain the brightness to the low and high thresholds
+  dprint(P_LBS, " / ");
+  brightness = constrain(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
+  brightness = map(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+  // dprint(P_LBS, " = ");
+  dprint(P_LBS, brightness);
+  dprint(P_LBS, "\tmin/max thresh: ");
+  dprint(P_LBS, lbs_scaler_min_thresh);
+  dprint(P_LBS, " / ");
+  dprintln(P_LBS, lbs_scaler_max_thresh);
+  return brightness;
+}
+
+double applyLBS(double brightness) {
+  dprint(P_LBS, "brightness (Before/After) lbs(double): ");
+  dprint(P_LBS, brightness);
+  updateLBS(brightness);
+  // constrain the brightness to the low and high thresholds
+  dprint(P_LBS, " / ");
+  brightness = constrainf(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
+  brightness = mapf(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS / 255, MAX_BRIGHTNESS / 255);
+  // dprint(P_LBS, " = ");
+  dprint(P_LBS, brightness);
+  dprint(P_LBS, "\tmin/max thresh: ");
+  dprint(P_LBS, lbs_scaler_min_thresh);
+  dprint(P_LBS, " / ");
+  dprintln(P_LBS, lbs_scaler_max_thresh);
+  return brightness;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 void updateNeosForPitch() {
   if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
     // calculate HSB
@@ -617,6 +730,9 @@ void updateNeosForPitch() {
     double s = calculateSaturation(&fc[0], &fft_features);
     // user brightness scaler is applied in this function
     double b = calculateHSBBrightness(&fc[0], &fft_features);
+    if (LBS_ACTIVE == true) {
+      b = applyLBS(b); // will scale to maximise the full dynamic range of the feedback
+    }
     double h = calculateHue(&fc[0], &fft_features);
     if (P_HSB) {
       Serial.print("h: "); Serial.print(h);
