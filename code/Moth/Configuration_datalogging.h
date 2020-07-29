@@ -54,18 +54,15 @@ bool data_logging_active =              true;
 #define AUTOLOG_LUX_TIMER               1
 
 // the ratio of on vs off time for the neopixels
-#define AUTOLOG_LED_ON_OFF_F            1
-#define AUTOLOG_LED_ON_OFF_R            1
+#define AUTOLOG_LED_ON_OFF              1
 #define AUTOLOG_LED_ON_OFF_TIMER        1
 
 // the number of values to store in the logging process
-#define AUTOLOG_FLASHES_F               0
-#define AUTOLOG_FLASHES_R               0
+#define AUTOLOG_FLASHES                 0
 #define AUTOLOG_FLASHES_TIMER           0
 
 // the number of values to store in the logging process
-#define AUTOLOG_FPM_F                   0
-#define AUTOLOG_FPM_R                   0
+#define AUTOLOG_FPM                     0
 #define AUTOLOG_FPM_TIMER               0
 
 // the brightness scaler avg log

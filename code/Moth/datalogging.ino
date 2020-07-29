@@ -86,17 +86,11 @@ void setupDLManagerCicada() {
 
     if (STATICLOG_RGB_AVG_VALS) {
       datalog_manager.addStaticLog("Average Red Value (Front)     : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].red_avg);
-      datalog_manager.addStaticLog("Average Red Value (Rear)      : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].red_avg);
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos.red_avg);
       datalog_manager.addStaticLog("Average Green Value (Front)   : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].green_avg);
-      datalog_manager.addStaticLog("Average Green Value (Rear)    : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].green_avg);
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos.green_avg);
       datalog_manager.addStaticLog("Average Blue Value (Front)    : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[0].blue_avg);
-      datalog_manager.addStaticLog("Average Blue Value (Rear)     : ",
-                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos[1].blue_avg);
+                                   STATICLOG_RGB_AVG_VALS_TIMER, &neos.blue_avg);
     }
 
     // todo double check the addr
@@ -109,29 +103,19 @@ void setupDLManagerCicada() {
     if (AUTOLOG_LUX_R > 0 && lux_manager.sensor_active[1] > 0) {
       datalog_manager.addAutolog("Rear Lux Log ", AUTOLOG_LUX_TIMER, &lux_manager.lux[1]);
     }
-
-    if (AUTOLOG_LED_ON_OFF_F > 0) {
-      ptr = &neos[0].on_ratio;
+    if (AUTOLOG_LED_ON_OFF > 0) {
+      ptr = &neos.on_ratio;
       datalog_manager.addAutolog("Front Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
     }
-    if (AUTOLOG_LED_ON_OFF_R > 0) {
-      ptr = &neos[1].on_ratio;
-      datalog_manager.addAutolog("Rear Led On/Off Ratio Log ", AUTOLOG_LED_ON_OFF_TIMER, ptr);
-    }
-      if (AUTOLOG_BRIGHTNESS_SCALER > 0) {
+    if (AUTOLOG_BRIGHTNESS_SCALER > 0) {
       ptr = &lux_manager.brightness_scaler_avg;
       lux_manager.resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Front Brightness Scaler Averages ", AUTOLOG_BRIGHTNESS_SCALER_TIMER, ptr);
     }
-    if (AUTOLOG_FPM_F > 0) {
-      ptr = &neos[0].fpm;
+    if (AUTOLOG_FPM > 0) {
+      ptr = &neos.fpm;
       lux_manager.resetBrightnessScalerAvg();
       datalog_manager.addAutolog("Front Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
-    }
-    if (AUTOLOG_FPM_R > 0) {
-      ptr = &neos[1].fpm;
-      lux_manager.resetBrightnessScalerAvg();
-      datalog_manager.addAutolog("Rear Flashes Per Minute  ", AUTOLOG_FPM_TIMER, ptr);
     }
     // printing needs to be at the end so that everything actually displays
     if (P_EEPROM_CONTENTS > 0) {

@@ -27,19 +27,6 @@ void updateFeatureCollectors() {
 #endif
 }
 
-void updateLuxManagers() {
-  // update the feature collectors
-  if (LUX_SENSORS_ACTIVE) {
-#if NUM_LUX_MANAGERS > 1
-    for (int i = 0; i < NUM_LUX_MANAGERS; i++) {
-      lux_managers[i].update();
-    }
-#else
-    lux_manager.update();
-#endif
-  }
-}
-
 bool testJumpers() {
   Serial.println("Testing the PCB for jumpers");
   delay(2000);
@@ -170,15 +157,6 @@ void readJumpers() {
   //////////// Jumper 1 ///////////////////////
   bool temp_b;
 #if HV_MAJOR < 3
-  /*ENCLOSURE_TYPE = digitalRead(JMP1_PIN);
-  Serial.print("(pin1) - ");
-  if (ENCLOSURE_TYPE == 0) {
-    num_channels = 1;
-    Serial.print(" OFF - Ground Enclosure - num_channels = 1");
-  } else {
-    num_channels = 2;
-    Serial.print(" ON - Orb Enclosure - num_channels = 2");
-  }*/
   SCALE_DOWN_BRIGHTNESS = !digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
   if (SCALE_DOWN_BRIGHTNESS == 0) {
@@ -223,11 +201,11 @@ void readJumpers() {
 #else
   Serial.print("(pin3) - ");
   if (temp_b == 0) {
-    SMOOTH_HSB_BRIGHTNESS = 0.125;
-    Serial.print(" OFF - SMOOTH_HSB_BRIGHTNESS is now set at 0.125");
+    SMOOTH_HSB = 0.125;
+    Serial.print(" OFF - SMOOTH_HSB is now set at 0.125");
   } else {
-    SMOOTH_HSB_BRIGHTNESS = 0.5;
-    Serial.print(" ON - SMOOTH_HSB_BRIGHTNESS is now set at 0.5");
+    SMOOTH_HSB = 0.4;
+    Serial.print(" ON - SMOOTH_HSB is now set at 0.4");
   }
   Serial.println();
 #endif//FIRMWARE_MODE
@@ -306,9 +284,7 @@ void readJumpers() {
     Serial.println("(pin7)  - OFF - LED_MAPPING_MODE remains STANDARD");
     LED_MAPPING_MODE = LED_MAPPING_STANDARD;
   }
-  for (int i = 0; i < NUM_NEO_GROUPS; i++) {
-    neos[i].changeMapping(LED_MAPPING_MODE);
-  }
+  neos.changeMapping(LED_MAPPING_MODE);
 
   ///////////// Jumper 8 //////////////////////
   temp_b = digitalRead(JMP8_PIN);
@@ -472,13 +448,11 @@ void setup() {
   Serial.println(global_fft_scaler);
   ///////////////////////// NeoPixels //////////////////////////
 
-  for (int i = 0; i < NUM_NEO_GROUPS; i++) {
-    neos[i].setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
-    neos[i].setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
-    neos[i].setFlashBehaviour(FLASH_DOMINATES);
-    neos[i].changeMapping(LED_MAPPING_MODE);
+    neos.setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
+    neos.setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
+    neos.setFlashBehaviour(FLASH_DOMINATES);
+    neos.changeMapping(LED_MAPPING_MODE);
     // neos[i].setSongFeedbackMode(ROUND);
-  }
 
   //////////////////////////// Lux Sensors //////////////////////////////
   printMinorDivide();
@@ -493,8 +467,7 @@ void setup() {
 
 #if HV_MAJOR > 2
   lux_manager.add6030Sensors(0.125, 25);
-  lux_manager.linkNeoGroup(&neos[0]);
-  lux_manager.linkNeoGroup(&neos[1]);
+  lux_manager.linkNeoGroup(&neos);
   delay(200);
   lux_manager.calibrate(LUX_CALIBRATION_TIME);
   if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
@@ -505,10 +478,8 @@ void setup() {
   lux_manager.addSensorTcaIdx("Rear", 1);
   lux_manager.startTCA7700Sensors(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
   if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
-    lux_manager.linkNeoGroup(&neos[0]);
-    lux_manager.linkNeoGroup(&neos[1]);
+    lux_manager.linkNeoGroup(&neos);
     delay(200);
-    lux_manager.calibrate(LUX_CALIBRATION_TIME);
     if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
       LUX_SENSORS_ACTIVE = true;
     }
@@ -552,7 +523,7 @@ void setup() {
 void loop() {
   // loop_tmr is used when frame limiting the program and determining what the FPS is for the program
   if (loop_tmr > loop_length) {
-    updateLuxManagers();
+    lux_manager.update();
     if (lux_manager.getExtremeLux() == true) {
       dprintln(P_LUX, "WARNING ------------ updateMode() returning due extreme lux conditions, not updating onset or song...");
     } else {

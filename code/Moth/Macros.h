@@ -27,11 +27,16 @@
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
 #define SV_MINOR           2
-#define SV_SUBVERSION      5
+#define SV_SUBVERSION      6
 /*
+// version 0.2.6 removed many global variables which were not being used, moved most global variables to the 
+   start of Mode.h and removed a good amount of clutter from the program. This included removing the extra Neopixel manager, 
+   and support for "stereo" visual feedback. An option to change the Lux Managers feedback was added so the Lux Manager can
+   either update the brightness scaler or the Min/Max brightness for linked NeoPixel Managers.
 // version 0.2.5 added functionality for the thirdd jumper on v2.1. It now determines the amout of smoothing
    for the HSB values. it also reintegrated LBS into the pitch mode. Made it so you could overide the boot delay.
-   Also fixed a bug with the center out feedback setting on the Moth v3, pushed v on 07/28/2020
+   Also fixed a bug with the center out feedback setting on the Moth v3. Lastly, HSB smoothing now
+   applies to all values not just brightness. pushed v on 07/28/2020
 // version 0.2.4 is an expansion of 0.2.3 and further improved the debug printing abilities of the
    progam as a whole. Fixed bug with the lux manager not polling correctly. Updated on 07/27/2020
 // version 0.2.3 was created on 07/10/20 in reaction to thee field expedition, added threshold control 

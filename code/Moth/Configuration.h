@@ -13,6 +13,9 @@
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// MOST IMPORTANT /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+#define LUX_ADJUSTS_BS                  0
+#define LUX_ADJUSTS_MIN_MAX             1
+uint8_t LUX_MAPPING_SCHEMA =            LUX_ADJUSTS_MIN_MAX;
 // will autogain based on the LED ON/OFF time be active?
 #define AUTOGAIN_ACTIVE                 false
 // should correspond to the serial number on the PCB
@@ -39,19 +42,19 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
 #define P_LED_ON_RATIO                  false
-#define P_COLOR_WIPE                    true
+#define P_COLOR_WIPE                    false
 
-#define P_HUE                           false
-
-#define P_BRIGHTNESS                    false
-#define P_BRIGHTNESS_SCALER             false
-
+#define P_SMOOTH_HSB                    false
 #define P_HSB                           false
+#define P_HUE                           false
+#define P_BRIGHTNESS                    false
+#define P_BRIGHTNESS_SCALER             true
+
 #define P_NEO_COLORS                    false
 
 #define P_EXTREME_LUX                   true
-#define P_LUX                           false
-#define P_LUX_READINGS                  false
+#define P_LUX                           true
+#define P_LUX_READINGS                  true
 
 #define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
@@ -177,7 +180,7 @@ double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.1;
 
 // if > 0 then the brightness will be smoothed with a previous value
 // thee higher the value the more it is smoothed
-double SMOOTH_HSB_BRIGHTNESS   =              0.125;
+double SMOOTH_HSB   =              0.125;
 
 #define BT_POT_NUM                            3   
 #define USER_CUTTOFF_MIN                      0.0   
@@ -259,17 +262,14 @@ bool gain_adjust_active =                false;
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              1
 #elif FIRMWARE_MODE == CICADA_MODE
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              1
 #elif FIRMWARE_MODE == TEST_MODE
   #define NUM_AUTOGAINS                 0
   #define NUM_FEATURE_COLLECTORS        0
-  #define NUM_NEO_GROUPS                2
-  #define NUM_LUX_MANAGERS              1  
+  #define NUM_NEO_GROUPS                2  
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -367,11 +367,6 @@ uint32_t lux_min_reading_delay =        1000 * 10;       // ten seconds
 #endif
 
 bool stereo_audio =                     true;
-#if ENCLOSURE_TYPE == GROUND_ENCLOSURE
- uint8_t num_channels = 1;
-#elif ENCLOSURE_TYPE == ORB_ENCLOSURE
- uint8_t num_channels =                  stereo_audio + 1;
-#endif
 
 // these are the default values which set front_mic_active
 // if the microphone test is run and it is found that one of the microphones is
@@ -592,17 +587,21 @@ double color_feature_max = 0.0;
 elapsedMillis feature_reset_tmr;
 const unsigned long feature_reset_time = (1000 * 2.5);// every 2.5 minute?
 
-double brightness_feature_min[2] = {1.0, 1.0};
-double brightness_feature_max[2] = {0.0, 0.0};
+double brightness_feature_min = 1.0;
+double brightness_feature_max = 0.0;
 
-double current_brightness[2] = {1.0, 1.0};
-double last_brightness[2] = {1.0, 1.0};
+double current_brightness = 1.0;
+double last_brightness = 1.0;
+
+double last_hue = 0.0;
+double last_saturation = 0.0;
+double hue = 0.0;
 
 double current_color = 0.5;
 double last_color = 0.5;
 
-double last_feature[2];
-double current_feature[2];
+double last_feature;
+double current_feature;
 
 //////////////////////////////// Onset ////////////////////////////////////
 elapsedMillis onset_feature_reset_tmr;

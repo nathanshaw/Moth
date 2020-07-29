@@ -13,13 +13,10 @@
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
-NeoGroup neos[2] = {
-  NeoGroup(&leds, 0, (NUM_LED / 2) - 1, "Front", MIN_FLASH_TIME, MAX_FLASH_TIME),
-  NeoGroup(&leds, NUM_LED / 2, NUM_LED - 1, "Rear", MIN_FLASH_TIME, MAX_FLASH_TIME)
-};
+NeoGroup neos = NeoGroup(&leds, 0, NUM_LED, "All Neos", MIN_FLASH_TIME, MAX_FLASH_TIME);
 
 // lux managers to keep track of the VEML readings
-LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay);
+LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay, LUX_MAPPING_SCHEMA);
 
 FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
 
@@ -95,7 +92,7 @@ void setupAudio() {
   printDivide();
 }
 
-double calculateSongBrightness(uint8_t i) {
+double calculateSongBrightness() {
   // how much energy is stored in the range of 4000 - 16000 compared to  the entire spectrum?
   // take the average of two-octave chunks from 1-4k and 250 - 1k
 #if P_CALCULATE_BRIGHTNESS_LENGTH > 0
@@ -109,7 +106,7 @@ double calculateSongBrightness(uint8_t i) {
   double target_brightness = fft_features.getFFTRangeByIdx(93, 372) - remaining_spect_avg;
   if (target_brightness < 0.0) {
     target_brightness = 0.0;
-    brightness_feature_min[i] = 0.0;
+    brightness_feature_min = 0.0;
   }
   /*
     if (target_brightness < brightness_feature_min[i]) {
@@ -119,44 +116,40 @@ double calculateSongBrightness(uint8_t i) {
       dprint(P_BRIGHTNESS, " < ");
       dprint(P_BRIGHTNESS, brightness_feature_min[i], 5);
     }
-    brightness_feature_min[i] = (target_brightness * 0.15) + (brightness_feature_min[i] * 0.85);
+    brightness_feature_min = (target_brightness * 0.15) + (brightness_feature_min * 0.85);
     if (i == 0 && P_BRIGHTNESS) {
       dprint(P_BRIGHTNESS, " updated brightness_min and target_brightness to: ");
-      dprintln(P_BRIGHTNESS, brightness_feature_min[i], 5);
+      dprintln(P_BRIGHTNESS, brightness_feature_min, 5);
     }
-    target_brightness = brightness_feature_min[i];
+    target_brightness = brightness_feature_min;
     }
   */
-  if (target_brightness > brightness_feature_max[i]) {
-    if (i == 0 && P_BRIGHTNESS) {
-      dprint(P_BRIGHTNESS, "target_B is more than feature_max: ");
-      dprint(P_BRIGHTNESS, target_brightness, 5);
-      dprint(P_BRIGHTNESS, " > ");
-      dprintln(P_BRIGHTNESS, brightness_feature_max[i], 5);
-    }
-    brightness_feature_max[i] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (brightness_feature_max[i] * (1.0 - BRIGHTNESS_LP_LEVEL));
+  if (target_brightness > brightness_feature_max) {
+    dprint(P_BRIGHTNESS, "target_B is more than feature_max: ");
+    dprint(P_BRIGHTNESS, target_brightness, 5);
+    dprint(P_BRIGHTNESS, " > ");
+    dprintln(P_BRIGHTNESS, brightness_feature_max, 5);
+
+    brightness_feature_max = (target_brightness * BRIGHTNESS_LP_LEVEL) + (brightness_feature_max * (1.0 - BRIGHTNESS_LP_LEVEL));
     // to ensure that loud clipping events do not skew things too much
-    if (brightness_feature_max[i] > 1.0) {
-      brightness_feature_max[i] = 1.0;
+    if (brightness_feature_max > 1.0) {
+      brightness_feature_max = 1.0;
     }
-    if (i == 0 && P_BRIGHTNESS) {
-      dprint(P_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
-      dprintln(P_BRIGHTNESS, brightness_feature_max[i], 5);
-    }
-    target_brightness = brightness_feature_max[i];
+    dprint(P_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
+    dprintln(P_BRIGHTNESS, brightness_feature_max, 5);
+
+    target_brightness = brightness_feature_max;
   }
-  dprint(P_BRIGHTNESS, "channel ");
-  dprint(P_BRIGHTNESS, i);
   dprint(P_BRIGHTNESS, " target: ");
   dprint(P_BRIGHTNESS, target_brightness);
   dprint(P_BRIGHTNESS, "\tmin: ");
-  dprint(P_BRIGHTNESS, brightness_feature_min[i]);
+  dprint(P_BRIGHTNESS, brightness_feature_min);
   dprint(P_BRIGHTNESS, "\tmax: ");
-  dprint(P_BRIGHTNESS, brightness_feature_max[i]);
+  dprint(P_BRIGHTNESS, brightness_feature_max);
   // to ensure the unit is not always on
   // instead of comparing the brightness to the cuttoff_threshold
   // we subtract the cuttoff_threshold from both the target and the max
-  target_brightness = (target_brightness - brightness_feature_min[i]) / (brightness_feature_max[i] - brightness_feature_min[i]);
+  target_brightness = (target_brightness - brightness_feature_min) / (brightness_feature_max - brightness_feature_min);
   target_brightness = target_brightness - BRIGHTNESS_CUTTOFF_THRESHOLD;
   if (target_brightness < 0.0) {
     target_brightness = 0.0;
@@ -221,33 +214,29 @@ void updateSong() {
   blue = ((1.0 - current_color) * SONG_BLUE_LOW) + (current_color * SONG_BLUE_HIGH);
 
   double target_brightness = 0.0;
-  for (int i = 0; i < num_channels; i++) {
-    /////////////////// Brightness ///////////////////////////////////
-    double __brightness = 0.0;
-    if (target_brightness == 0.0) {
-      __brightness = calculateSongBrightness(i);
-    } else if (STEREO_FEEDBACK == true) {
-      __brightness = calculateSongBrightness(i);
-    }
-    if (__brightness > target_brightness) {
-      target_brightness = __brightness;
-    }
+  /////////////////// Brightness ///////////////////////////////////
+  double __brightness = 0.0;
+  if (target_brightness == 0.0) {
+    __brightness = calculateSongBrightness();
+  } else if (STEREO_FEEDBACK == true) {
+    __brightness = calculateSongBrightness();
   }
-  last_brightness[0] = current_brightness[0];
-  current_brightness[0] = (target_brightness * BRIGHTNESS_LP_LEVEL) + (last_brightness[0] * (1.0 - BRIGHTNESS_LP_LEVEL));
+  if (__brightness > target_brightness) {
+    target_brightness = __brightness;
+  }
+  last_brightness = current_brightness;
+  current_brightness = (target_brightness * BRIGHTNESS_LP_LEVEL) + (last_brightness * (1.0 - BRIGHTNESS_LP_LEVEL));
 
 #if P_BRIGHTNESS > 0
-  dprint(P_BRIGHTNESS, "last/current_brightness[");
-  dprint(P_BRIGHTNESS, 0);
-  dprint(P_BRIGHTNESS, "]: ");
-  dprint(P_BRIGHTNESS, last_brightness[0]);
+  dprint(P_BRIGHTNESS, "last/current_brightness");
+  dprint(P_BRIGHTNESS, last_brightness);
   dprint(P_BRIGHTNESS, " => ");
-  dprintln(P_BRIGHTNESS, current_brightness[0]);
+  dprintln(P_BRIGHTNESS, current_brightness);
 #endif
 
-  // red = (uint8_t)((double)red * current_brightness[0]);
-  // green = (uint8_t)((double)green * current_brightness[0]);
-  // blue = (uint8_t)((double)blue * current_brightness[0]);
+  // red = (uint8_t)((double)red * current_brightness);
+  // green = (uint8_t)((double)green * current_brightness);
+  // blue = (uint8_t)((double)blue * current_brightness);
 
 #if P_SONG_COLOR > 0
   dprint(P_SONG_COLOR, " r: ");
@@ -258,21 +247,18 @@ void updateSong() {
   dprintln(P_SONG_COLOR, blue);
 #endif
 
-  for (int i = 0; i < num_channels; i++) {
-    // adding thee target_brightness multiplier will weight the overall brightness in favor
-    // of sounds which have more higher frequency content.
-    neos[i].colorWipe(red, green, blue, current_brightness[0]);// * (1.0 + (target_brightness * 0.25)));
-  }
+  // adding thee target_brightness multiplier will weight the overall brightness in favor
+  // of sounds which have more higher frequency content.
+  neos.colorWipe(red, green, blue, current_brightness);// * (1.0 + (target_brightness * 0.25)));
+
   /////////////////// LOCAL SCALER RESET //////////////////////////
   // this needs to be after the rest of the logic in this function
   // when it was before it was adjusting the seed values to do odd things
   if (millis() > ((1000 * 60) + BOOT_DELAY) && feature_reset_tmr > feature_reset_time) {
     color_feature_min += ((color_feature_max - color_feature_min) * 0.05);
     color_feature_max -= ((color_feature_max - color_feature_min) * 0.05);
-    for (int t = 0; t < num_channels; t++) {
-      brightness_feature_min[t] += ((brightness_feature_max[t] - brightness_feature_min[t]) * 0.05);
-      brightness_feature_max[t] -= ((brightness_feature_max[t] - brightness_feature_min[t]) * 0.05);
-    }
+    brightness_feature_min += ((brightness_feature_max - brightness_feature_min) * 0.05);
+    brightness_feature_max -= ((brightness_feature_max - brightness_feature_min) * 0.05);
     dprintln(P_SONG, "reset song feature min and max for cent and brightness ");
     feature_reset_tmr = 0;
   }
@@ -366,9 +352,7 @@ void updateOnset() {
       dprint(P_ONSET, " - ");
       dprint(P_ONSET, threshold);
     */
-    for (int i = 0; i < num_channels; i++) {
-      neos[i].colorWipeAdd(red, green, blue, lux_manager.getBrightnessScaler() * user_brightness_scaler);
-    }
+    neos.colorWipeAdd(red, green, blue, lux_manager.getBrightnessScaler() * user_brightness_scaler);
   }
 
   /////////////////// LOCAL SCALER RESET //////////////////////////
@@ -389,8 +373,8 @@ void updateOnset() {
 
 void updateAutogain() {
 #if (AUTOGAIN_ACTIVE)
-  auto_gain[0].updateExternal((neos[0].getOnRatio() + neos[1].getOnRatio()) * 0.5);
-  auto_gain[1].updateExternal((neos[0].fpm + neos[1].fpm) * 0.5);
+  auto_gain[0].updateExternal(neos.getOnRatio());
+  auto_gain[1].updateExternal(neos.fpm);
   return;
 #endif
 }
@@ -518,14 +502,6 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
     b = 1.0;
     dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
   }
-  if (SMOOTH_HSB_BRIGHTNESS > 0.0) {
-    dprint(P_BRIGHTNESS_SCALER, "smoothing brightness: ");
-    dprint(P_BRIGHTNESS_SCALER, b);
-    dprint(P_BRIGHTNESS_SCALER, "\t");
-    b = (b * (1.0 - SMOOTH_HSB_BRIGHTNESS)) + (last_brightness[0] * (SMOOTH_HSB_BRIGHTNESS));
-    last_brightness[0] = b;
-    dprint(P_BRIGHTNESS_SCALER, b);
-  }
   return b;
 }
 
@@ -560,9 +536,6 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   }
   return sat;
 }
-
-double last_hue = 0.0;
-double hue = 0.0;
 
 double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
 
@@ -601,12 +574,6 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
       Serial.println("ERROR - calculateHue() does not accept that HUE_FEATURE");
       break;
   }
-  hue = (last_hue * 0.75) + (hue * 0.25);
-  if (hue < 0.0) {
-    hue = 0.0;
-  };
-  dprint(P_HUE, "last_hue: "); dprint(P_HUE, last_hue);
-  dprint(P_HUE, "\thue: "); dprintln(P_HUE, hue);
   last_hue = hue;
   return hue;
 }
@@ -616,7 +583,7 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-void updateLBS(uint8_t feature) {
+  void updateLBS(uint8_t feature) {
   if (lbs_timer > LBS_TIME_FRAME) {
     lbs_timer = 0;
     lbs_min = (uint8_t)((double)lbs_min * 1.1);
@@ -645,7 +612,7 @@ void updateLBS(uint8_t feature) {
   dprint(P_LBS, lbs_scaler_min_thresh);
   dprint(P_LBS, " / ");
   dprintln(P_LBS, lbs_scaler_max_thresh);
-}
+  }
 */
 void updateLBS(double feature) {
   if (lbs_timer > LBS_TIME_FRAME) {
@@ -715,6 +682,7 @@ double applyLBS(double brightness) {
   dprintln(P_LBS, lbs_scaler_max_thresh);
   return brightness;
 }
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -726,7 +694,6 @@ void updateNeosForPitch() {
     // the brightness should be the loudness (overall amp of bins)
     // the saturation should be the relatitive loudness of the primary bin
     // the hue should be the bin number (With higher frequencies corresponding to reds and yellows)
-    uint8_t inactive = 0;
     double s = calculateSaturation(&fc[0], &fft_features);
     // user brightness scaler is applied in this function
     double b = calculateHSBBrightness(&fc[0], &fft_features);
@@ -734,6 +701,27 @@ void updateNeosForPitch() {
       b = applyLBS(b); // will scale to maximise the full dynamic range of the feedback
     }
     double h = calculateHue(&fc[0], &fft_features);
+    if (SMOOTH_HSB > 0.0) {
+      dprint(P_SMOOTH_HSB, "smoothing hsb:\t");
+      dprint(P_SMOOTH_HSB, h);
+      dprint(P_SMOOTH_HSB, "\t");
+      dprint(P_SMOOTH_HSB, s);
+      dprint(P_SMOOTH_HSB, "\t");
+      dprintln(P_SMOOTH_HSB, b);
+
+      h = (h * (1.0 - SMOOTH_HSB)) + (last_hue * (SMOOTH_HSB));
+      last_hue = b;
+      s = (s * (1.0 - SMOOTH_HSB)) + (last_saturation * (SMOOTH_HSB));
+      last_saturation = b;
+      b = (b * (1.0 - SMOOTH_HSB)) + (last_brightness * (SMOOTH_HSB));
+      last_brightness = b;
+      dprint(P_SMOOTH_HSB, "\t\t");
+      dprint(P_SMOOTH_HSB, h);
+      dprint(P_SMOOTH_HSB, "\t");
+      dprint(P_SMOOTH_HSB, s);
+      dprint(P_SMOOTH_HSB, "\t");
+      dprintln(P_SMOOTH_HSB, b);
+    }
     if (P_HSB) {
       Serial.print("h: "); Serial.print(h);
       Serial.print("\ts: ");
@@ -741,19 +729,14 @@ void updateNeosForPitch() {
       Serial.print("\tb: ");
       Serial.println(b);
     }
-    for (int chan = 0; chan < 2; chan++) {
-      if (fc[0].isActive() == true) {
-        // now colorWipe the LEDs with the HSB value
-        // if (h > 0) {
-        neos[chan].colorWipeHSB(h, s, b);
-        /*} else {
-          neos[chan].colorWipeHSB(0, 0, 0);
-          }*/
-      } else {
-        inactive++;
-      }
-    }
-    if (inactive > num_channels) {
+    if (fc[0].isActive() == true) {
+      // now colorWipe the LEDs with the HSB value
+      // if (h > 0) {
+      neos.colorWipeHSB(h, s, b);
+      /*} else {
+        neos[chan].colorWipeHSB(0, 0, 0);
+        }*/
+    } else {
       Serial.println("ERROR - not able to updateNeos() as there is no active audio channels");
       return;
     }
@@ -766,9 +749,7 @@ void updateNeosForPitch() {
 void printColors() {
   fft_features.printFFTVals();
   if (P_NEO_COLORS) {
-    for (int i = 0; i < NUM_NEO_GROUPS; i++)  {
-      neos[i].printColors();
-    }
+    neos.printColors();
   }
 }
 
