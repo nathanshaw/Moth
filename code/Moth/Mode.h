@@ -9,16 +9,18 @@
 #include "AudioEngine/AudioEngine.h"
 #include "AudioEngine/FFTManager1024.h"
 #include <Audio.h>
+// #include <Arduino.h>
+// #include <math.h>
 
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
 
-NeoGroup neos = NeoGroup(&leds, 0, NUM_LED, "All Neos", MIN_FLASH_TIME, MAX_FLASH_TIME);
+NeoGroup neos = NeoGroup(&leds, 0, NUM_LED - 1, "All Neos", MIN_FLASH_TIME, MAX_FLASH_TIME);
 
 // lux managers to keep track of the VEML readings
 LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay, LUX_MAPPING_SCHEMA);
 
-FeatureCollector fc[2] = {FeatureCollector("front"), FeatureCollector("rear")};
+FeatureCollector fc = FeatureCollector("front");
 
 DLManager datalog_manager = DLManager((String)"Datalog Manager");
 FFTManager1024 fft_features = FFTManager1024("Input FFT");
@@ -29,7 +31,7 @@ AudioFilterBiquad        biquad2;        //xy=217.00389099121094,302.00392818450
 AudioFilterBiquad        biquad1;        //xy=219.00390625,270.00391578674316
 AudioAmplifier           amp2;           //xy=378.79129791259766,302.57704162597656
 AudioAmplifier           amp1;           //xy=380.2198715209961,264.0055875778198
-AudioAnalyzePeak         peak2;          //xy=517.0039100646973,316.003924369812
+// AudioAnalyzePeak         peak2;          //xy=517.0039100646973,316.003924369812
 AudioAnalyzePeak         peak1;          //xy=521.00390625,221.0039176940918
 AudioAnalyzeFFT1024      input_fft;      //xy=521.3627586364746,251.71987438201904
 AudioAnalyzeRMS          rms;            //xy=650.0000076293945,151.00000190734863
@@ -45,24 +47,10 @@ AudioConnection          patchCord1(i2s1, 0, biquad1, 0);
 AudioConnection          patchCord2(i2s1, 1, biquad2, 0);
 AudioConnection          patchCord3(biquad2, amp2);
 AudioConnection          patchCord4(biquad1, amp1);
-AudioConnection          patchCord6(amp2, peak2);
+// AudioConnection          patchCord6(amp2, peak2);
 AudioConnection          patchCord8(amp1, input_fft);
 AudioConnection          patchCord9(amp1, peak1);
 ////////////////////////////////////////////////////////////////////////////////////
-
-void linkFeatureCollectors() {
-  // fc 0-1 are for the song front/rear
-  fc[0].linkPeak(&peak1, global_peak_scaler, P_PEAK_VALS);
-  fc[1].linkPeak(&peak2, global_peak_scaler, P_PEAK_VALS);
-
-  fft_features.linkFFT(&input_fft, true);
-  Serial.println("Linked FFT to FFTManager");
-  //  fft_features.setFFTScaler(global_fft_scaler);
-  fft_features.setupCentroid(true, 4000, 16000);
-  Serial.println("Started calculating Centroid in the FFTManager");
-  fft_features.setFluxActive(true);
-  Serial.println("Started calculating FLUX in the FFTManager");
-}
 
 void setupAudio() {
   ////////////// Audio ////////////
@@ -70,17 +58,37 @@ void setupAudio() {
   AudioMemory(AUDIO_MEMORY);
   Serial.print("Audio Memory has been set to: ");
   Serial.println(AUDIO_MEMORY);
-  linkFeatureCollectors();
+  /////////////////////////////////////////////////////////////////////
+  // fc 0-1 are for the song front/rear
+  if (PEAK_FEATURE_ACTIVE) {
+    fc.linkPeak(&peak1, global_peak_scaler, P_PEAK_VALS);
+  }
+  if (RMS_FEATURE_ACTIVE) {
+    fc.linkRMS(&rms, global_rms_scaler, P_RMS_VALS);
+  }
+  if (FFT_FEATURES_ACTIVE) {
+    fft_features.linkFFT(&input_fft, true);
+    Serial.println("Linked FFT to FFTManager");
+    if (FIRMWARE_MODE == CICADA_MODE) {
+      fft_features.setupCentroid(true, 4000, 16000);
+    } else if (FIRMWARE_MODE == PITCH_MODE) {
+      fft_features.setupCentroid(true, 200, 20000);
+    }
+    Serial.println("Started calculating Centroid in the FFTManager");
+    fft_features.setFluxActive(true);
+    Serial.println("Started calculating FLUX in the FFTManager");
+  }
   Serial.println("Feature collectors have been linked");
-  biquad1.setHighpass(0, 80, 0.85);
-  biquad1.setHighpass(1, 80, 0.85);
-  biquad1.setHighpass(2, 80, 0.85);
+  /////////////////////////////////////////////////////////////////////
+  biquad1.setHighpass(0, 30, 0.85);
+  biquad1.setHighpass(1, 50, 0.85);
+  biquad1.setHighpass(2, 60, 0.85);
   biquad1.setLowShelf(3, 80, ONSET_BQ1_DB);
   Serial.println("Biquad filter 1 has been configured");
-  biquad2.setHighpass(0, 80, 0.85);
-  biquad2.setHighpass(1, 80, 0.85);
-  biquad2.setHighpass(2, 80, 0.85);
-  biquad2.setLowShelf(3, 80, ONSET_BQ1_DB);
+  biquad2.setHighpass(0, 8000, 0.85);
+  biquad2.setHighpass(1, 8000, 0.85);
+  biquad2.setHighpass(2, 8000, 0.85);
+  biquad2.setLowShelf(3, 8000, ONSET_BQ1_DB);
   Serial.println("Biquad filter 2 has been configured");
   amp1.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
   amp2.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
@@ -374,11 +382,10 @@ void updateOnset() {
 void updateAutogain() {
 #if (AUTOGAIN_ACTIVE)
   auto_gain[0].updateExternal(neos.getOnRatio());
-  auto_gain[1].updateExternal(neos.fpm);
+  auto_gain[1].updateExternal(neos.getAvgBrightness(true));
   return;
 #endif
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////// Start of PITCH functions ////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -397,32 +404,6 @@ bool getHueFromTone(FeatureCollector *f) {
   Serial.print("WARNING - getColorFromTone is not currently implemented\t");
   // Serial.println(f->getToneLevel());
   return true;
-}
-
-
-double getHueFromFFTAllBins(FFTManager1024 *f) {
-  /*if (COLOR_MAP_MODE == COLOR_MAPPING_RGB) {
-    double red_d, green_d, blue_d, tot;
-    red_d   = f->getFFTRange(FFT_LOWEST_BIN, 7);
-    green_d = f->getFFTRange(7, 20);
-    blue_d  = f->getFFTRange(20, 128);
-    tot   = (red_d + green_d + blue_d);
-    red_d   = red_d / tot;
-    green_d = green_d / tot;
-    blue_d  = blue_d / tot;
-    rgb[chan][0] = red_d * MAX_BRIGHTNESS;
-    rgb[chan][1] = green_d * MAX_BRIGHTNESS;
-    rgb[chan][2] = blue_d * MAX_BRIGHTNESS * global_brightness_scaler;
-    }
-    else*/
-  if (COLOR_MAP_MODE == COLOR_MAPPING_HSB) {
-    double h = (double) map(f->getHighestEnergyIdx(), 7, 512, 0, 1000) / 1000.0;
-    dprint(P_FFT_VALS, "FFT - All Bins - HSB - Hue:\t"); dprintln(P_FFT_VALS, h);
-    return h;
-  } else {
-    Serial.println("ERROR - the COLOR_MAP_MODE is not currently implemented");
-    return 0.0;
-  }
 }
 
 double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
@@ -463,89 +444,110 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
     } else {
       b = _fft->getFFTTotalEnergy();
     }
-  } else {
+  } //else if (BRIGHTNESS_FEATURE == FEATURE_
+
+  else {
     Serial.println("ERROR - calculateHSBBrightness() does not accept that  BRIGHTNESS_FEATURE");
   }
   ///////////////////////// If user controls are in place to scale the brightness it is done now //////////////////////
   /////////////////////// Make sure that it is within bounds ////////////////////
-
+  dprint(P_BRIGHTNESS, "brightness is: ");
+  dprint(P_BRIGHTNESS, b);
 
   if (b < 0) {
-    dprint(P_BRIGHTNESS_SCALER, "brightness too low, changing to 0.0");
+    dprint(P_BRIGHTNESS, " brightness too low, changing to 0.0");
     b = 0;
   } else if (b > 1.0) {
     b = 1.0;
-    dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
+    dprint(P_BRIGHTNESS, " brightness too high, changing to 1.0");
   }
+  dprintln(P_BRIGHTNESS, b);
   if (USER_BS_ACTIVE > 0) {
-    dprint(P_BRIGHTNESS_SCALER, "changing brightness due to user brightness_scaler | before: ");
-    dprint(P_BRIGHTNESS_SCALER, b);
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, "changing brightness due to user brightness_scaler | before: ");
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, b);
     b = b * user_brightness_scaler;
-    dprint(P_BRIGHTNESS_SCALER, " after: ");
-    dprintln(P_BRIGHTNESS_SCALER, b);
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, " after: ");
+    dprintln(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, b);
   }
 
   //////////////////////// Scale down the brightness and make it more exponential for better results //////////////////
-  if (SCALE_DOWN_BRIGHTNESS == true) {
-    dprint(P_BRIGHTNESS_SCALER, "changing brightness due to SCALE_DOWN_BRIGHTNESS | before: ");
-    dprint(P_BRIGHTNESS_SCALER, b);
+  if (SQUARE_BRIGHTNESS == true) {
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, "changing brightness due to SQUARE_BRIGHTNESS | before: ");
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, b);
     b = (b) * b;
-    dprint(P_BRIGHTNESS_SCALER, " after: ");
-    dprintln(P_BRIGHTNESS_SCALER, b);
+    dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, " after: ");
+    dprintln(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, b);
   }
 
   /////////////////////// Make sure that it is within bounds ////////////////////
   if (b < 0) {
-    dprintln(P_BRIGHTNESS_SCALER, "brightness too low, changing to 0.0");
+    dprintln(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, "brightness too low, changing to 0.0");
     b = 0;
   } else if (b > 1.0) {
     b = 1.0;
-    dprintln(P_BRIGHTNESS_SCALER, "brightness too high, changing to 1.0");
+    dprintln(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, "brightness too high, changing to 1.0");
   }
+  dprintMinorDivide(P_BRIGHTNESS);
   return b;
 }
 
 double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   double sat = 0.0;
-  if (SATURATION_FEATURE == FEATURE_PEAK_AVG) {
-    sat = f->getPeakAvg();
-    // Serial.println(sat);
-    if (sat > 1.0) {
-      sat =  1.0;
-    }
-    // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
-    f->resetPeakAvgLog();
-  } else if (SATURATION_FEATURE == FEATURE_RMS_AVG) {
-    sat = f->getRMSAvg();
-    if (sat > 1.0) {
-      sat =  1.0;
-    }
-    // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
-    f->resetRMSAvgLog();
+  switch (SATURATION_FEATURE) {
+    case (FEATURE_PEAK_AVG):
+      sat = f->getPeakAvg();
+      // Serial.println(sat);
+      if (sat > 1.0) {
+        sat =  1.0;
+      }
+      // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
+      f->resetPeakAvgLog();
+      break;
+    case (FEATURE_RMS_AVG):
+      sat = f->getRMSAvg();
+      if (sat > 1.0) {
+        sat =  1.0;
+      }
+      // Serial.print("sat set to  : ");Serial.println(hsb[i][1]);
+      f->resetRMSAvgLog();
+      break;
+    case (FEATURE_FFT_RELATIVE_ENERGY):
+      // get how much energy is stored in the max bin, get the amount of energy stored in all bins
+      sat = _fft->getRelativeEnergy(_fft->getHighestEnergyIdx()) * 1000.0;
+      // Serial.print("relative energy in highest energy bin: ");Serial.println(sat);
+      break;
+    case (FEATURE_FLUX):
+      sat = (_fft->getFlux() - 20) / 60;
+      break;
+    default:
+      Serial.print("ERROR - calculateSaturation() does not accept that  SATURATION_FEATURE");
+      break;
   }
-  else if (SATURATION_FEATURE == FEATURE_FFT_RELATIVE_ENERGY) {
-    // get how much energy is stored in the max bin, get the amount of energy stored in all bins
-    sat = _fft->getRelativeEnergy(_fft->getHighestEnergyIdx()) * 1000.0;
-    if (sat > 1.0) {
-      sat = 1.0;
-    }
-    // Serial.print("relative energy in highest energy bin: ");Serial.println(sat);
-  }
-  else {
-    Serial.print("ERROR - calculateSaturation() does not accept that  SATURATION_FEATURE");
+  if (sat > 1.0) {
+    Serial.print("WARNING - saturation is above 1.0 at ");
+    Serial.print(sat);
+    Serial.println(" changing to 1.0");
+    sat = 1.0;
+  } else if (sat < 0.0) {
+    Serial.print("WARNING - saturation is below 0.0 at ");
+    Serial.print(sat);
+    Serial.println(" changing to 0.0");
+    sat = 0.0;
   }
   return sat;
 }
 
 double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
+  /* In theory, the Hue should be between 0.0 and 1.0 to be useful for the rest of the program
 
+  */
   hue = 0.0;
   switch (HUE_FEATURE) {
     case FEATURE_FFT_BIN_RANGE:
       hue = getColorFromFFTSingleRange(_fft, 3, 20);
       break;
     case FEATURE_FFT:
-      hue = getHueFromFFTAllBins(_fft);
+      hue = (double) map(constrain(_fft->getHighestEnergyIdx(), 7, 255), 7, 255, 0, 1000) / 1000.0;
       break;
     case FEATURE_FFT_MAX_BIN:
       // calculate the bin with the most energy,
@@ -570,9 +572,37 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
     case FEATURE_RMS:
       hue = f->getRMS();
       break;
+    case FEATURE_CENTROID:
+      double c = _fft->getCentroid();
+      // the centroid will be a frequency between about 200 and 50000
+      // first I need to move it to a more linear scale
+      Serial.print("centroid: ");
+      Serial.print(c);
+      Serial.print("\tmidi: ");
+      double midi_note = (12 * log2(c / 440));
+      Serial.print(midi_note);
+      hue = midi_note / 30;
+      Serial.print("\tscaled hue: ");
+      Serial.println(hue);
+      // next I need to scale down to a value between 0.0 and 1.0
+      break;
+    case FEATURE_FLUX:
+      hue = _fft->getFlux();
+      break;
     case DEFAULT:
       Serial.println("ERROR - calculateHue() does not accept that HUE_FEATURE");
       break;
+  }
+  if (hue < 0.0) {
+    Serial.print("Warning, hue in calculateHue() is too low (");
+    Serial.print(hue);
+    Serial.println(") , setting to 0.0");
+    hue = 0.0;
+  } else if (hue > 1.0) {
+    Serial.print("Warning, hue in calculateHue() is too high (");
+    Serial.print(hue);
+    Serial.println(") , setting to 1.0");
+    hue = 1.0;
   }
   last_hue = hue;
   return hue;
@@ -673,7 +703,7 @@ double applyLBS(double brightness) {
   // constrain the brightness to the low and high thresholds
   dprint(P_LBS, " / ");
   brightness = constrainf(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
-  brightness = mapf(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS / 255, MAX_BRIGHTNESS / 255);
+  brightness = mapf(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS / 765, MAX_BRIGHTNESS / 765);
   // dprint(P_LBS, " = ");
   dprint(P_LBS, brightness);
   dprint(P_LBS, "\tmin/max thresh: ");
@@ -694,13 +724,14 @@ void updateNeosForPitch() {
     // the brightness should be the loudness (overall amp of bins)
     // the saturation should be the relatitive loudness of the primary bin
     // the hue should be the bin number (With higher frequencies corresponding to reds and yellows)
-    double s = calculateSaturation(&fc[0], &fft_features);
+    double s = calculateSaturation(&fc, &fft_features);
     // user brightness scaler is applied in this function
-    double b = calculateHSBBrightness(&fc[0], &fft_features);
+    double b = calculateHSBBrightness(&fc, &fft_features);
     if (LBS_ACTIVE == true) {
       b = applyLBS(b); // will scale to maximise the full dynamic range of the feedback
     }
-    double h = calculateHue(&fc[0], &fft_features);
+    double h = calculateHue(&fc, &fft_features);
+
     if (SMOOTH_HSB > 0.0) {
       dprint(P_SMOOTH_HSB, "smoothing hsb:\t");
       dprint(P_SMOOTH_HSB, h);
@@ -708,12 +739,21 @@ void updateNeosForPitch() {
       dprint(P_SMOOTH_HSB, s);
       dprint(P_SMOOTH_HSB, "\t");
       dprintln(P_SMOOTH_HSB, b);
-
-      h = (h * (1.0 - SMOOTH_HSB)) + (last_hue * (SMOOTH_HSB));
-      last_hue = b;
-      s = (s * (1.0 - SMOOTH_HSB)) + (last_saturation * (SMOOTH_HSB));
-      last_saturation = b;
-      b = (b * (1.0 - SMOOTH_HSB)) + (last_brightness * (SMOOTH_HSB));
+      double _h = (h * (1.0 - SMOOTH_HSB)) + (last_hue * (SMOOTH_HSB));
+      if (_h >= 0.0 && _h <= 1.0){
+        last_hue = h;
+        h = _h;
+      }
+      double _s = (s * (1.0 - SMOOTH_HSB)) + (last_saturation * (SMOOTH_HSB));
+      if (_s >= 0.0 && _s <= 1.0){
+        last_saturation = s;
+        s = _s;
+      }
+      double _b = (b * (1.0 - SMOOTH_HSB)) + (last_brightness * (SMOOTH_HSB));
+      if (_b >= 0.0 && _b <= 1.0){
+        last_brightness = b;
+        b = _b;
+      }
       last_brightness = b;
       dprint(P_SMOOTH_HSB, "\t\t");
       dprint(P_SMOOTH_HSB, h);
@@ -722,6 +762,7 @@ void updateNeosForPitch() {
       dprint(P_SMOOTH_HSB, "\t");
       dprintln(P_SMOOTH_HSB, b);
     }
+
     if (P_HSB) {
       Serial.print("h: "); Serial.print(h);
       Serial.print("\ts: ");
@@ -729,7 +770,7 @@ void updateNeosForPitch() {
       Serial.print("\tb: ");
       Serial.println(b);
     }
-    if (fc[0].isActive() == true) {
+    if (fc.isActive() == true) {
       // now colorWipe the LEDs with the HSB value
       // if (h > 0) {
       neos.colorWipeHSB(h, s, b);

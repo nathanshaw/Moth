@@ -14,7 +14,7 @@ void updateFeatureCollectors() {
   // update the feature collectors
   fft_features.updateFFT();
 #if NUM_FEATURE_COLLECTORS == 1
-  fc[0].update();
+  fc.update();
 #endif
 #if NUM_FEATURE_COLLECTORS > 1
   for (int i = 0; i < NUM_FEATURE_COLLECTORS; i++) {
@@ -157,9 +157,9 @@ void readJumpers() {
   //////////// Jumper 1 ///////////////////////
   bool temp_b;
 #if HV_MAJOR < 3
-  SCALE_DOWN_BRIGHTNESS = !digitalRead(JMP1_PIN);
+  SQUARE_BRIGHTNESS = !digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
-  if (SCALE_DOWN_BRIGHTNESS == 0) {
+  if (SQUARE_BRIGHTNESS == 0) {
     Serial.print(" ON  - WILL NOT scale down brightness");
   } else {
     Serial.print(" OFF - WILL scale down brightness");
@@ -177,7 +177,7 @@ void readJumpers() {
 #endif//HV_MAJOR
   //////////// Jumper 2 ///////////////////////
   /////////// Boot Delay //////////////////////
-  temp_b = digitalRead(JMP2_PIN);
+  temp_b = !digitalRead(JMP2_PIN);
   BOOT_DELAY *= temp_b;
   Serial.print("(pin2) -  ");
   if (BOOT_DELAY == 0) {
@@ -444,8 +444,6 @@ void setup() {
   Serial.println(global_peak_scaler);
   Serial.print("global_rms_scaler  = ");
   Serial.println(global_rms_scaler);
-  Serial.print("global_fft_scaler  = ");
-  Serial.println(global_fft_scaler);
   ///////////////////////// NeoPixels //////////////////////////
 
     neos.setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
@@ -470,9 +468,6 @@ void setup() {
   lux_manager.linkNeoGroup(&neos);
   delay(200);
   lux_manager.calibrate(LUX_CALIBRATION_TIME);
-  if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
-    LUX_SENSORS_ACTIVE = true;
-  }
 #else
   lux_manager.addSensorTcaIdx("Front", 0);
   lux_manager.addSensorTcaIdx("Rear", 1);
@@ -480,11 +475,9 @@ void setup() {
   if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
     lux_manager.linkNeoGroup(&neos);
     delay(200);
-    if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
-      LUX_SENSORS_ACTIVE = true;
-    }
   }
 #endif // HV_MAJOR
+  lux_manager.setBrightnessScalerMinMax(BRIGHTNESS_SCALER_MIN, BRIGHTNESS_SCALER_MAX);
 
 #if FIRMWARE_MODE == TEST_MODE
   for (int i = 0; i < NUM_LED; i++) {

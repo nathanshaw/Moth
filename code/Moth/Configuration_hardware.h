@@ -23,7 +23,7 @@
 // Currently there are three options for the enclosure : GROUND_ENCLOSURE, ORB_ENCLOSURE, and NO_ENCLOSURE
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
-uint8_t ENCLOSURE_TYPE =          GROUND_ENCLOSURE;
+uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE;
 
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE
 #define ENC_ATTENUATION_FACTOR         1.0

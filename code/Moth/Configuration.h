@@ -42,9 +42,9 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
 #define P_LED_ON_RATIO                  false
-#define P_COLOR_WIPE                    false
+#define P_COLOR_WIPE                    true
 
-#define P_SMOOTH_HSB                    false
+#define P_SMOOTH_HSB                    true
 #define P_HSB                           false
 #define P_HUE                           false
 #define P_BRIGHTNESS                    false
@@ -59,7 +59,7 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 #define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
 // this is where the final brightness scaler is applied
-#define P_PACK_COLORS                   false
+#define P_PACK_COLORS                   true
 
 #define P_SONG                          false
 #define P_SONG_COLOR                    false
@@ -259,7 +259,7 @@ bool gain_adjust_active =                false;
 
 // this needs to be included after the firmware_mode line so everything loads properly
 #if FIRMWARE_MODE == PITCH_MODE
-  #define NUM_AUTOGAINS                 0
+  #define NUM_AUTOGAINS                 1
   #define NUM_FEATURE_COLLECTORS        1
   #define NUM_NEO_GROUPS                2
 #elif FIRMWARE_MODE == CICADA_MODE
@@ -275,17 +275,14 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-bool LUX_SENSORS_ACTIVE =               false;
-// WARNING NOT IMPLEMENTED - TODO
-#if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define   COMBINE_LUX_READINGS           true
-#elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-#define   COMBINE_LUX_READINGS           true
-#endif // enclosure type
 
-// THESE should be determined by the LUX_READINGS
-uint8_t  MIN_BRIGHTNESS =              0;
-uint8_t  MAX_BRIGHTNESS =              255;
+// These are determined by the LUX_READINGS, any values se here will just serve as a
+// default value which will be overwriten once a lux reading is taken. 
+// PLEASE NOTE: the MAX_BRIGHTNEESS is for all three color channels not just a single channel
+// so for instance if rgb = 150, 150, 150. that would be limited if the MAX_BRIGHTNESS IS 450
+// that makes it so a MAX_BRIGHTNESS is actually 765
+uint16_t  MIN_BRIGHTNESS =              0;
+uint16_t  MAX_BRIGHTNESS =              765;
 
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               10.0
@@ -293,11 +290,12 @@ uint8_t  MAX_BRIGHTNESS =              255;
 #define MID_LUX_THRESHOLD               350.0
 #define HIGH_LUX_THRESHOLD              1200.0
 #if HV_MAJOR < 3
-#define EXTREME_LUX_THRESHOLD           4000.0
+#define EXTREME_LUX_THRESHOLD           5000.0
 #else
-#define EXTREME_LUX_THRESHOLD           6000.0
+#define EXTREME_LUX_THRESHOLD           5000.0
 #endif
-// on scale of 0-1.0 what is the min multiplier for lux sensor brightness adjustment
+
+// on scale of 0-1.0 what is the min multiplier for the user defined brightness scaler
 #define BRIGHTNESS_SCALER_MIN           0.05
 #define BRIGHTNESS_SCALER_MAX           3.00
 
@@ -400,7 +398,7 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 bool FLASH_DOMINATES =                  false;
 
 // if this is true then the brightness will b = (b + b) * b; in order to reduce its value, and make loud events even more noticable
-bool SCALE_DOWN_BRIGHTNESS =            true;
+bool SQUARE_BRIGHTNESS =            true;
 
 // how high the onset flash timer will go up to
 #define MAX_FLASH_TIME                  60
@@ -430,12 +428,27 @@ uint8_t LED_MAPPING_MODE = LED_MAPPING_STANDARD;
 /////////////////////////////// Feature Collector /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 // Which Audio features will be activated?
-#define FFT_FEATURE_ACTIVE                  1
+#define FFT_FEATURES_ACTIVE                 1
 #define PEAK_FEATURE_ACTIVE                 1
 #define RMS_FEATURE_ACTIVE                  1
 // these features are not currently implemented
 // #define TONE_FEATURE_ACTIVE                 1
 // #define FREQ_FEATURE_ACTIVE                 1
+
+//////////////////////////// FFT ////////////////////////////////////////////////
+// When calculating things such as which bin has the most energy and so on,
+// what bin is considered the "1st?" and which one is the last?
+// todo what frequency does this correspond to?
+#define FFT_LOWEST_BIN              1
+// todo this needs to be calculated better?
+#define FFT_NUM_BINS                511
+#define FFT_HIGHEST_BIN             80
+// when using the Freq function generator, what amount of uncertanity is allowed?
+// #define FREQ_UNCERTANITY_ALLOWED    0.15
+
+/////////////////////////////// Color Mapping /////////////////////////////////////
+// when calculating the hue for the NeoPixel leds, what feature do you want to use?
+// look under Audio Features for the Available Features
 
 /////////////////////////////// Audio Features ////////////////////////////////////
 // all the different features that are available to use through the feature collector for
@@ -454,24 +467,13 @@ uint8_t LED_MAPPING_MODE = LED_MAPPING_STANDARD;
 #define FEATURE_FFT_MAX_BIN                 (8)
 #define FEATURE_FFT_BIN_RANGE               (9)
 #define FEATURE_STRONG_FFT                  (10)
+#define FEATURE_CENTROID                    (13)
+#define FEATURE_FLUX                        (14)
 
-//////////////////////////// FFT ////////////////////////////////////////////////
-// When calculating things such as which bin has the most energy and so on,
-// what bin is considered the "1st?" and which one is the last?
-// todo what frequency does this correspond to?
-#define FFT_LOWEST_BIN              1
-// todo this needs to be calculated better?
-#define FFT_NUM_BINS                511
-#define FFT_HIGHEST_BIN             80
-// when using the Freq function generator, what amount of uncertanity is allowed?
-// #define FREQ_UNCERTANITY_ALLOWED    0.15
-
-/////////////////////////////// Color Mapping /////////////////////////////////////
-// when calculating the hue for the NeoPixel leds, what feature do you want to use?
-// look under Audio Features for the Available Features
-#define HUE_FEATURE                         (FEATURE_FFT_MAX_BIN)
-#define BRIGHTNESS_FEATURE                  (FEATURE_PEAK_AVG)
-#define SATURATION_FEATURE                  (FEATURE_PEAK_AVG)
+// When the color mapping is using HSB, this will be where the features used are determined
+#define HUE_FEATURE                         (FEATURE_CENTROID)
+#define BRIGHTNESS_FEATURE                  (FEATURE_RMS)
+#define SATURATION_FEATURE                  (FEATURE_FLUX)
 
 // These are different color mapping modes
 #define COLOR_MAPPING_RGB                     0
@@ -517,10 +519,10 @@ int SONG_COLOR_FEATURE =                      SPECTRAL_CENTROID;
 // #define STARTING_ONSET_GAIN             16.0
 
 #if HV_MAJOR < 3
-#define STARTING_GAIN                         80.0
+#define STARTING_GAIN                         30.0
 #elif HV_MAJOR == 3
 // 30.0 is good for testing when no enclosure is present, but a higher value should be used when an enclosure is present
-#define STARTING_GAIN                         30.0
+#define STARTING_GAIN                         20.0
 #endif
 
 #define SONG_BQ1_THRESH                       4000
