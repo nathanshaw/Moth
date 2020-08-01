@@ -178,9 +178,9 @@ void readJumpers() {
   //////////// Jumper 2 ///////////////////////
   /////////// Boot Delay //////////////////////
   temp_b = digitalRead(JMP2_PIN);
-  BOOT_DELAY *= !temp_b;
+  BOOT_DELAY *= temp_b;
   Serial.print("(pin2) -  ");
-  if (temp_b == 0) {
+  if (BOOT_DELAY == 0) {
     Serial.print("OFF - ");
   } else {
     Serial.print("ON  - ");
