@@ -27,9 +27,12 @@
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
 #define SV_MINOR           2
-#define SV_SUBVERSION      6
+#define SV_SUBVERSION      7
 /*
-
+// version 0.2.7 xxxx
+   updated some code that used long if/else statements to usee switch/case statements instead. Applied the 
+   loacal brightness scalers to all values. Bunch of other minor things to get ready for the next field expedition.
+   
 // version 0.2.6 removed many global variables which were not being used, moved most global variables to the 
    start of Mode.h and removed a good amount of clutter from the program. This included removing the extra Neopixel manager, 
    and support for "stereo" visual feedback. An option to change the Lux Managers feedback was added so the Lux Manager can
@@ -83,9 +86,10 @@
 #define CICADA_MODE_NEW                 3
 
 ///////////////////// ENCLOSURE_TYPES /////////////////////
-#define ORB_ENCLOSURE             1
-#define GROUND_ENCLOSURE          0
-#define NO_ENCLOSURE              2
+#define ORB_ENCLOSURE_WITH_HOLE         0
+#define ORB_ENCLOSURE_WITHOUT_HOLE      1
+#define GROUND_ENCLOSURE                2
+#define NO_ENCLOSURE                    3
 
 ///////////////////// Audio Features //////////////////////
 // Some macros to make it easier to set some software settings

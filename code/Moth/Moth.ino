@@ -138,7 +138,7 @@ void readPots() {
   // if
   if (P_POT_VALS) {
     printPots();
-    }
+  }
 }
 
 void printPots() {
@@ -166,12 +166,12 @@ void readJumpers() {
   }
   Serial.println();
 #else
-  temp_b = digitalRead(JMP1_PIN);
+  SQUARE_BRIGHTNESS = !digitalRead(JMP1_PIN);
   Serial.print("(pin1) - ");
-  if (temp_b == 0) {
-    Serial.print(" OFF - TODO");
+  if (SQUARE_BRIGHTNESS == 0) {
+    Serial.print(" ON  - WILL NOT scale down brightness");
   } else {
-    Serial.print(" ON - TODO");
+    Serial.print(" OFF - WILL scale down brightness");
   }
   Serial.println();
 #endif//HV_MAJOR
@@ -189,7 +189,7 @@ void readJumpers() {
   Serial.println(BOOT_DELAY / 1000);
 
   //////////// Jumper 3 ///////////////////////
-  //////////// Flash Dominates //
+  
   temp_b = digitalRead(JMP3_PIN);
 #if FIRMWARE_MODE == CICADA_MODE
   FLASH_DOMINATES = temp_b;
@@ -201,77 +201,78 @@ void readJumpers() {
 #else
   Serial.print("(pin3) - ");
   if (temp_b == 0) {
-    SMOOTH_HSB = 0.125;
-    Serial.print(" OFF - SMOOTH_HSB is now set at 0.125");
+    SMOOTH_HSB = 0.1;
+    Serial.print(" OFF - SMOOTH_HSB is now set at 0.1");
   } else {
-    SMOOTH_HSB = 0.4;
-    Serial.print(" ON - SMOOTH_HSB is now set at 0.4");
+    SMOOTH_HSB = 0.45;
+    Serial.print(" ON - SMOOTH_HSB is now set at 0.45");
   }
   Serial.println();
 #endif//FIRMWARE_MODE
 
   //////////// Jumper 4 ///////////////////////
   //////////// Major Sensitivity Attenuation //
-    double total_scaler = 0.0;
+  double total_scaler = 0.0;
 #if HV_MAJOR < 3
   temp_b = digitalRead(JMP4_PIN);
   if (temp_b == 1) {
-    Serial.print("(pin4)  - ON  - user_brightness_scaler not decreased by 50% : ");
+    Serial.print("(pin4)  - ON  - user_brightness_scaler not decreased by 66% : ");
   } else {
-    Serial.print("(pin4)  - OFF - user_brightness_scaler decreased by 50% : ");
-    total_scaler -= 0.5;
+    Serial.print("(pin4)  - OFF - user_brightness_scaler decreased by 66% : ");
+    total_scaler -= 0.66;
   }
   Serial.println(total_scaler);
 #else
   temp_b = digitalRead(JMP4_PIN);
-  Serial.print("(pin4) - ");
-  if (temp_b == 0) {
-    Serial.print("(pin4)  - OFF - TODO");
+  if (temp_b == 1) {
+    Serial.print("(pin4)  - ON  - user_brightness_scaler not decreased by 66% : ");
   } else {
-    Serial.print("(pin4  - ON - TODO");
+    Serial.print("(pin4)  - OFF - user_brightness_scaler decreased by 66% : ");
+    total_scaler -= 0.66;
   }
-  Serial.println();
+  Serial.println(total_scaler);
 #endif//HV_MAJOR
   ///////////// Jumper 5 //////////////////////
   //////////// Minor Sensitivity Boost ///////////////
 #if HV_MAJOR < 3
   temp_b = digitalRead(JMP5_PIN);
   if (temp_b == 1) {
-    total_scaler += 0.5;
-    Serial.print("(pin5)  - ON  - user_brightness_scaler increased by 50% : ");
+    total_scaler += 1.0;
+    Serial.print("(pin5)  - ON  - user_brightness_scaler increased by 100% : ");
   } else {
-    Serial.print("(pin5)  - OFF - user_brightness_scaler not increased by 50% : ");
+    Serial.print("(pin5)  - OFF - user_brightness_scaler not increased by 100% : ");
   }
   Serial.println(total_scaler);
 #else
-  temp_b = digitalRead(JMP4_PIN);
-  Serial.print("(pin4) - ");
-  if (temp_b == 0) {
-    Serial.print("(pin4)  - OFF - TODO");
-  } else {
-    Serial.print("(pin4  - ON - TODO");
-  }
-  Serial.println();
-#endif//HV_MAJOR
-  ///////////// Jumper 6 //////////////////////
-  //////////// Major Sensitivity Boost ////////////////
-  #if HV_MAJOR < 3
-  temp_b = digitalRead(JMP6_PIN);
+  temp_b = digitalRead(JMP5_PIN);
   if (temp_b == 1) {
     total_scaler += 1.0;
-    Serial.print("(pin6)  - ON  - user_brightness_scaler increased by 100% : ");
+    Serial.print("(pin5)  - ON  - user_brightness_scaler increased by 100% : ");
   } else {
-    Serial.print("(pin6)  - OFF - user_brightness_scaler not increased by 100% : ");
+    Serial.print("(pin5)  - OFF - user_brightness_scaler not increased by 100% : ");
   }
   Serial.println(total_scaler);
+#endif//HV_MAJOR
+  ///////////// Jumper 6 //////////////////////
+  //////////// Starting Gain Boost ////////////////
+#if HV_MAJOR < 3
+  temp_b = digitalRead(JMP6_PIN);
+  if (temp_b == 1) {
+    ENC_ATTENUATION_FACTOR *= 1.5;
+    Serial.print("(pin6)  - ON  - STARTING_GAIN increased by a factor of 50% : ");
+  } else {
+    Serial.print("(pin6)  - OFF - STARTING_GAIN not increased by a factor of 50% : ");
+  }
+  Serial.println(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
 #else
   temp_b = digitalRead(JMP6_PIN);
-  Serial.print("(pin6) - ");
-  if (temp_b == 0) {
-    Serial.println("OFF - TODO");
+  if (temp_b == 1) {
+    ENC_ATTENUATION_FACTOR *= 1.5;
+    Serial.print("(pin6)  - ON  - STARTING_GAIN increased by a factor of 50% : ");
   } else {
-    Serial.println("ON - TODO");
+    Serial.print("(pin6)  - OFF - STARTING_GAIN not increased by a factor of 50% : ");
   }
+  Serial.println(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
 #endif//HV_MAJOR
 #if HV_MAJOR > 2
   ///////////// Jumper 7 //////////////////////
@@ -419,6 +420,22 @@ void setup() {
   Serial.print(".");
   Serial.println(HV_MINOR);
   printMinorDivide();
+  //////////////// Eenclosure Type ///////////////////////////
+  Serial.print("Enclosure type is: ");
+  if (ENCLOSURE_TYPE == GROUND_ENCLOSURE){
+    Serial.println("Ground");
+  } else if (ENCLOSURE_TYPE == ORB_ENCLOSURE_WITHOUT_HOLE) {
+    Serial.println("Orb without hole");
+  } else if (ENCLOSURE_TYPE == ORB_ENCLOSURE_WITH_HOLE) {
+    Serial.println("Orb with hole");
+  } else if (ENCLOSURE_TYPE == NO_ENCLOSURE) {
+    Serial.println("no enclosure");
+  } else {
+    Serial.println("ERROR, enclosure type is not recognized");
+    neos.colorWipe(255, 0, 0, 0);
+    delay(60000);
+  }
+  printMinorDivide();
   //////////////// User Controls /////////////////////////////
   explainSerialCommands();
   setupUserControls();
@@ -446,11 +463,11 @@ void setup() {
   Serial.println(global_rms_scaler);
   ///////////////////////// NeoPixels //////////////////////////
 
-    neos.setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
-    neos.setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
-    neos.setFlashBehaviour(FLASH_DOMINATES);
-    neos.changeMapping(LED_MAPPING_MODE);
-    // neos[i].setSongFeedbackMode(ROUND);
+  neos.setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
+  neos.setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
+  neos.setFlashBehaviour(FLASH_DOMINATES);
+  neos.changeMapping(LED_MAPPING_MODE);
+  // neos[i].setSongFeedbackMode(ROUND);
 
   //////////////////////////// Lux Sensors //////////////////////////////
   printMinorDivide();
@@ -492,7 +509,7 @@ void setup() {
   printMajorDivide("Setup Loop Finished");
 
   /////////////////////////////// Main Loop Delay ////////////////////////////////
-  
+
   // Serial.print("segment : ");
   // Serial.println(segment);
   for (int it = 0; it < NUM_LED; it++) {
@@ -502,7 +519,7 @@ void setup() {
     uint32_t segment = (uint32_t)((double)BOOT_DELAY / (double)NUM_LED);
     leds.setPixel(it, 10, 32, 20);
     leds.show();
-    if (digitalRead(JMP1_PIN)){
+    if (digitalRead(JMP1_PIN)) {
       delay(segment);
     }
   }

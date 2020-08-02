@@ -11,26 +11,23 @@
 // depending on what functionality you want
 #define FIRMWARE_MODE             PITCH_MODE
 
-// TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
-// how long does the microphone test routine last for in the feature collector testMicrophone() function
-#define MICROPHONE_TEST_DURATION  1500
-#define LUX_TEST_DURATION         1000
-
-////////////////////////////////////////////////////////////////////////////
-////////////////////// Hardware Configurations /////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-
-// Currently there are three options for the enclosure : GROUND_ENCLOSURE, ORB_ENCLOSURE, and NO_ENCLOSURE
+// Currently there are four options for the enclosure : 
+//         GROUND_ENCLOSURE 
+//         ORB_ENCLOSURE_WITH_HOLE
+//         ORB_ENCLOSURE_WITHOUT_HOLE
+//         NO_ENCLOSURE
 // different enclosures result in a different amount of attenuation from environmental sounds.
 // the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
-uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE;
+uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE_WITHOUT_HOLE;
 
-#if ENCLOSURE_TYPE == ORB_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         1.0
+#if ENCLOSURE_TYPE == ORB_ENCLOSURE_WITH_HOLE
+double ENC_ATTENUATION_FACTOR =        1.0;
+#elif ENCLOSURE_TYPE == ORB_ENCLOSURE_WITHOUT_HOLE
+double ENC_ATTENUATION_FACTOR =        2.0;
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         3.0
+double ENC_ATTENUATION_FACTOR =        3.0;
 #elif ENCLOSURE_TYPE == NO_ENCLOSURE
-#define ENC_ATTENUATION_FACTOR         0.75
+double ENC_ATTENUATION_FACTOR =        0.75;
 #endif
 
 // different microcontrollers which can be used for the system
@@ -117,6 +114,11 @@ int pot_pins[NUM_POTS] = {POT1_PIN, POT2_PIN, POT3_PIN, POT4_PIN};
 uint16_t pot_vals[NUM_POTS] = {0, 0, 0, 0};
 
 #endif
+
+// TODO - need  to move some of this to the EEPROM storage, and add a flag in the standard configuratui file to  either read that information or to write it
+// how long does the microphone test routine last for in the feature collector testMicrophone() function
+#define MICROPHONE_TEST_DURATION  1500
+#define LUX_TEST_DURATION         1000
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Jumper Settings //////////////////////////////////

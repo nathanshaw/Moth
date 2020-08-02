@@ -72,7 +72,7 @@ void setupAudio() {
     if (FIRMWARE_MODE == CICADA_MODE) {
       fft_features.setupCentroid(true, 4000, 16000);
     } else if (FIRMWARE_MODE == PITCH_MODE) {
-      fft_features.setupCentroid(true, 200, 20000);
+      fft_features.setupCentroid(true, 120, 16000);
     }
     Serial.println("Started calculating Centroid in the FFTManager");
     fft_features.setFluxActive(true);
@@ -139,10 +139,12 @@ double calculateSongBrightness() {
     dprintln(P_BRIGHTNESS, brightness_feature_max, 5);
 
     brightness_feature_max = (target_brightness * BRIGHTNESS_LP_LEVEL) + (brightness_feature_max * (1.0 - BRIGHTNESS_LP_LEVEL));
+    
     // to ensure that loud clipping events do not skew things too much
     if (brightness_feature_max > 1.0) {
       brightness_feature_max = 1.0;
     }
+    
     dprint(P_BRIGHTNESS, " updated brightness_max and target_brightness to: ");
     dprintln(P_BRIGHTNESS, brightness_feature_max, 5);
 
@@ -173,18 +175,45 @@ double calculateSongBrightness() {
   return target_brightness;
 }
 
-
-double calculateSongColor() {
+double calculateColorFromCentroid() {
   double cent = fft_features.getCentroid();       // right now we are only polling the first FC for its centroid to use to color both sides
+  // this is basically some loc
   if (cent < color_feature_min) {
-    color_feature_min = (color_feature_min * 0.94) + (cent * 0.06);
+    dprint(P_HUE, "cent is less than color_feature_min changing to min: ");
+    dprint(P_HUE, cent);
+    dprint(P_HUE, " / ");
+    dprintln(P_HUE, color_feature_min);
+    color_feature_min = (color_feature_min * (1.0 - feature_reset_factor)) + (cent * feature_reset_factor);
     cent = color_feature_min;
   }
   if (cent > color_feature_max) {
-    color_feature_max = (color_feature_max * 0.94) + (cent * 0.06);
+    dprint(P_HUE, "cent is more than color_feature_max changing to max: ");
+    dprint(P_HUE, cent);
+    dprint(P_HUE, " / ");
+    dprintln(P_HUE, color_feature_max);
+    color_feature_max = (color_feature_max * (1.0 - feature_reset_factor)) + (cent * feature_reset_factor);
     cent = color_feature_max;
   }
+  dprint(P_HUE, "hue before/after scaling:\t");
+  dprint(P_HUE, cent);
   cent = (cent - color_feature_min) / (color_feature_max - color_feature_min);
+  dprint(P_HUE, " / ");
+  dprintln(P_HUE, cent);
+  dprint(P_HUE, "hue min/max:\t\t\t");
+  dprint(P_HUE, color_feature_min);
+  dprint(P_HUE, " / ");
+  dprintln(P_HUE, color_feature_max);
+    /////////////////// LOCAL SCALER RESET //////////////////////////
+  // this needs to be after the rest of the logic in this function
+  // when it was before it was adjusting the seed values to do odd things
+  if (millis() > ((1000 * 60) + BOOT_DELAY) && feature_reset_tmr > feature_reset_time) {
+    color_feature_min += ((color_feature_max - color_feature_min) * feature_reset_factor);
+    color_feature_max -= ((color_feature_max - color_feature_min) * feature_reset_factor);
+    brightness_feature_min += ((brightness_feature_max - brightness_feature_min) * feature_reset_factor);
+    brightness_feature_max -= ((brightness_feature_max - brightness_feature_min) * feature_reset_factor);
+    dprintln(P_SONG, "reset song feature min and max for cent and brightness ");
+    feature_reset_tmr = 0;
+  }
   return cent;
 }
 
@@ -203,7 +232,7 @@ void updateSong() {
   uint8_t red, green, blue;
 
   /////////////////// Color ////////////////////////////////////////
-  target_color = calculateSongColor();
+  target_color = calculateColorFromCentroid();
   last_color = current_color;
   current_color = (target_color * COLOR_LP_LEVEL) + (last_color * (1.0 - COLOR_LP_LEVEL));
 
@@ -258,18 +287,6 @@ void updateSong() {
   // adding thee target_brightness multiplier will weight the overall brightness in favor
   // of sounds which have more higher frequency content.
   neos.colorWipe(red, green, blue, current_brightness);// * (1.0 + (target_brightness * 0.25)));
-
-  /////////////////// LOCAL SCALER RESET //////////////////////////
-  // this needs to be after the rest of the logic in this function
-  // when it was before it was adjusting the seed values to do odd things
-  if (millis() > ((1000 * 60) + BOOT_DELAY) && feature_reset_tmr > feature_reset_time) {
-    color_feature_min += ((color_feature_max - color_feature_min) * 0.05);
-    color_feature_max -= ((color_feature_max - color_feature_min) * 0.05);
-    brightness_feature_min += ((brightness_feature_max - brightness_feature_min) * 0.05);
-    brightness_feature_max -= ((brightness_feature_max - brightness_feature_min) * 0.05);
-    dprintln(P_SONG, "reset song feature min and max for cent and brightness ");
-    feature_reset_tmr = 0;
-  }
 #if P_UPDATE_SONG_LENGTH == 1
   Serial.print("updateSong() function call length: ");
   Serial.println(song_update_timer - m);
@@ -410,50 +427,43 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   double b;
   dprintMinorDivide(P_BRIGHTNESS);
   dprint(P_BRIGHTNESS, "calculating HSB Brightness: ");
-  if (BRIGHTNESS_FEATURE == FEATURE_PEAK_AVG) {
-    dprintln(P_BRIGHTNESS, "feature is PEAK_AVG");
-    b = f->getPeakAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
-    if (b > 1.0) {
-      b =  1.0;
-    }
-    f->resetPeakAvgLog();
-  } else if (BRIGHTNESS_FEATURE == FEATURE_RMS_AVG) {
-    dprintln(P_BRIGHTNESS, "feature is RMS_AVG");
-    b = f->getRMSAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
-    if (b > 1.0) {
-      b =  1.0;
-    }
-    f->resetRMSAvgLog();
-  }
-  else if (BRIGHTNESS_FEATURE == FEATURE_RMS) {
-    dprintln(P_BRIGHTNESS, "feature is RMS");
-    b = f->getRMS() - BRIGHTNESS_CUTTOFF_THRESHOLD;
-    if (b > 1.0) {
-      b =  1.0;
-    }
-  }
-  else if (BRIGHTNESS_FEATURE == FEATURE_FFT_ENERGY) {
-    dprintln(P_BRIGHTNESS, "feature is FFT_ENERGY");
-    b = _fft->getFFTTotalEnergy() - BRIGHTNESS_CUTTOFF_THRESHOLD;
-  } else  if (BRIGHTNESS_FEATURE == FEATURE_STRONG_FFT) {
-    // range index is what the highest energy bin is within the range we care about
-    uint16_t range_idx = _fft->getHighestEnergyIdx();
-    uint16_t tot_idx = _fft->getHighestEnergyIdx();
-    if (range_idx != tot_idx) {
-      b = 0.0;
-    } else {
-      b = _fft->getFFTTotalEnergy();
-    }
-  } //else if (BRIGHTNESS_FEATURE == FEATURE_
-
-  else {
-    Serial.println("ERROR - calculateHSBBrightness() does not accept that  BRIGHTNESS_FEATURE");
+  switch (BRIGHTNESS_FEATURE) {
+    case (FEATURE_PEAK_AVG):
+      dprintln(P_BRIGHTNESS, "feature is PEAK_AVG");
+      b = f->getPeakAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      f->resetPeakAvgLog();
+      break;
+    case (FEATURE_RMS_AVG):
+      dprintln(P_BRIGHTNESS, "feature is RMS_AVG");
+      b = f->getRMSAvg() - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      f->resetRMSAvgLog();
+      break;
+    case (FEATURE_RMS):
+      dprintln(P_BRIGHTNESS, "feature is RMS");
+      b = f->getRMS();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      break;
+    case (FEATURE_FFT_ENERGY):
+      dprintln(P_BRIGHTNESS, "feature is FFT_ENERGY");
+      b = _fft->getFFTTotalEnergy() - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      break;
+    case (FEATURE_STRONG_FFT):
+      // range index is what the highest energy bin is within the range we care about
+      uint16_t range_idx = _fft->getHighestEnergyIdx();
+      uint16_t tot_idx = _fft->getHighestEnergyIdx();
+      if (range_idx != tot_idx) {
+        b = 0.0;
+      } else {
+        b = _fft->getFFTTotalEnergy();
+      }
+      break;
+    default:
+      Serial.println("ERROR - calculateHSBBrightness() does not accept that  BRIGHTNESS_FEATURE");
+      break;
   }
   ///////////////////////// If user controls are in place to scale the brightness it is done now //////////////////////
   /////////////////////// Make sure that it is within bounds ////////////////////
   dprint(P_BRIGHTNESS, "brightness is: ");
-  dprint(P_BRIGHTNESS, b);
-
+  dprintln(P_BRIGHTNESS, b);
   if (b < 0) {
     dprint(P_BRIGHTNESS, " brightness too low, changing to 0.0");
     b = 0;
@@ -461,7 +471,6 @@ double calculateHSBBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
     b = 1.0;
     dprint(P_BRIGHTNESS, " brightness too high, changing to 1.0");
   }
-  dprintln(P_BRIGHTNESS, b);
   if (USER_BS_ACTIVE > 0) {
     dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, "changing brightness due to user brightness_scaler | before: ");
     dprint(P_BRIGHTNESS_SCALER + P_BRIGHTNESS, b);
@@ -523,6 +532,31 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
       Serial.print("ERROR - calculateSaturation() does not accept that  SATURATION_FEATURE");
       break;
   }
+  if (sat < sat_feature_min) {
+    dprint(P_SATURATION, "sat is less than sat_feature_min changing to min: ");
+    dprint(P_SATURATION, sat);
+    dprint(P_SATURATION, " / ");
+    dprintln(P_SATURATION, sat_feature_min);
+    sat_feature_min = (sat_feature_min * 0.94) + (sat * 0.06);
+    sat = sat_feature_min;
+  }
+  if (sat > sat_feature_max) {
+    dprint(P_SATURATION, "sat is more than sat_feature_max changing to max: ");
+    dprint(P_SATURATION, sat);
+    dprint(P_SATURATION, " / ");
+    dprintln(P_SATURATION, sat_feature_max);
+    sat_feature_max = (sat_feature_max * 0.94) + (sat * 0.06);
+    sat = sat_feature_max;
+  }
+  dprint(P_SATURATION, "hue before/after scaling: ");
+  dprint(P_SATURATION, sat);
+  sat = (sat - sat_feature_min) / (sat_feature_max - sat_feature_min);
+  dprint(P_SATURATION, " / ");
+  dprint(P_SATURATION, sat);
+  dprint(P_SATURATION, "hue min/max: ");
+  dprint(P_SATURATION, sat_feature_min);
+  dprint(P_SATURATION, " / ");
+  dprintln(P_SATURATION, sat_feature_max);
   if (sat > 1.0) {
     Serial.print("WARNING - saturation is above 1.0 at ");
     Serial.print(sat);
@@ -576,13 +610,8 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
       double c = _fft->getCentroid();
       // the centroid will be a frequency between about 200 and 50000
       // first I need to move it to a more linear scale
-      Serial.print("centroid: ");
-      Serial.print(c);
-      Serial.print("\tmidi: ");
-      double midi_note = (12 * log2(c / 440));
-      Serial.print(midi_note);
-      hue = midi_note / 30;
-      Serial.print("\tscaled hue: ");
+      hue = calculateColorFromCentroid();
+      Serial.print("scaled hue:\t\t");
       Serial.println(hue);
       // next I need to scale down to a value between 0.0 and 1.0
       break;
@@ -673,7 +702,7 @@ void updateLBS(double feature) {
   }
   // if we do not return then it means we updated the min or max and now
   // need to update the lbs_scaler_min_thresh and max thresb
-  dprint(P_LBS, "\tnew lbs_scaler_min/max_thresh : ");
+  dprint(P_LBS, "new lbs_scaler_min/max_thresh : ");
   dprint(P_LBS, lbs_scaler_min_thresh);
   dprint(P_LBS, " / ");
   dprintln(P_LBS, lbs_scaler_max_thresh);
@@ -697,7 +726,7 @@ uint8_t applyLBS(uint8_t brightness) {
 }
 
 double applyLBS(double brightness) {
-  dprint(P_LBS, "brightness (Before/After) lbs(double): ");
+  dprint(P_LBS, "brightness (Before/After) lbs(double):\t");
   dprint(P_LBS, brightness);
   updateLBS(brightness);
   // constrain the brightness to the low and high thresholds
@@ -705,8 +734,8 @@ double applyLBS(double brightness) {
   brightness = constrainf(brightness,  lbs_scaler_min_thresh, lbs_scaler_max_thresh);
   brightness = mapf(brightness, lbs_scaler_min_thresh, lbs_scaler_max_thresh, MIN_BRIGHTNESS / 765, MAX_BRIGHTNESS / 765);
   // dprint(P_LBS, " = ");
-  dprint(P_LBS, brightness);
-  dprint(P_LBS, "\tmin/max thresh: ");
+  dprintln(P_LBS, brightness);
+  dprint(P_LBS, "\t\t\tmin/max thresh: ");
   dprint(P_LBS, lbs_scaler_min_thresh);
   dprint(P_LBS, " / ");
   dprintln(P_LBS, lbs_scaler_max_thresh);
@@ -740,17 +769,17 @@ void updateNeosForPitch() {
       dprint(P_SMOOTH_HSB, "\t");
       dprintln(P_SMOOTH_HSB, b);
       double _h = (h * (1.0 - SMOOTH_HSB)) + (last_hue * (SMOOTH_HSB));
-      if (_h >= 0.0 && _h <= 1.0){
+      if (_h >= 0.0 && _h <= 1.0) {
         last_hue = h;
         h = _h;
       }
       double _s = (s * (1.0 - SMOOTH_HSB)) + (last_saturation * (SMOOTH_HSB));
-      if (_s >= 0.0 && _s <= 1.0){
+      if (_s >= 0.0 && _s <= 1.0) {
         last_saturation = s;
         s = _s;
       }
       double _b = (b * (1.0 - SMOOTH_HSB)) + (last_brightness * (SMOOTH_HSB));
-      if (_b >= 0.0 && _b <= 1.0){
+      if (_b >= 0.0 && _b <= 1.0) {
         last_brightness = b;
         b = _b;
       }

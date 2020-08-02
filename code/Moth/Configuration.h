@@ -28,7 +28,7 @@ uint8_t LUX_MAPPING_SCHEMA =            LUX_ADJUSTS_MIN_MAX;
 #define STEREO_FEEDBACK                 false
 // the local brightness scaler will adjust the brightness that would normally be displayed
 // to utalise the entire dynamic range available
-bool LBS_ACTIVE          =              false;
+bool LBS_ACTIVE          =              true;
 // if false, a onset detected on either side results in a LED flash on both sides
 // if true, a onset detected on one side will only result in a flash on that side
 bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
@@ -41,17 +41,20 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 #define P_LEDS_ON                       false
 // print lux debug mostly prints info about when extreme lux is entered and 
 // other things in the lux manager, it is reccomended to leave this printing on
-#define P_LED_ON_RATIO                  false
-#define P_COLOR_WIPE                    true
+#define P_LED_ON_RATIO                  true
+#define P_COLOR_WIPE                    false
 
+///////////////////////// NeoPixels ////////////////////////
+#define P_HSB                           true
 #define P_SMOOTH_HSB                    true
-#define P_HSB                           false
-#define P_HUE                           false
-#define P_BRIGHTNESS                    false
+#define P_SATURATION                    true
+#define P_HUE                           true
+#define P_BRIGHTNESS                    true
 #define P_BRIGHTNESS_SCALER             true
 
 #define P_NEO_COLORS                    false
 
+//////////////////////// LuxManager ////////////////////////
 #define P_EXTREME_LUX                   true
 #define P_LUX                           true
 #define P_LUX_READINGS                  true
@@ -175,7 +178,7 @@ double ONSET_THRESH =                         1.0;
 #if FIRMWARE_MODE == CICADA_MODE
 double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.15;
 #elif FIRMWARE_MODE == PITCH_MODE
-double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.1;
+double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.05;
 #endif//FIRMWARE_MODE
 
 // if > 0 then the brightness will be smoothed with a previous value
@@ -585,9 +588,12 @@ int ONSET_FEATURE =                           PEAK_DELTA;
 //////////////////////////////// Global Variables /////////////////////////
 double color_feature_min = 1.00;
 double color_feature_max = 0.0;
+double last_hue = 0.0;
+double hue = 0.0;
 
 elapsedMillis feature_reset_tmr;
-const unsigned long feature_reset_time = (1000 * 2.5);// every 2.5 minute?
+const unsigned long feature_reset_time = (1000 * 60 * 1);// every 2 minute?
+const double feature_reset_factor = 0.08; // how much will the min and max be adjusted? 
 
 double brightness_feature_min = 1.0;
 double brightness_feature_max = 0.0;
@@ -595,9 +601,9 @@ double brightness_feature_max = 0.0;
 double current_brightness = 1.0;
 double last_brightness = 1.0;
 
-double last_hue = 0.0;
 double last_saturation = 0.0;
-double hue = 0.0;
+double sat_feature_min = 1.0;
+double sat_feature_max = 0.0;
 
 double current_color = 0.5;
 double last_color = 0.5;
