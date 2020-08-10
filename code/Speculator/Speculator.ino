@@ -516,7 +516,7 @@ void setup() {
   // nothing is needed =P
   #if HV_MAJOR > 2
   weather_manager.init();
-  #endif // HV_MAJOR > 2
+  #endif // HV_MAJOR > 20
   ///////////////////////// DL Manager //////////////////////////
   setupDLManagerCicada();
   printMinorDivide();

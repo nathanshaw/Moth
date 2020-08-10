@@ -17,7 +17,7 @@
 #define LUX_ADJUSTS_MIN_MAX             1
 uint8_t LUX_MAPPING_SCHEMA =            LUX_ADJUSTS_MIN_MAX;
 // will autogain based on the LED ON/OFF time be active?
-#define AUTOGAIN_ACTIVE                 true
+#define AUTOGAIN_ACTIVE                 false
 // should correspond to the serial number on the PCB
 #define SERIAL_ID                       13
 
@@ -104,12 +104,12 @@ elapsedMillis song_update_timer = 0;
 #define P_AUDIO_USAGE_MAX               false
 
 //////////////////////////// FFT ///////////////////////////////////////////
-#define P_FFT                           true
+#define P_FFT                           false
 // for printing raw FFT values
-#define P_FFT_VALS                      true
+#define P_FFT_VALS                      false
 // will print spectral flux if flux_active
-#define P_FLUX_VALS                     false
-#define P_ONSET_FLUX                    false
+#define P_FLUX_VALS                     true
+#define P_ONSET_FLUX                    falseƒ
 // will print centroid if centroid_active
 #define P_CENTROID_VALS                 true
 // will print highest energy bin in FFT
