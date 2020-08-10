@@ -26,9 +26,12 @@
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
-#define SV_MINOR           2
-#define SV_SUBVERSION      8
+#define SV_MINOR           3
+#define SV_SUBVERSION      0
 /*
+// version 0.3.0 has lots of changes under the hood concerning how the classees are treated. For the v3 units the temp
+   and humidity sensor and the WeatherManager was addded. There is a huge problem with the program having a memory leak
+   somewhere, I really neeed to find that beforee v 1.0 can be launched
 // version 0.2.7-8 xxxx
    updated some code that used long if/else statements to usee switch/case statements instead. Applied the 
    loacal brightness scalers to all values. Bunch of other minor things to get ready for the next field expedition.

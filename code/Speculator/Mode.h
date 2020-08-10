@@ -24,7 +24,7 @@ NeoGroup neos = NeoGroup(&leds, 0, NUM_LED - 1, "All Neos", MIN_FLASH_TIME, MAX_
 LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay, LUX_MAPPING_SCHEMA);
 // weather manager keeps track of temp and humidity sensors.
 #if HV_MAJOR > 2
-WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH);
+WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH, TEMP_HISTORESIS);
 #endif // HV_MAJOR
 
 FeatureCollector fc = FeatureCollector("All");

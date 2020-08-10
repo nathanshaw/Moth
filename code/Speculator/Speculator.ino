@@ -514,7 +514,9 @@ void setup() {
 #endif
   ///////////////////////// Weather Manager /////////////////////
   // nothing is needed =P
-
+  #if HV_MAJOR > 2
+  weather_manager.init();
+  #endif // HV_MAJOR > 2
   ///////////////////////// DL Manager //////////////////////////
   setupDLManagerCicada();
   printMinorDivide();
