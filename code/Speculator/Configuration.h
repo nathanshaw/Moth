@@ -354,7 +354,7 @@ uint32_t lux_min_reading_delay =        1000 * 10;       // ten seconds
 // how often does the feature collector update
 //33 is 30 times a second
 #define FC_UPDATE_RATE                  20
-#define AUDIO_MEMORY                    16
+#define AUDIO_MEMORY                    24
 
 bool stereo_audio =                     true;
 
