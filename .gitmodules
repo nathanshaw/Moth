@@ -10,3 +10,6 @@
 [submodule "code/Speculator/LuxManager"]
 	path = code/Speculator/LuxManager
 	url = https://github.com/nathanshaw/LuxManager
+[submodule "code/Speculator/ValueTracker"]
+	path = code/Speculator/ValueTracker
+	url = https://github.com/nathanshaw/ValueTracker.git
