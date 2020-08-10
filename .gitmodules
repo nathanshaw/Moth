@@ -13,3 +13,6 @@
 [submodule "code/Speculator/ValueTracker"]
 	path = code/Speculator/ValueTracker
 	url = https://github.com/nathanshaw/ValueTracker.git
+[submodule "code/Speculator/WeatherManager"]
+	path = code/Speculator/WeatherManager
+	url = https://github.com/nathanshaw/WeatherManager.git
