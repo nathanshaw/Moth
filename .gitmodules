@@ -1,12 +1,12 @@
-[submodule "code/Moth/AudioEngine"]
-	path = code/Moth/AudioEngine
+[submodule "code/Speculator/AudioEngine"]
+	path = code/Speculator/AudioEngine
 	url = https://github.com/nathanshaw/AudioEngine
-[submodule "code/Moth/NeopixelManager"]
-	path = code/Moth/NeopixelManager
+[submodule "code/Speculator/NeopixelManager"]
+	path = code/Speculator/NeopixelManager
 	url = https://github.com/nathanshaw/NeopixelManager
-[submodule "code/Moth/DLManager"]
-	path = code/Moth/DLManager
+[submodule "code/Speculator/DLManager"]
+	path = code/Speculator/DLManager
 	url = https://github.com/nathanshaw/DLManager
-[submodule "code/Moth/LuxManager"]
-	path = code/Moth/LuxManager
+[submodule "code/Speculator/LuxManager"]
+	path = code/Speculator/LuxManager
 	url = https://github.com/nathanshaw/LuxManager
