@@ -8,7 +8,7 @@
 
 #include <WS2812Serial.h>
 
-const int numled = 12;
+const int numled = 40;
 const int pin = 5;
 
 // Usable pins:
@@ -45,6 +45,7 @@ uint32_t ittr = 0;
 
 void setup() {
   leds.begin();
+  leds.setBrightness(20);
   Serial.begin(57600);
 }
 
@@ -59,7 +60,6 @@ void loop() {
   colorWipe(PINK, microsec);
   colorWipe(ORANGE, microsec);
   colorWipe(WHITE, microsec);
-  
 }
 
 void colorWipe(int color, int wait) {

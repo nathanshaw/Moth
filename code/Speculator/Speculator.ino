@@ -440,7 +440,13 @@ void setup() {
   explainSerialCommands();
   setupUserControls();
   testJumpers();
+  
   readUserControls();
+  delay(5000);
+  readUserControls();
+  delay(5000);
+  readUserControls();
+  delay(5000);
 
   //////////////// Leds //////////////////////////////////////
   leds.begin();
