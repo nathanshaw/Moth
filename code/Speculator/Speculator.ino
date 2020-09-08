@@ -462,6 +462,7 @@ void setup() {
   Serial.println(" LEDs");
   delay(3000);
   printMinorDivide();
+
   ///////////////////////// Audio //////////////////////////
   setupAudio();
 
@@ -493,7 +494,8 @@ void setup() {
   leds.show();
   Serial.println("LEDS off");
   delay(500);
-  // todo make this proper
+
+  lux_manager.setLuxThresholds(LOW_LUX_THRESHOLD, MID_LUX_THRESHOLD, HIGH_LUX_THRESHOLD, EXTREME_LUX_THRESHOLD);
 
 #if HV_MAJOR > 2
   lux_manager.add6030Sensors(0.125, 25);

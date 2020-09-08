@@ -292,6 +292,7 @@ bool gain_adjust_active =                false;
 uint16_t  MIN_BRIGHTNESS =              0;
 uint16_t  MAX_BRIGHTNESS =              765;
 
+#define NIGHT_LUX_THRESHOLD             1.0
 // this is the threshold in which anything below will just be treated as the lowest reading
 #define LOW_LUX_THRESHOLD               10.0
 // when a lux of this level is detected the LEDs will be driven with a brightness scaler of 1.0

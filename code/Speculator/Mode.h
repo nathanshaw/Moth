@@ -4,8 +4,8 @@
 #include <WS2812Serial.h>
 #include "DLManager/DLManager.h"
 #include "Configuration.h"
-#include "NeopixelManager/NeopixelManager.h"
-#include "LuxManager/LuxManager.h"
+#include <NeopixelManager.h>
+#include <LuxManager.h>
 
 #if HV_MAJOR > 2
 #include "WeatherManager/WeatherManager.h"
