@@ -1,3 +1,8 @@
+*.png
+*.pdf
+*.jpg
+*.jpeg
+*.tiff
 *.DS_Store
 *.b#1
 *.b#2
