@@ -347,7 +347,6 @@ void updateOnset() {
   dprintln(P_ONSET_FLUX, onset_flux);
 
   //////////////////////////// Cent Neg Delta ////////////////////////
-
   double new_cent_degd = fft_features.getCentroidNegDelta();
   new_cent_degd = updateScalers(new_cent_degd, min_cent_negd, max_cent_negd, 0.5);
   last_cent_degd = onset_cent;
@@ -355,13 +354,7 @@ void updateOnset() {
   // Serial.print("onset_cent/min/max: ");
   // Serial.print((new_cent_degd), 8);
   onset_cent = (new_cent_degd / max_cent_negd);
-  /*Serial.print(" - ");
-    Serial.print(min_cent_negd, 8);
-    Serial.print(" - ");
-    Serial.print(max_cent_negd, 8);
-    Serial.print(" => ");
-    Serial.println(onset_cent, 8);
-  */
+
   //////////////////////////// Energy between 1k - 3k //////////////////
   // using the bins instead of the hard coded frequencies saves some cycles
   // double range_rms = fft_features.getFFTRangeByFreq(1000, 2000);

@@ -5,6 +5,9 @@
 #include "PrintUtils.h"
 #include "Macros.h"
 
+// There are three artefact types currently availible 
+// SPECULATOR, EXPLORATOR, and LEGATUS
+#define ARTEFACT_TYPE             SPECULATOR
 #define HV_MAJOR                  3
 #define HV_MINOR                  0
 
@@ -12,15 +15,18 @@
 // depending on what functionality you want
 #define FIRMWARE_MODE             PITCH_MODE
 
-// Currently there are four options for the enclosure : 
-//         GROUND_ENCLOSURE 
-//         ORB_ENCLOSURE_WITH_HOLE
-//         ORB_ENCLOSURE_WITHOUT_HOLE
-//         NO_ENCLOSURE
-// different enclosures result in a different amount of attenuation from environmental sounds.
-// the orb enclosure forms the base-line for this, it is thin and dones attneuate sounds but not nearly as much as the ground enclosure.
+/////////////////////// Enclosure Type //////////////////////////////
+// Currently there are four the Speculator enclosures: 
+// GROUND_ENCLOSURE, ORB_ENCLOSURE_WITH_HOLE
+// ORB_ENCLOSURE_WITHOUT_HOLE, and NO_ENCLOSURE
+// if it is unknown what enclosure will be paired with the PCB
+// it is recommended to map ENCLOSURE_TYPE to a physical switch
 uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE_WITHOUT_HOLE;
 
+// different enclosures result in varying attenuation levels
+// ENC_ATTENUATION_FACTOR is automatically calculated based on
+// the ARTEFACT_TYPE and ENCLOSURE_TYPE
+#if ARTEFACT_TYPE == SPECULATOR
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE_WITH_HOLE
 double ENC_ATTENUATION_FACTOR =        1.0;
 #elif ENCLOSURE_TYPE == ORB_ENCLOSURE_WITHOUT_HOLE
@@ -29,17 +35,10 @@ double ENC_ATTENUATION_FACTOR =        2.0;
 double ENC_ATTENUATION_FACTOR =        3.0;
 #elif ENCLOSURE_TYPE == NO_ENCLOSURE
 double ENC_ATTENUATION_FACTOR =        0.75;
-#endif
+#endif // ENCLOSURE_TYPE
+#endif // ARTEFACT_TYPE
 
-// different microcontrollers which can be used for the system
-#define TEENSY30                  0
-#define TEENSY32                  1
-#define TEENSY35                  2
-#define TEENSY36                  3
-#define TEENSY40                  4
-
-#define MICROCONTROLLER           TEENSY32
-
+////////////////////// Lux Sensors ///////////////////////////////////
 #if HV_MAJOR > 1
 #define NUM_LUX_SENSORS           2
 #endif

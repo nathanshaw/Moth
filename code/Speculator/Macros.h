@@ -81,6 +81,11 @@
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Operating Modes //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
+// artefact family
+#define SPECULATOR                      0
+#define EXPLORATOR                      1
+#define LEGATUS                         2
+
 // the current modes, or software driven functionality in which 
 // the firmware should use.
 #define TEST_MODE                       0
