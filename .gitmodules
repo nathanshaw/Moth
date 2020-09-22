@@ -4,9 +4,6 @@
 [submodule "code/Speculator/NeopixelManager"]
 	path = code/Speculator/NeopixelManager
 	url = https://github.com/nathanshaw/NeopixelManager
-[submodule "code/Speculator/DLManager"]
-	path = code/Speculator/DLManager
-	url = https://github.com/nathanshaw/DLManager
 [submodule "code/Speculator/LuxManager"]
 	path = code/Speculator/LuxManager
 	url = https://github.com/nathanshaw/LuxManager
