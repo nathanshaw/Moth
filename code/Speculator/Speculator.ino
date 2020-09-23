@@ -12,7 +12,7 @@ elapsedMillis last_jumper_read = 100000;
 
 void updateFeatureCollectors() {
   // update the feature collectors
-  fft_features.updateFFT();
+  fft_features.update();
   fc.update();
 #if P_AUDIO_MEMORY_MAX > 0
   Serial.print("audio memory max: ");
@@ -377,7 +377,7 @@ void listenForSerialCommands() {
         input = Serial.read();
         if (input == 's') {
           Serial.print("Brightness Scalers: ");
-          Serial.println(lux_manager.brightness_scaler);
+          Serial.println(lux_manager.getBrightnessScaler());
           // Serial.print("\t");
           // Serial.println(brightness_scalers[1]);
         }
@@ -526,8 +526,9 @@ void setup() {
   weather_manager.init();
   #endif // HV_MAJOR > 20
   ///////////////////////// DL Manager //////////////////////////
-  setupDLManagerCicada();
-  printMinorDivide();
+  // TODO
+  // setupDLManagerCicada();
+  // printMinorDivide();
   printMajorDivide("Setup Loop Finished");
 
   /////////////////////////////// Main Loop Delay ////////////////////////////////
@@ -557,6 +558,15 @@ void loop() {
   if (loop_tmr > loop_length) {
 #if HV_MAJOR > 2
     weather_manager.update();
+    if (weather_manager.getHumidityShutdown() == true) {
+      Serial.println("HUMIDTY SHUTDOWN INITALISED!!!!!!");
+      // if there is a regulator shutdown options use that
+      // TODO
+    } else if (weather_manager.getTempShutdown() == true) {
+      Serial.println("TEMPERATURE SHUTDOWN INITALISED!!!!!!");
+      delay(1000000);
+      // TODO
+    } else{
 #endif // HV_MAJOR
     lux_manager.update(); // always poll the sensors
     if (lux_manager.getExtremeLux() == true) {
@@ -565,9 +575,13 @@ void loop() {
       updateFeatureCollectors();
       updateMode();
       updateAutogain();
-      updateDatalog();
+      // TODO
+      // updateDatalog();
       readUserControls();
       loop_tmr = 0;
     }
+    #if HV_MAJOR > 2
+    }
+    #endif // HV_MAJOR
   }
 }

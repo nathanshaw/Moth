@@ -2,13 +2,13 @@
 #define __MODE_H__
 
 #include <WS2812Serial.h>
-#include "DLManager/DLManager.h"
+#include <DLManager.h>
 #include "Configuration.h"
 #include <NeopixelManager.h>
 #include <LuxManager.h>
 
 #if HV_MAJOR > 2
-#include "WeatherManager/WeatherManager.h"
+#include <WeatherManager.h>
 #endif // HV_MAJOR
 
 #include "AudioEngine/AutoGain.h"
@@ -89,7 +89,7 @@ void setupAudio() {
       fft_features.setupCentroid(true, 120, 16000);
     }
     Serial.println("Started calculating Centroid in the FFTManager");
-    fft_features.setFluxActive(true);
+    fft_features.setCalculateFlux(true);
     Serial.println("Started calculating FLUX in the FFTManager");
   }
   Serial.println("Feature collectors have been linked");
