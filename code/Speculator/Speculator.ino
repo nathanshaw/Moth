@@ -506,7 +506,7 @@ void setup() {
   lux_manager.addSensorTcaIdx("Front", 0);
   lux_manager.addSensorTcaIdx("Rear", 1);
   lux_manager.startTCA7700Sensors(VEML7700_GAIN_1, VEML7700_IT_25MS); // todo add this to config_adv? todo
-  if ((lux_manager.sensor_active[0] | lux_manager.sensor_active[1]) > 0) {
+  if ((lux_manager.getSensorActive(0) | lux_manager.getSensorActive(1)) > 0) {
     lux_manager.linkNeoGroup(&neos);
     delay(200);
   }

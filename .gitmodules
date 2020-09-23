@@ -1,6 +1,3 @@
-[submodule "code/Speculator/AudioEngine"]
-	path = code/Speculator/AudioEngine
-	url = https://github.com/nathanshaw/AudioEngine
 [submodule "code/Speculator/NeopixelManager"]
 	path = code/Speculator/NeopixelManager
 	url = https://github.com/nathanshaw/NeopixelManager
