@@ -11,9 +11,8 @@
 #include <WeatherManager.h>
 #endif // HV_MAJOR
 
-#include "AudioEngine/AutoGain.h"
-#include "AudioEngine/FFTManager1024.h"
 #include <Audio.h>
+#include <AudioEngine.h>
 
 //////////////////////////////// Global Objects /////////////////////////
 WS2812Serial leds(NUM_LED, LED_DISPLAY_MEMORY, LED_DRAWING_MEMORY, LED_PIN, WS2812_GRB);
