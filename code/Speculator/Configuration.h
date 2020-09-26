@@ -26,9 +26,6 @@ uint8_t LUX_MAPPING_SCHEMA =            LUX_ADJUSTS_MIN_MAX;
 // if stereo feedback is set to true than only audio from both channels will be used to calculate visual feedback brightness and color
 // not generally recommended...
 #define STEREO_FEEDBACK                 false
-// the local brightness scaler will adjust the brightness that would normally be displayed
-// to utalise the entire dynamic range available
-bool LBS_ACTIVE          =              true;// WARNING - does not currently work!!!
 // if false, a onset detected on either side results in a LED flash on both sides
 // if true, a onset detected on one side will only result in a flash on that side
 bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
@@ -36,7 +33,6 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Debug Printing ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-#define P_LBS                           false
 
 #define P_LEDS_ON                       false
 // print lux debug mostly prints info about when extreme lux is entered and 
@@ -232,49 +228,7 @@ uint32_t loop_length = (uint32_t)((double)1000.0 / (double)MAX_FPS);
 #define USER_CONTROL_POLL_RATE         8000
 #endif // HV_NUMBER
 
-////////////////////////////////////////////////////////////////////////////
-/////////////////////////// Local Brightness Scalers////////////////////////
-////////////////////////////////////////////////////////////////////////////
 
-// how often should the LBS be recalculated?
-#define LBS_TIME_FRAME                 (1000 * 60 * 1)
-// once the local min and max have been overwritten how long to collect readings for
-// a new min and max before using the new values?
-#define LBS_OVERLAP_TIME               (1000 * 30)
-
-elapsedMillis lbs_timer;
-// what percent from the low and high will be truncated to the lowest and highest value
-#define LBS_LOW_TRUNCATE_THRESH       0.1
-#define LBS_HIGH_TRUNCATE_THRESH      0.75
-// currently the cicada mode will use integers to determine the LBS
-#if FIRMWARE_MODE == CICADA_MODE
-uint8_t lbs_min =                     255;
-uint8_t lbs_max =                     0;
-// to keep track of 
-double lbs_min_temp =                 999999999.9; 
-double lbs_max_temp =                 0.0;
-// this is what the LBS will map the lowest feature results and highest feature results 
-// TODO will perhaps need to make a 16bit version of this?, or change all my brightnesses to be stored using 16 bits instead of 8?
-// uint8_t lbs_brightness_low =          0;
-// uint8_t lbs_brightness_high =         255;
-uint8_t lbs_scaler_min_thresh =       0;
-uint8_t lbs_scaler_max_thresh =       255;
-/////////////////////////////////
-#elif FIRMWARE_MODE == PITCH_MODE
-double lbs_min =                     1.0;
-double lbs_max =                     0.0;
-// to keep track of 
-double lbs_min_temp =                 1.0; 
-double lbs_max_temp =                 0.0;
-// this is what the LBS will map the lowest feature results and highest feature results 
-// TODO will perhaps need to make a 16bit version of this?, or change all my brightnesses to be stored using 16 bits instead of 8?
-// double lbs_brightness_low =          0.0;
-// double lbs_brightness_high =         1.0;
-
-double lbs_scaler_min_thresh =       0.0;
-double lbs_scaler_max_thresh =       1.0;
-
-#endif // FIRMWARE_MODE
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// General Settings /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////

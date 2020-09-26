@@ -157,11 +157,11 @@ void readJumpers() {
   Serial.println();
 
   ///////////// Jumper 10 //////////////////////
-  LBS_ACTIVE = digitalRead(BUT10_PIN);
+  // LBS_ACTIVE = digitalRead(BUT10_PIN);
   if (temp_b == 1) {
-    Serial.print("(pin10) - ON  - Local Brightness Scaler Active");
+    Serial.print("(pin10) - ON  - TODO");
   } else {
-    Serial.print("(pin10) - OFF - Local Brightness Scaler Off");
+    Serial.print("(pin10) - OFF - TODO");
   }
 #endif // HV_MAJOR > 2
 
