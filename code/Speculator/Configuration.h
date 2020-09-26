@@ -43,28 +43,36 @@ bool INDEPENDENT_FLASHES =              false; // WARNING NOT IMPLEMENTED - TODO
 // other things in the lux manager, it is reccomended to leave this printing on
 #define P_LED_ON_RATIO                  false
 #define P_COLOR_WIPE                    false
+// for printing neopixelmanager onset (click) data
+#define P_ONSET                         false
 
 ///////////////////////// NeoPixels and Colour ////////////////////////
-#define P_HSB                           false
+#define P_HSB                           true
 #define P_SMOOTH_HSB                    false
 #define P_SATURATION                    false
-#define P_HUE                           true
+#define P_HUE                           false
 #define P_BRIGHTNESS                    false
-#define P_BRIGHTNESS_SCALER             false
 
 #define P_NEO_COLORS                    false
 
 //////////////////////// LuxManager and Ambiant Lighting ///////////////
 #define P_EXTREME_LUX                   true
-#define P_LUX                           false
-#define P_LUX_READINGS                  false
+// sets p_lux_readings within the lux_manager but also the NeoPixelManager
+#define P_LUMIN                         true 
+// sets p_lux within the lux_manager
+#define P_LUX_READINGS                  true
+// sets general debug printing for the lux_manager class
+#define P_LUX_MANAGER_DEBUG             true
+// sets print_brightness_scaler within the lux_manager
+#define P_BS                            false
 
+// TODO what is this?
 #define P_CALCULATE_BRIGHTNESS_LENGTH   false 
 
 // this is where the final brightness scaler is applied
 #define P_PACK_COLORS                   false
 
-#define P_SONG                          false
+#define P_SONG_GENERAL                  false
 #define P_SONG_COLOR                    false
 
 // basically do you want to print the number of song updates which occur every second?
@@ -101,18 +109,23 @@ elapsedMillis song_update_timer = 0;
 #define P_PEAK                          false
 #define P_TONE_VALS                     false
 #define P_FREQ_VALS                     false
-#define P_AUDIO_USAGE_MAX               false
+#define P_AUDIO_USAGE_MAX               true
 
 //////////////////////////// FFT ///////////////////////////////////////////
-#define P_FFT                           false
-// for printing raw FFT values
 #define P_FFT_VALS                      false
 // will print spectral flux if flux_active
-#define P_FLUX_VALS                     true
-#define P_ONSET_FLUX                    falseƒ
+#define P_FLUX_VALS                     false
+#define P_ONSET_FLUX                    false
 // will print centroid if centroid_active
 #define P_CENTROID_VALS                 true
 // will print highest energy bin in FFT
+//////////////////// General Purpose //////////////////////////////////
+
+// activates some printing which will print out how long different functions calls take
+#define P_FUNCTION_TIMES                false
+
+// prints the max audio memory usage (to help calibrate how much is allocated to the system)
+#define P_AUDIO_MEMORY_MAX              false
 
 //////////////////////////// EEPROM ///////////////////////////////////
 // set to true if you want to print out data stored in EEPROM on boot
@@ -180,15 +193,24 @@ double ONSET_THRESH =                         1.0;
 #endif//HV_MAJOR
 
 #if FIRMWARE_MODE == CICADA_MODE
-double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.25;
-#elif FIRMWARE_MODE == PITCH_MODE
 double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.15;
+#elif FIRMWARE_MODE == PITCH_MODE
+double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.000;
 #elif FIRMWARE_MODE == PITCH_MODE && HV_MAJOR == 3
 double BRIGHTNESS_CUTTOFF_THRESHOLD = 0.0;
 #endif//FIRMWARE_MODE
 
 // if > 0 then the brightness will be smoothed with a previous value
 // thee higher the value the more it is smoothed
+#define HUE_DECAY_RATE       3000
+#define HUE_DECAY_FACTOR     0.02
+
+#define SAT_DECAY_RATE       1000
+#define SAT_DECAY_FACTOR     0.025
+
+#define BGT_DECAY_RATE       3000
+#define BGT_DECAY_FACTOR     0.025
+
 double SMOOTH_HSB   =              0.125;
 
 #define BT_POT_NUM                            3   
@@ -283,7 +305,7 @@ bool gain_adjust_active =                false;
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Lux    Settings //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-
+// lux_manager
 // These are determined by the LUX_READINGS, any values se here will just serve as a
 // default value which will be overwriten once a lux reading is taken. 
 // PLEASE NOTE: the MAX_BRIGHTNEESS is for all three color channels not just a single channel
@@ -308,8 +330,8 @@ uint16_t  MAX_BRIGHTNESS =              765;
 #define BRIGHTNESS_SCALER_MIN           0.05
 #define BRIGHTNESS_SCALER_MAX           3.00
 
-uint32_t lux_max_reading_delay =        1000 * 60 * 1;   // every minute
-uint32_t lux_min_reading_delay =        1000 * 10;       // ten seconds
+uint32_t lux_max_reading_delay =        1000 * 60 * 0.1;   // every minute
+uint32_t lux_min_reading_delay =        1000 * 5;       // five seconds
 
 ////////////////////////////////////////////////////////////////////////////
 ///////////////////////// NeoPixel Settings ////////////////////////////////
@@ -354,8 +376,8 @@ uint32_t lux_min_reading_delay =        1000 * 10;       // ten seconds
 /////////////////////////////////////////////////////////////////////////
 // how often does the feature collector update
 //33 is 30 times a second
-#define FC_UPDATE_RATE                  20
-#define AUDIO_MEMORY                    24
+#define FC_UPDATE_RATE                  10
+#define AUDIO_MEMORY                    16
 
 bool stereo_audio =                     true;
 
@@ -391,7 +413,7 @@ DMAMEM byte LED_DISPLAY_MEMORY[NUM_LED * 12]; // 12 bytes per LED
 bool FLASH_DOMINATES =                  false;
 
 // if this is true then the brightness will b = (b + b) * b; in order to reduce its value, and make loud events even more noticable
-bool SQUARE_BRIGHTNESS =            true;
+bool SQUARE_BRIGHTNESS =                true;
 
 // how high the onset flash timer will go up to
 #define MAX_FLASH_TIME                  60
@@ -478,16 +500,16 @@ double hue_max = 0.0;
 #define FEATURE_FLUX                        (14)
 
 // When the color mapping is using HSB, this will be where the features used are determined
-#define HUE_FEATURE                         (FEATURE_CENTROID)
-#define BRIGHTNESS_FEATURE                  (FEATURE_RMS)
-#define SATURATION_FEATURE                  (FEATURE_FLUX)
+#define HUE_FEATURE                         FEATURE_CENTROID
+#define BRIGHTNESS_FEATURE                  (FEATURE_FFT_ENERGY)
+#define SATURATION_FEATURE                  (FEATURE_FFT_RELATIVE_ENERGY)
 
 // These are different color mapping modes
 #define COLOR_MAPPING_RGB                     0
 #define COLOR_MAPPING_HSB                     1
 
 // For the neopixels will the color mapping exist within the RGB or HSB domain?
-#define COLOR_MAP_MODE              (COLOR_MAPPING_HSB)
+#define COLOR_MAP_MODE                        (COLOR_MAPPING_HSB)
 
 #define  MODE_SINGLE_RANGE                    0
 #define  MODE_ALL_BINS                        1
@@ -525,10 +547,10 @@ int SONG_COLOR_FEATURE =                      SPECTRAL_CENTROID;
 // #define STARTING_ONSET_GAIN             16.0
 
 #if HV_MAJOR < 3
-#define STARTING_GAIN                         30.0
+#define STARTING_GAIN                         480.0
 #elif HV_MAJOR == 3
 // 30.0 is good for testing when no enclosure is present, but a higher value should be used when an enclosure is present
-#define STARTING_GAIN                         30.0
+#define STARTING_GAIN                         60.0
 #endif
 
 double front_gain =                           STARTING_GAIN;  
@@ -601,24 +623,26 @@ int ONSET_FEATURE =                           PEAK_DELTA;
 #define ONSET_BQ2_DB                    -12
 
 //////////////////////////////// Global Variables /////////////////////////
-double color_feature_min = 1.00;
-double color_feature_max = 0.0;
-double last_hue = 0.0;
-double hue = 0.0;
+double hue = 1.0;
+double brightness = 1.0;
+double saturation = 0.0;// needs to start at 0.0 or else the min/max value tracker has issues
+
+/// TODO
+/// these lines need to go into the primary firmware program
+/// ValueTrackerFloat hue_tracker        = ValueTrackerFloat(&hue, hsb_lp_level);
+/// ValueTrackerFloat saturation_tracker = ValueTrackerFloat(&saturation, hsb_lp_level);
+/// ValueTrackerFloat brightness_tracker = ValueTrackerFloat(&brightness, hsb_lp_level);
+
+float target_hue = 1.0;
+float target_saturation = 1.0;
+float target_brightness = 1.0;
 
 elapsedMillis feature_reset_tmr;
 const unsigned long feature_reset_time = (1000 * 60 * 1);// every 2 minute?
 const double feature_reset_factor = 0.08; // how much will the min and max be adjusted? 
 
-double brightness_feature_min = 1.0;
-double brightness_feature_max = 0.0;
-
-double current_brightness = 1.0;
-double last_brightness = 1.0;
-
-double last_saturation = 0.0;
-double sat_feature_min = 1.0;
-double sat_feature_max = 0.0;
+// high amount of filtering
+float hsb_lp_level = 0.25;
 
 double current_color = 0.5;
 double last_color = 0.5;

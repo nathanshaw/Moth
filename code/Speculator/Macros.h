@@ -26,9 +26,13 @@
 ////////////////////// Software Configurations /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
-#define SV_MINOR           3
+#define SV_MINOR           4
 #define SV_SUBVERSION      0
 /*
+// version 0.4.0 fixed the vast majority of the bugs associated with v 0.3.1, there is still an issue with the lux manager,
+   but this version is stable
+// version 0.3.1 moved many of the classes into the Arduino general libray, for some reason the restart issue is back
+   and there are problems with printing, this is not a real working version, just an inbetween
 // version 0.3.0 has lots of changes under the hood concerning how the classees are treated. For the v3 units the temp
    and humidity sensor and the WeatherManager was addded. There is a huge problem with the program having a memory leak
    somewhere, I really neeed to find that beforee v 1.0 can be launched

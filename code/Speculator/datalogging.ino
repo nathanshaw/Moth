@@ -69,9 +69,9 @@
 //    /*
 //    if (STATICLOG_MASTER_GAIN) {
 //      datalog_manager.addStaticLog("Lowest Master Gain  : ",
-//                                   STATICLOG_ONSET_GAIN_TIMER, &fc.min_gain);
+//                                   STATICLOG_ONSET_GAIN_TIMER, &feature_collector.min_gain);
 //      datalog_manager.addStaticLog("Highest Master Gain ",
-//                                   STATICLOG_ONSET_GAIN_TIMER, &fc.max_gain);
+//                                   STATICLOG_ONSET_GAIN_TIMER, &feature_collector.max_gain);
 //      datalog_manager.logSetupConfigDouble("Master Starting Gain          : ", STARTING_GAIN);
 //    }
 //    */

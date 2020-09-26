@@ -11,6 +11,7 @@
 #define HV_MAJOR                  2
 #define HV_MINOR                  1
 
+// For the Speculator.....
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
 // depending on what functionality you want
 #define FIRMWARE_MODE             PITCH_MODE
@@ -74,35 +75,80 @@ double ENC_ATTENUATION_FACTOR =        0.75;
 //////////// MICROCONTROLLER PIN OUTS ////
 #define LED_PIN                   5
 
-//////////// User Controls /////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// User Controls //////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+// in ms, how often will theUI controls update?
+#define UI_POLLING_RATE 60
+// how much play will the pots have before returning a value?
+// good values should range between 0.002 and 0.005
+#define POT_PLAY        0.004
+
+// should the UIManager print when the user control elements are changed?
+#define P_UIMANAGER     true
+
 #if HV_MAJOR < 3
 #define NUM_JUMPERS               6
-#define JMP1_PIN                  12
-#define JMP2_PIN                  11
-#define JMP3_PIN                  14
-#define JMP4_PIN                  15
-#define JMP5_PIN                  16
-#define JMP6_PIN                  17
+
+// pins for the buttons
+#define BUT1_PIN                  12
+#define BUT2_PIN                  11
+#define BUT3_PIN                  14
+#define BUT4_PIN                  15
+#define BUT5_PIN                  16
+#define BUT6_PIN                  17
+
+#define BUT1_REVERSE              false
+#define BUT2_REVERSE              false
+#define BUT3_REVERSE              false
+#define BUT4_REVERSE              false
+#define BUT5_REVERSE              false
+#define BUT6_REVERSE              false
+
+#define BUT1_ACTIVE               true 
+#define BUT2_ACTIVE               true
+#define BUT3_ACTIVE               true
+#define BUT4_ACTIVE               true
+#define BUT5_ACTIVE               true
+#define BUT6_ACTIVE               true
+
+#define BUT1_PULLUP               false
+#define BUT2_PULLUP               false
+#define BUT3_PULLUP               false
+#define BUT4_PULLUP               false
+#define BUT5_PULLUP               false
+#define BUT6_PULLUP               false
+
+#define BUT1_NAME                 ""
+#define BUT2_NAME                 ""
+#define BUT3_NAME                 ""
+#define BUT4_NAME                 ""
+#define BUT5_NAME                 ""
+#define BUT6_NAME                 ""
+
 #define NUM_POTS                  0
-int jmp_pins[NUM_JUMPERS] = {JMP1_PIN, JMP2_PIN, JMP3_PIN, JMP4_PIN, JMP5_PIN,
-                             JMP6_PIN};
+int jmp_pins[NUM_JUMPERS] = {BUT1_PIN, BUT2_PIN, BUT3_PIN, BUT4_PIN, BUT5_PIN,
+                             BUT6_PIN};
+
+#define NUM_POTS                  0
 
 #elif HV_MAJOR == 3
 #define NUM_JUMPERS               10
 
-#define JMP1_PIN                  14
-#define JMP2_PIN                  12
-#define JMP3_PIN                  11
-#define JMP4_PIN                  10
-#define JMP5_PIN                  8
-#define JMP6_PIN                  7
-#define JMP7_PIN                  6
-#define JMP8_PIN                  4
-#define JMP9_PIN                  3
-#define JMP10_PIN                 2
+#define BUT1_PIN                  14
+#define BUT2_PIN                  12
+#define BUT3_PIN                  11
+#define BUT4_PIN                  10
+#define BUT5_PIN                  8
+#define BUT6_PIN                  7
+#define BUT7_PIN                  6
+#define BUT8_PIN                  4
+#define BUT9_PIN                  3
+#define BUT10_PIN                 2
 
-int jmp_pins[NUM_JUMPERS] = {JMP1_PIN, JMP2_PIN, JMP3_PIN, JMP4_PIN, JMP5_PIN,
-                             JMP6_PIN, JMP7_PIN, JMP8_PIN, JMP9_PIN, JMP10_PIN};
+int jmp_pins[NUM_JUMPERS] = {BUT1_PIN, BUT2_PIN, BUT3_PIN, BUT4_PIN, BUT5_PIN,
+                             BUT6_PIN, BUT7_PIN, BUT8_PIN, BUT9_PIN, BUT10_PIN};
 
 #define NUM_POTS                  4
 #define POT1_PIN                  22
