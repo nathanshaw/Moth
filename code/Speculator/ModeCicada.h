@@ -37,9 +37,9 @@ FFTManager1024 fft_manager = FFTManager1024("Input FFT");
 
 // UIManager ui_manager = UIManager(UI_POLLING_RATE, POT_PLAY, P_UIMANAGER);
 
-ValueTrackerFloat hue_tracker        = ValueTrackerFloat(&hue, HUE_DECAY_FACTOR, HUE_DECAY_RATE, hsb_lp_level);
-ValueTrackerFloat saturation_tracker = ValueTrackerFloat(&saturation, SAT_DECAY_FACTOR, SAT_DECAY_RATE, hsb_lp_level);
-ValueTrackerFloat brightness_tracker = ValueTrackerFloat(&brightness, BGT_DECAY_FACTOR, BGT_DECAY_RATE, hsb_lp_level);
+ValueTrackerFloat hue_tracker        = ValueTrackerFloat(&hue, HUE_DECAY_FACTOR, HUE_DECAY_DELAY, hsb_lp_level);
+ValueTrackerFloat saturation_tracker = ValueTrackerFloat(&saturation, SAT_DECAY_FACTOR, SAT_DECAY_DELAY, hsb_lp_level);
+ValueTrackerFloat brightness_tracker = ValueTrackerFloat(&brightness, BGT_DECAY_FACTOR, BGT_DECAY_DELAY, hsb_lp_level);
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
 AudioInputI2S            i2s1;           //xy=55,291.8571424484253
@@ -201,10 +201,10 @@ void setupAudio() {
   biquad2.setLowShelf(3, 8000, ONSET_BQ1_DB);
   Serial.println("Biquad filter 2 has been configured");
 
-  amp1.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
-  amp2.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
+  amp1.gain(STARTING_GAIN * ENC_GAIN_ADJUST);
+  amp2.gain(STARTING_GAIN * ENC_GAIN_ADJUST);
   Serial.print("Set amp1 and amp2 gains to: ");
-  Serial.println(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
+  Serial.println(STARTING_GAIN * ENC_GAIN_ADJUST);
 
   // set gain level? automatically?
   // todo make this adapt to when microphones are broken on one or more side...

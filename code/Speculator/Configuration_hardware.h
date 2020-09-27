@@ -8,8 +8,8 @@
 // There are three artefact types currently availible 
 // SPECULATOR, EXPLORATOR, and LEGATUS
 #define ARTEFACT_TYPE             SPECULATOR
-#define HV_MAJOR                  2
-#define HV_MINOR                  1
+#define HV_MAJOR                  3
+#define HV_MINOR                  0
 
 // For the Speculator.....
 // FIRMWARE MODE should be set to  CICADA_MODE, PITCH_MODE, or TEST_MODE
@@ -25,19 +25,33 @@
 uint8_t ENCLOSURE_TYPE =          ORB_ENCLOSURE_WITHOUT_HOLE;
 
 // different enclosures result in varying attenuation levels
-// ENC_ATTENUATION_FACTOR is automatically calculated based on
+// ENC_GAIN_ADJUST is automatically calculated based on
 // the ARTEFACT_TYPE and ENCLOSURE_TYPE
 #if ARTEFACT_TYPE == SPECULATOR
 #if ENCLOSURE_TYPE == ORB_ENCLOSURE_WITH_HOLE
-double ENC_ATTENUATION_FACTOR =        1.0;
+double ENC_GAIN_ADJUST =        1.0;
 #elif ENCLOSURE_TYPE == ORB_ENCLOSURE_WITHOUT_HOLE
-double ENC_ATTENUATION_FACTOR =        2.0;
+double ENC_GAIN_ADJUST =        2.0;
 #elif ENCLOSURE_TYPE == GROUND_ENCLOSURE
-double ENC_ATTENUATION_FACTOR =        3.0;
+double ENC_GAIN_ADJUST =        3.0;
 #elif ENCLOSURE_TYPE == NO_ENCLOSURE
-double ENC_ATTENUATION_FACTOR =        0.75;
+double ENC_GAIN_ADJUST =        0.75;
 #endif // ENCLOSURE_TYPE
 #endif // ARTEFACT_TYPE
+
+//////////////////////////////////////////////////////////////////
+/////////////////////// Enclosure Finish /////////////////////////
+//////////////////////////////////////////////////////////////////
+#define FINISH_NORMAL                  0
+#define FINISH_FROSTED                 1
+
+#define ENCLOSURE_FINISH               FINISH_NORMAL
+
+#if ENCLOSURE_FINISH == FINISH_NORMAL
+#define LUX_ENCLOSURE_SCALER           0.75
+#elif ENCLOSURE_FINISH == FINISH_FROSTED
+#define LUX_ENCLOSURE_SCALER           1.0
+#endif 
 
 ////////////////////// Lux Sensors ///////////////////////////////////
 #if HV_MAJOR > 1
@@ -136,16 +150,16 @@ int jmp_pins[NUM_JUMPERS] = {BUT1_PIN, BUT2_PIN, BUT3_PIN, BUT4_PIN, BUT5_PIN,
 #elif HV_MAJOR == 3
 #define NUM_JUMPERS               10
 
-#define BUT1_PIN                  14
-#define BUT2_PIN                  12
-#define BUT3_PIN                  11
-#define BUT4_PIN                  10
-#define BUT5_PIN                  8
-#define BUT6_PIN                  7
-#define BUT7_PIN                  6
-#define BUT8_PIN                  4
-#define BUT9_PIN                  3
-#define BUT10_PIN                 2
+#define BUT10_PIN                 14
+#define BUT9_PIN                  12
+#define BUT8_PIN                  11
+#define BUT7_PIN                  10
+#define BUT6_PIN                  8
+#define BUT5_PIN                  7
+#define BUT4_PIN                  6
+#define BUT3_PIN                  4
+#define BUT2_PIN                  3
+#define BUT1_PIN                  2
 
 int jmp_pins[NUM_JUMPERS] = {BUT1_PIN, BUT2_PIN, BUT3_PIN, BUT4_PIN, BUT5_PIN,
                              BUT6_PIN, BUT7_PIN, BUT8_PIN, BUT9_PIN, BUT10_PIN};

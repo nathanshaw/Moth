@@ -28,8 +28,8 @@
 //    datalog_manager.logSetupConfigDouble("Lux Low Threshold           : ", LOW_LUX_THRESHOLD);
 //    datalog_manager.logSetupConfigDouble("Lux Mid Threshold           : ", MID_LUX_THRESHOLD);
 //    datalog_manager.logSetupConfigDouble("Lux High Threshold          : ", HIGH_LUX_THRESHOLD);
-//    datalog_manager.logSetupConfigDouble("Brightness Scaler Min       : ", BRIGHTNESS_SCALER_MIN);
-//    datalog_manager.logSetupConfigDouble("Brightness Scaler Max       : ", BRIGHTNESS_SCALER_MAX);
+//    datalog_manager.logSetupConfigDouble("Brightness Scaler Min       : ", LUX_BS_MIN);
+//    datalog_manager.logSetupConfigDouble("Brightness Scaler Max       : ", LUX_BS_MAX);
 //    datalog_manager.logSetupConfigByte("Min Brightness              : ", MIN_BRIGHTNESS);
 //    datalog_manager.logSetupConfigByte("Max Brightness              : ", MAX_BRIGHTNESS);
 //    // Auto Gain

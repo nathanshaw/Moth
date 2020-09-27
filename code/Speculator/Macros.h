@@ -27,8 +27,19 @@
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
 #define SV_MINOR           4
-#define SV_SUBVERSION      0
-/*
+#define SV_SUBVERSION      4
+
+// TODO - fix issue with the center out mapping ignoring the very center ring and instead treating the entire outside pcb as a ring
+
+/* 
+// version 0.4.4 fixed some issues with the Speculator v3 implementation of the firmware, the user controls were 
+   expanded and fixed up a big, fixed a major issue with getting the VEML6030 sensors to work in the same way
+   as the VEML7700 sensors (the lux readings were off and some issues were present with the library)
+  
+// version 0.4.3 added the luxmanager calibrate function back into the code, it is the firmware used for a pop-up installation in late september
+
+// version 0.4.1 is attempting to add the lux manager back into the mix, the crashing issue is fixed, but the brightness
+   scaler functionality is broken
 // version 0.4.0 fixed the vast majority of the bugs associated with v 0.3.1, there is still an issue with the lux manager,
    but this version is stable
 // version 0.3.1 moved many of the classes into the Arduino general libray, for some reason the restart issue is back
@@ -158,7 +169,7 @@
 
 ////////////////////////// Lux Manager stuff ////////////////
 // how long will the lux calibratin routine last for?
-#define LUX_CALIBRATION_TIME            5000
+#define LUX_CALIBRATION_TIME            4000
 // how long the lux sensors need the LEDs to be 
 // turned off in order to get an accurate reading
 #define LUX_SHDN_LEN                    40

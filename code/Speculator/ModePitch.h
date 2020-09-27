@@ -25,21 +25,21 @@ LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay
 
 // weather manager keeps track of temp and humidity sensors.
 #if HV_MAJOR > 2
-WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH, TEMP_HISTORESIS);
+// WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH, TEMP_HISTORESIS);
 #endif // HV_MAJOR
 
 FeatureCollector feature_collector = FeatureCollector("All");
 
 // DLManager datalog_manager = DLManager((String)"Datalog Manager");
-FFTManager1024 fft_manager = FFTManager1024("Input FFT");
+FFTManager1024 fft_manager = FFTManager1024(FFT_LOWEST_BIN, FFT_HIGHEST_BIN, "Input FFT");
 
 // AutoGain auto_gain = AutoGain(&feature_collector, &fft_manager, MIN_GAIN, MAX_GAIN, MAX_GAIN_ADJ);
 
 // UIManager ui_manager = UIManager(UI_POLLING_RATE, POT_PLAY, P_UIMANAGER);
 
-ValueTrackerDouble hue_tracker        = ValueTrackerDouble(&hue, HUE_DECAY_FACTOR, HUE_DECAY_RATE, hsb_lp_level);
-ValueTrackerDouble saturation_tracker = ValueTrackerDouble(&saturation, SAT_DECAY_FACTOR, SAT_DECAY_RATE, hsb_lp_level);
-ValueTrackerDouble brightness_tracker = ValueTrackerDouble(&brightness, BGT_DECAY_FACTOR, BGT_DECAY_RATE, hsb_lp_level);
+ValueTrackerDouble hue_tracker        = ValueTrackerDouble(&hue, HUE_DECAY_FACTOR, HUE_DECAY_DELAY, HUE_LP_LEVEL);
+ValueTrackerDouble saturation_tracker = ValueTrackerDouble(&saturation, SAT_DECAY_FACTOR, SAT_DECAY_DELAY, SATURATION_LP_LEVEL);
+ValueTrackerDouble brightness_tracker = ValueTrackerDouble(&brightness, BGT_DECAY_FACTOR, BGT_DECAY_DELAY, BRIGHTNESS_LP_LEVEL);
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
 AudioInputI2S            i2s1;           //xy=55,291.8571424484253
@@ -73,7 +73,7 @@ AudioConnection          patchCord9(amp1, peak1);
 
 void setupAudio() {
   ////////////// Audio ////////////
-  Serial.print("Setting up Audio Parameters");
+  printMajorDivide("Setting up Audio Parameters");
   AudioMemory(AUDIO_MEMORY);
   Serial.print("Audio Memory has been set to: ");
   Serial.println(AUDIO_MEMORY);
@@ -116,10 +116,10 @@ void setupAudio() {
   biquad2.setHighpass(2, 8000, 0.85);
   biquad2.setLowShelf(3, 8000, ONSET_BQ1_DB);
   Serial.println("Biquad filter 2 has been configured");
-  amp1.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
-  amp2.gain(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
+  amp1.gain(STARTING_GAIN * ENC_GAIN_ADJUST * USER_CONTROL_GAIN_ADJUST);
+  amp2.gain(STARTING_GAIN * ENC_GAIN_ADJUST * USER_CONTROL_GAIN_ADJUST);
   Serial.print("Set amp1 and amp2 gains to: ");
-  Serial.println(STARTING_GAIN * ENC_ATTENUATION_FACTOR);
+  Serial.println(STARTING_GAIN * ENC_GAIN_ADJUST * USER_CONTROL_GAIN_ADJUST);
   // set gain level? automatically?
   // todo make this adapt to when microphones are broken on one or more side...
   Serial.println("Exiting setupAudio()");
@@ -154,31 +154,31 @@ bool getColorFromFFTSingleRange(FFTManager1024 *f, uint8_t s, uint8_t e) {
 }
 
 double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
-  double b;
+  double b = 0.0;
   dprintMinorDivide(P_BRIGHTNESS);
   dprint(P_BRIGHTNESS, "calculating HSB Brightness: ");
   switch (BRIGHTNESS_FEATURE) {
     case (FEATURE_PEAK_AVG):
       dprintln(P_BRIGHTNESS, "feature is PEAK_AVG");
-      b = f->getDominatePeakAvg();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      b = f->getDominatePeakAvg();
       f->resetDominatePeakAvg();
       break;
     case (FEATURE_PEAK):
       dprintln(P_BRIGHTNESS, "feature is PEAK");
-      b = f->getDominatePeak();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      b = f->getDominatePeak();
       break;
     case (FEATURE_RMS_AVG):
       dprintln(P_BRIGHTNESS, "feature is RMS_AVG");
-      b = f->getDominateRMSAvg();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      b = f->getDominateRMSAvg();
       f->resetDominateRMSAvg();
       break;
     case (FEATURE_RMS):
       dprintln(P_BRIGHTNESS, "feature is RMS");
-      b = f->getDominateRMS();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      b = f->getDominateRMS();
       break;
     case (FEATURE_FFT_ENERGY):
       dprintln(P_BRIGHTNESS, "feature is FFT_ENERGY");
-      b = _fft->getFFTTotalEnergy();// - BRIGHTNESS_CUTTOFF_THRESHOLD;
+      b = _fft->getFFTTotalEnergy();
       break;
     case (FEATURE_STRONG_FFT):
       // range index is what the highest energy bin is within the range we care about
@@ -195,23 +195,46 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
   dprint(P_BRIGHTNESS, b);
   brightness = b;
   brightness_tracker.update();
-  brightness = brightness_tracker.getScaled();
+  brightness = brightness_tracker.getScaledAvg();
   dprint(P_BRIGHTNESS, "\t"); dprintln(P_BRIGHTNESS, brightness);
+  ////////////////////////// When using target_brightness
+  if (USE_TARGET_BRIGHTNESS == true) {
+    // here the target_brightness value is used as the actual brightness and the actual as the target
+    if (brightness > target_brightness) {
+      target_brightness += 0.003;
+      if (brightness < target_brightness){
+        target_brightness = brightness;
+      }
+    } else if (brightness < target_brightness) {
+      target_brightness -= 0.003;
+      if (brightness > target_brightness){
+        target_brightness = brightness;
+      }
+    }
+    brightness = target_brightness;
+  }
+  /////////////////////////// Reverse ////////////////////////
+  if (REVERSE_BRIGHTNESS == true) {
+    brightness = 1.0 - brightness;
+  }
   /////////////////////////// Apply user brightness scaler ////////////////////////
-  if (USER_BS_ACTIVE > 0) {
-    dprint(P_BS + P_BRIGHTNESS, "changing brightness due to user brightness_scaler | before: ");
-    dprint(P_BS + P_BRIGHTNESS, brightness);
+  if (USER_BS_ACTIVE > 0 && (user_brightness_scaler > 1.01 || user_brightness_scaler < 0.99)) {
+    dprint(P_BS + P_BRIGHTNESS, "changing brightness due to user_brightness_scaler (scaler is: ");
+    dprint(P_BS + P_BRIGHTNESS, user_brightness_scaler, 4);
+    dprint(P_BS + P_BRIGHTNESS, ") | before: ");
+    dprint(P_BS + P_BRIGHTNESS, brightness, 4);
     brightness = brightness * user_brightness_scaler;
     dprint(P_BS + P_BRIGHTNESS, " after: ");
-    dprintln(P_BS + P_BRIGHTNESS, brightness);
+    dprintln(P_BS + P_BRIGHTNESS, brightness, 4);
   }
+
   //////////////////////// Scale down the brightness and make it more exponential for better results //////////////////
-  if (SQUARE_BRIGHTNESS == true) {
+  if (SQUARE_BRIGHTNESS == true && brightness < 1.0) {
     dprint(P_BS + P_BRIGHTNESS, "changing brightness due to SQUARE_BRIGHTNESS | before: ");
-    dprint(P_BS + P_BRIGHTNESS, brightness);
+    dprint(P_BS + P_BRIGHTNESS, brightness, 4);
     brightness = (brightness) * brightness;
     dprint(P_BS + P_BRIGHTNESS, " after: ");
-    dprintln(P_BS + P_BRIGHTNESS, brightness);
+    dprintln(P_BS + P_BRIGHTNESS, brightness, 4);
   }
     /////////////////////// Make sure that it is within bounds ////////////////////
   if (brightness < BRIGHTNESS_CUTTOFF_THRESHOLD) {
@@ -219,9 +242,13 @@ double calculateBrightness(FeatureCollector *f, FFTManager1024 *_fft) {
       dprint(P_BS + P_BRIGHTNESS,BRIGHTNESS_CUTTOFF_THRESHOLD);
       dprintln(P_BS + P_BRIGHTNESS," changing to 0.0");
       brightness = 0;
-    } else if (brightness > 1.0) {
+    } else if (brightness > 1.0 + BRIGHTNESS_CUTTOFF_THRESHOLD) {
+      dprint(P_BS + P_BRIGHTNESS, "brightness higher than 1.0 (");
+      dprint(P_BS + P_BRIGHTNESS, brightness);
+      dprintln(P_BS + P_BRIGHTNESS, "), changing to 1.0");
       brightness = 1.0;
-      dprintln(P_BS + P_BRIGHTNESS, "brightness higher than 1.0, changing to 1.0");
+    } else {
+      brightness = brightness - BRIGHTNESS_CUTTOFF_THRESHOLD;
     }
   dprintMinorDivide(P_BRIGHTNESS);
   return brightness;
@@ -259,7 +286,11 @@ double calculateSaturation(FeatureCollector *f, FFTManager1024 *_fft) {
   saturation_tracker.update();
   dprint(P_SATURATION, "saturation before/after scaling: ");
   dprint(P_SATURATION, sat);
-  saturation = saturation_tracker.getScaled();
+  saturation = saturation_tracker.getScaledAvg();
+  saturation = (9.9 * log10((double)saturation + 1.0)) - (2.0 * (double)saturation);
+  if (REVERSE_SATURATION == true) {
+    saturation = 1.0 - saturation;
+  }
   dprint(P_SATURATION, " / ");
   dprint(P_SATURATION, sat,4);
   dprint(P_SATURATION, "\tsat min/max: ");
@@ -316,7 +347,11 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
   dprint(P_HUE, hue);
   hue = h;
   hue_tracker.update();
-  hue = hue_tracker.getScaled();
+  hue = hue_tracker.getScaledAvg();
+  /////////////////////////// Reverse ////////////////////////
+  if (REVERSE_HUE == true) {
+    hue = 1.0 - hue;
+  }
   if (hue > 1.0) {
     hue = 1.0;
   } else if (hue < 0.0) {
@@ -326,13 +361,6 @@ double calculateHue(FeatureCollector *f, FFTManager1024 *_fft) {
   dprintln(P_HUE, hue);
   return hue;
 }
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
 
 void printRGB() {
   // fft_manager.printFFTVals();
