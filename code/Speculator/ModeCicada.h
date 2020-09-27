@@ -25,7 +25,7 @@ LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay
 // weather manager keeps track of temp and humidity sensors.
 
 #if HV_MAJOR > 2
-WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH, TEMP_HISTORESIS);
+WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTREME_THRESH, TEMP_HISTORESIS);
 #endif // HV_MAJOR
 
 FeatureCollector feature_collector = FeatureCollector("All");

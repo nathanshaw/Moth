@@ -25,7 +25,7 @@ LuxManager lux_manager = LuxManager(lux_min_reading_delay, lux_max_reading_delay
 
 // weather manager keeps track of temp and humidity sensors.
 #if HV_MAJOR > 2
-// WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTRME_THRESH, TEMP_HISTORESIS);
+WeatherManager weather_manager = WeatherManager(HUMID_EXTREME_THRESH, TEMP_EXTREME_THRESH, TEMP_HISTORESIS, WEATHER_MANAGER_UPDATE_RATE);
 #endif // HV_MAJOR
 
 FeatureCollector feature_collector = FeatureCollector("All");
@@ -37,9 +37,9 @@ FFTManager1024 fft_manager = FFTManager1024(FFT_LOWEST_BIN, FFT_HIGHEST_BIN, "In
 
 // UIManager ui_manager = UIManager(UI_POLLING_RATE, POT_PLAY, P_UIMANAGER);
 
-ValueTrackerDouble hue_tracker        = ValueTrackerDouble(&hue, HUE_DECAY_FACTOR, HUE_DECAY_DELAY, HUE_LP_LEVEL);
-ValueTrackerDouble saturation_tracker = ValueTrackerDouble(&saturation, SAT_DECAY_FACTOR, SAT_DECAY_DELAY, SATURATION_LP_LEVEL);
-ValueTrackerDouble brightness_tracker = ValueTrackerDouble(&brightness, BGT_DECAY_FACTOR, BGT_DECAY_DELAY, BRIGHTNESS_LP_LEVEL);
+ValueTrackerDouble hue_tracker        = ValueTrackerDouble((String)"HUE", &hue, HUE_DECAY_FACTOR, HUE_DECAY_DELAY, HUE_LP_LEVEL);
+ValueTrackerDouble saturation_tracker = ValueTrackerDouble((String)"SATURATION", &saturation, SAT_DECAY_FACTOR, SAT_DECAY_DELAY, SATURATION_LP_LEVEL);
+ValueTrackerDouble brightness_tracker = ValueTrackerDouble((String)"BRIGHTNESS", &brightness, BGT_DECAY_FACTOR, BGT_DECAY_DELAY, BRIGHTNESS_LP_LEVEL);
 
 ////////////////////////// Audio Objects //////////////////////////////////////////
 AudioInputI2S            i2s1;           //xy=55,291.8571424484253

@@ -15,7 +15,7 @@
 // this is a high value to force jumper readings in the setup() loop
 elapsedMillis last_jumper_read = 100000;
 
-#if P_FUNCTION_TIMES == true 
+#if P_FUNCTION_TIMES == true
 elapsedMillis function_times = 0;
 #endif // P_FUNCTION_TIMES
 
@@ -95,9 +95,10 @@ void setup() {
   }
   printMinorDivide();
   //////////////// User Controls /////////////////////////////
-  explainSerialCommands();
+  explainSerialCommands(true);
   setupUserControls();
-  testJumpers();
+  testJumpers(true);
+  readUserControls(true); // to print out the actual final results
   //////////////// Leds //////////////////////////////////////
   neos.colorWipe(12, 12, 12, 1.0);
   printMinorDivide();
@@ -105,26 +106,29 @@ void setup() {
   Serial.print("There are ");
   Serial.print(NUM_LED);
   Serial.println(" LEDs");
-  Serial.print("NeoGroup p_lux and p_extreme_lux are both set to :\t");Serial.println(P_LUMIN);
+  Serial.print("NeoGroup p_lux and p_extreme_lux are both set to :\t"); Serial.println(P_LUMIN);
   neos.setPrintLux(P_LUMIN);
-  Serial.print("NeoGroup p_lux is set to                         :\t");Serial.println(P_LUMIN);
+  Serial.print("NeoGroup p_lux is set to                         :\t"); Serial.println(P_LUMIN);
   neos.setPrintExtremeLux(P_LUMIN);
-  Serial.print("NeoGroup p_brightness_scaler is set to           :\t");Serial.println(P_BS);
+  Serial.print("NeoGroup p_brightness_scaler is set to           :\t"); Serial.println(P_BS);
   neos.setPrintBrightnessScaler(P_BS);
-  Serial.print("NeoGroup p_leds_on is set to                     :\t");Serial.println(P_LEDS_ON);
+  Serial.print("NeoGroup p_leds_on is set to                     :\t"); Serial.println(P_LEDS_ON);
   neos.setPrintLedsOn(P_LEDS_ON);
-  Serial.print("NeoGroup p_on_ratio is set to                    :\t");Serial.println(P_LED_ON_RATIO);
+  Serial.print("NeoGroup p_on_ratio is set to                    :\t"); Serial.println(P_LED_ON_RATIO);
   neos.setPrintOnRatio(P_LED_ON_RATIO);
-  Serial.print("NeoGroup p_color_wipe is set to                  :\t");Serial.println(P_COLOR_WIPE);
+  Serial.print("NeoGroup p_color_wipe is set to                  :\t"); Serial.println(P_COLOR_WIPE);
   neos.setPrintColorWipe(P_COLOR_WIPE);
-  Serial.print("NeoGroup p_onset is set to                       :\t");Serial.println(P_ONSET);
+  Serial.print("NeoGroup p_onset is set to                       :\t"); Serial.println(P_ONSET);
   neos.setPrintOnRatio(P_ONSET);
-  Serial.print("NeoGroup p_onset is set to                       :\t");Serial.println(P_ONSET);
+  Serial.print("NeoGroup p_onset is set to                       :\t"); Serial.println(P_ONSET);
   neos.setPrintPackColors(P_PACK_COLORS);
+  printMinorDivide();
+  Serial.print("NeoGroup SATURATED_COLORS                        :\t"); Serial.println(P_ONSET);
+  neos.setSaturatedColors(SATURATED_COLORS);
 
   neos.setFlashColors(ONSET_RED, ONSET_GREEN, ONSET_BLUE);
   neos.setSongColors(SONG_RED_HIGH, SONG_GREEN_HIGH, SONG_BLUE_HIGH);
-  
+
   neos.setFlashBehaviour(FLASH_DOMINATES);
   Serial.print("NeoGroup flash_behaviour is set to                :\t");
   Serial.println(FLASH_DOMINATES);
@@ -159,7 +163,7 @@ void setup() {
   //////////////////////////// Lux Sensors //////////////////////////////
   printMinorDivide();
   Serial.println("turning off LEDs for Lux Calibration");
-  neos.colorWipe(0,0,0,0.0);
+  neos.colorWipe(0, 0, 0, 0.0);
   Serial.println("LEDS off");
   delay(100);
 
@@ -173,12 +177,11 @@ void setup() {
   lux_manager.setPrintGeneralDebug(P_LUX_MANAGER_DEBUG);
   Serial.print("lux_manager print_general_debug is set to       :\t");
   Serial.println(P_LUX_MANAGER_DEBUG);
-  
+
 #if HV_MAJOR > 2
   lux_manager.add6030Sensors(2, 25);
   lux_manager.linkNeoGroup(&neos);
   delay(200);
-  lux_manager.calibrate(LUX_CALIBRATION_TIME, true);
 #else
   lux_manager.addSensorTcaIdx("Front", 0);
   lux_manager.addSensorTcaIdx("Rear", 1);
@@ -195,13 +198,28 @@ void setup() {
   lux_manager.calibrate(2000, true);
   lux_manager.print();
 #if FIRMWARE_MODE == TEST_MODE
-  neos.colorWipe(64,64,64,1.0);
+  neos.colorWipe(64, 64, 64, 1.0);
   delay(10000000);
 #endif
   ///////////////////////// Weather Manager /////////////////////
   // nothing is needed =P
 #if HV_MAJOR > 2
-  // weather_manager.init();
+  printMinorDivide();
+  Serial.println("initalising the weather manager");
+  weather_manager.init();
+  weather_manager.setPrintReadings(P_WEATHER_MANAGER_READINGS);
+  Serial.println("finished initalising the weather manager");
+  Serial.print("WeatherManager HUMID_EXTREME_THRESH  :\t");
+  Serial.println(HUMID_EXTREME_THRESH);
+  Serial.print("WeatherManager TEMP_EXTREME_THRESH   :\t");
+  Serial.println(TEMP_EXTREME_THRESH);
+  Serial.print("WeatherManager TEMP_HISTORESIS      :\t");
+  Serial.println(TEMP_HISTORESIS);
+  Serial.print("WEATHER_MANAGER_UPDATE_RATE         :\t");
+  Serial.println(WEATHER_MANAGER_UPDATE_RATE);
+  weather_manager.update();
+  weather_manager.print();
+  printMinorDivide();
 #endif // HV_MAJOR > 20
   ///////////////////////// DL Manager //////////////////////////
   // TODO
@@ -228,18 +246,32 @@ void setup() {
 
 void loop() {
 #if HV_MAJOR > 2
-  /*
   weather_manager.update();
   if (weather_manager.getHumidityShutdown() == true) {
-    Serial.println("HUMIDTY SHUTDOWN INITALISED!!!!!!");
-    delay(1000000);
+    neos.colorWipe(0, 0, 0, 0);
+    while (true) {
+      Serial.println("HUMIDTY SHUTDOWN INITALISED!!!!!!");
+      delay(10000);
+    }
     // TODO
   } else if (weather_manager.getTempShutdown() == true) {
+    unsigned int times = 0;
     Serial.println("TEMPERATURE SHUTDOWN INITALISED!!!!!!");
-    delay(1000000);
-    // TODO
+    neos.colorWipe(255, 0, 0, 0.5);
+    delay(1000);
+    neos.colorWipe(0, 0, 0, 0.0);
+    while (weather_manager.getTempShutdown() == true) {
+      weather_manager.update();
+      if (times % 20 == 10) {
+        neos.colorWipe(255, 0, 0, 0.5);
+      } else if (times % 20 == 11) {
+        neos.colorWipe(0, 0, 0, 0.0);
+      }
+      times++;
+      delay(100);
+    }
+    Serial.println("TEMPERATURE SHUTDOWN LIFTED - resuming normal operation");
   } else {
-  */ 
 #endif // HV_MAJOR
     if (lux_manager.update()) {
       lux_manager.print();
@@ -247,15 +279,15 @@ void loop() {
     // if (lux_manager.getExtremeLux() == true) {jk
     //   Serial.println("WARNING ------------ updateMode() returning due extreme lux conditions, not updating onset or song...");
     // } else {
-      updateAudioAnalysis();
-      updateMode();
-      // updateAutogain();
-      // TODO
-      // updateDatalog();
-      readUserControls();
+    updateAudioAnalysis();
+    updateMode();
+    // updateAutogain();
+    // TODO
+    // updateDatalog();
+    readUserControls(P_USER_CONTROLS);
     // }
 #if HV_MAJOR > 2
-  // }
+  }
 #endif // HV_MAJOR
-// Serial.println(millis()/1000);
+  // Serial.println(millis()/1000);
 }

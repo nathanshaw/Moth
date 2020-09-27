@@ -27,11 +27,14 @@
 ////////////////////////////////////////////////////////////////////////////
 #define SV_MAJOR           0
 #define SV_MINOR           4
-#define SV_SUBVERSION      4
+#define SV_SUBVERSION      5
 
 // TODO - fix issue with the center out mapping ignoring the very center ring and instead treating the entire outside pcb as a ring
 
 /* 
+// version 0.4.5 integrated the weathermanager into the v3 Speculator code (minus the proper shutdown procedures due
+   to hardware limitations), fixed issue with the LuxManager not actually forcing lux readings 
+   when it needs to. Now the lux manager and the weather manager should both be operating as expected
 // version 0.4.4 fixed some issues with the Speculator v3 implementation of the firmware, the user controls were 
    expanded and fixed up a big, fixed a major issue with getting the VEML6030 sensors to work in the same way
    as the VEML7700 sensors (the lux readings were off and some issues were present with the library)

@@ -131,7 +131,7 @@ elapsedMillis song_update_timer = 0;
 #define AUDIO_USB                       true
 
 // will print readings from jumpers and pots
-#define P_USER_CONTROLS                 true
+#define P_USER_CONTROLS                 false
 
 //////////////////////////// Pots ////////////////////////////////////////////
 // this wll allow the POT to overide the brightness at the end of color wipe
@@ -220,7 +220,6 @@ double SMOOTH_HSB   =              0.125;
 #define USER_CUTTOFF_MIN                      0.0   
 #define USER_CUTTOFF_MAX                      0.5
 
-bool SATURATED_COLORS                =        true;
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////// System Performance /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -346,6 +345,8 @@ bool FLASH_DOMINATES =                  false;
 // if this is true then the brightness will b = (b + b) * b; in order to reduce its value, and make loud events even more noticable
 bool SQUARE_BRIGHTNESS =                true;
 
+bool SATURATED_COLORS =                 false;
+
 // how high the onset flash timer will go up to
 #define MAX_FLASH_TIME                  60
 // where the onset flash timer will start
@@ -469,17 +470,22 @@ double hue_max = 0.0;
 ///////////////////////// WeatherManager ////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 #if HV_MAJOR > 2
+#define P_WEATHER_MANAGER_READINGS          false
 // what is the threshold that will determine when Humidity shutddown is activated. .50 equates to 50%
-#define HUMID_EXTREME_THRESH                .95
+#define HUMID_EXTREME_THRESH                95
 // what temp is the thrsehold (in c)        
-#define TEMP_EXTRME_THRESH                  50
+// TODO what is a good value for this?
+#define TEMP_EXTREME_THRESH                  60
 // 0.2 equates to 20% of the threshold, so if the threshold is 100 and 
 // this value is 0.2 the Speculator will reactivate once the temperature
 // drops to 80 degrees
-#define TEMP_HISTORESIS                     0.2
+#define TEMP_HISTORESIS                     0.1
+#define WEATHER_MANAGER_UPDATE_RATE         3000
 #endif // HV_MAJOR
 
-/////////////////////////////// Audio Features ////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////// Audio Features //////////////////////////
+/////////////////////////////////////////////////////////////////////////
 // all the different features that are available to use through the feature collector for
 // various mappings.
 #define FEATURE_RMS                         (1)
@@ -513,9 +519,9 @@ bool REVERSE_HUE            =               false;
 // the low filtering so only the new values will be used while 0.5 will result in the
 // average of the old and new value to be used, a higher value will be a quicker responce
 // the max value is 1.0 and the min value is 0.0
-#define HUE_LP_LEVEL                          0.5
-#define SATURATION_LP_LEVEL                   0.5
-#define BRIGHTNESS_LP_LEVEL                   0.5
+#define HUE_LP_LEVEL                          0.15
+#define SATURATION_LP_LEVEL                   0.15
+#define BRIGHTNESS_LP_LEVEL                   0.15
 
 // These are different color mapping modes
 #define COLOR_MAPPING_RGB                     0
@@ -626,6 +632,7 @@ double saturation = 0.0;// needs to start at 0.0 or else the min/max value track
 float target_hue = 1.0;
 float target_saturation = 1.0;
 bool USE_TARGET_BRIGHTNESS = false;
+
 float target_brightness = 1.0;
 
 double current_color = 0.5;
